@@ -1,4 +1,4 @@
-# Land Auction App
+# Arazial App
 
 A cross-platform Flutter application for land auctions with a modern UI/UX design. This app allows users to view auctions, check details, and place bids.
 
