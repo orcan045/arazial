@@ -40,6 +40,15 @@ class _SignupScreenState extends State<SignupScreen> {
         password: _passwordController.text,
       );
       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Kayıt başarılı! Giriş yapabilirsiniz.'),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
         Navigator.of(context).pop(); // Return to login screen
       }
     } catch (error) {
@@ -58,32 +67,73 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final size = MediaQuery.of(context).size;
     
     return Scaffold(
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        title: const Text('Kayıt Ol'),
+        elevation: 0,
+        backgroundColor: theme.colorScheme.background,
+        iconTheme: IconThemeData(
+          color: theme.colorScheme.onBackground,
+        ),
+        title: Text(
+          'Kayıt Ol',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+            color: theme.colorScheme.onBackground,
+          ),
+        ),
       ),
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             children: [
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
+              
+              // Title
               Text(
                 'Yeni Hesap Oluştur',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w500,
+                  color: theme.colorScheme.onBackground,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 8),
+              Text(
+                'Arazi ihalelerine katılmak için üye olun',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: theme.colorScheme.onBackground.withOpacity(0.7),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+              
+              // Email field
               TextFormField(
                 controller: _emailController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'E-posta',
                   hintText: 'ornek@email.com',
-                  prefixIcon: Icon(Icons.email),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.outline.withOpacity(0.5),
+                    ),
+                  ),
                 ),
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
@@ -98,11 +148,25 @@ class _SignupScreenState extends State<SignupScreen> {
                 },
               ),
               const SizedBox(height: 16),
+              
+              // Password field
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Şifre',
-                  prefixIcon: Icon(Icons.lock),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.outline.withOpacity(0.5),
+                    ),
+                  ),
                 ),
                 obscureText: true,
                 textInputAction: TextInputAction.next,
@@ -117,11 +181,25 @@ class _SignupScreenState extends State<SignupScreen> {
                 },
               ),
               const SizedBox(height: 16),
+              
+              // Confirm password field
               TextFormField(
                 controller: _confirmPasswordController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Şifre Tekrar',
-                  prefixIcon: Icon(Icons.lock),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.outline.withOpacity(0.5),
+                    ),
+                  ),
                 ),
                 obscureText: true,
                 textInputAction: TextInputAction.done,
@@ -136,35 +214,87 @@ class _SignupScreenState extends State<SignupScreen> {
                 },
               ),
               const SizedBox(height: 24),
+              
+              // Error message
               if (_errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.errorContainer.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   child: Text(
                     _errorMessage!,
                     style: TextStyle(
-                      color: theme.colorScheme.error,
+                      color: theme.colorScheme.onErrorContainer,
+                      fontSize: 13,
                     ),
                     textAlign: TextAlign.center,
                   ),
                 ),
+              
+              const SizedBox(height: 24),
+              
+              // Signup button
               ElevatedButton(
                 onPressed: _isLoading ? null : _signup,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  minimumSize: Size(size.width, 0),
+                ),
                 child: _isLoading
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
+                          color: theme.colorScheme.onPrimary,
                         ),
                       )
-                    : const Text('Kayıt Ol'),
+                    : const Text(
+                        'Kayıt Ol',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
               ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('Zaten hesabınız var mı? Giriş yapın'),
+              
+              const SizedBox(height: 24),
+              
+              // Login link
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Zaten hesabınız var mı?',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: theme.colorScheme.onBackground.withOpacity(0.7),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    child: Text(
+                      'Giriş yapın',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -172,4 +302,4 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
     );
   }
-} 
+}

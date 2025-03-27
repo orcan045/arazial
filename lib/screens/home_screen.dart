@@ -5,6 +5,8 @@ import 'package:land_auction_app/providers/auction_provider.dart';
 import 'package:land_auction_app/screens/auction_detail_screen.dart';
 import 'package:land_auction_app/widgets/auction_card.dart';
 import 'package:land_auction_app/widgets/app_drawer.dart';
+import 'package:land_auction_app/theme/app_theme.dart';
+import 'dart:ui';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -48,107 +50,153 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _tabController.dispose();
     super.dispose();
   }
+
+  Widget _buildLogo() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.public,
+          color: AppTheme.primaryColor,
+          size: 24,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'arazial',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 22,
+            color: AppTheme.primaryColor,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    );
+  }
   
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        title: const Text(
-          'Arazi İhaleleri',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        centerTitle: true,
+        elevation: 2,
+        backgroundColor: theme.colorScheme.surface,
+        title: _buildLogo(),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search),
+            icon: Icon(
+              Icons.search_outlined,
+              color: theme.colorScheme.onSurface,
+              size: 22,
+            ),
+            splashRadius: 20,
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Arama özelliği yakında eklenecek'),
+                SnackBar(
+                  content: const Text('Arama özelliği yakında eklenecek'),
+                  behavior: SnackBarBehavior.floating,
+                  backgroundColor: AppTheme.primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               );
             },
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
-          labelColor: theme.colorScheme.primary,
-          unselectedLabelColor: Colors.grey,
-          indicatorColor: theme.colorScheme.primary,
-          indicatorWeight: 3,
-          tabs: const [
-            Tab(text: 'Aktif'),
-            Tab(text: 'Yaklaşan'),
-            Tab(text: 'Geçmiş'),
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: theme.colorScheme.onBackground.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              labelStyle: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+              unselectedLabelStyle: TextStyle(
+                fontWeight: FontWeight.w400,
+                fontSize: 14,
+              ),
+              labelColor: AppTheme.primaryColor,
+              unselectedLabelColor: theme.colorScheme.onBackground.withOpacity(0.6),
+              indicatorColor: AppTheme.primaryColor,
+              indicatorWeight: 2,
+              indicatorSize: TabBarIndicatorSize.label,
+              tabs: const [
+                Tab(text: 'Aktif'),
+                Tab(text: 'Yaklaşan'),
+                Tab(text: 'Geçmiş'),
+              ],
+            ),
+          ),
         ),
       ),
       drawer: const AppDrawer(),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              theme.colorScheme.primary.withOpacity(0.05),
-              theme.colorScheme.surface,
-            ],
-          ),
-        ),
-        child: RefreshIndicator(
-          onRefresh: _onRefresh,
-          color: theme.colorScheme.primary,
-          child: provider.Consumer<AuctionProvider>(
-            builder: (context, auctionProvider, child) {
-              if (auctionProvider.isLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-              
-              return TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildAuctionsList(auctionProvider.activeAuctions),
-                  _buildAuctionsList(auctionProvider.upcomingAuctions),
-                  _buildAuctionsList(auctionProvider.pastAuctions),
-                ],
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        color: AppTheme.primaryColor,
+        backgroundColor: theme.colorScheme.surface,
+        displacement: 40,
+        child: provider.Consumer<AuctionProvider>(
+          builder: (context, auctionProvider, child) {
+            if (auctionProvider.isLoading) {
+              return Center(
+                child: SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: CircularProgressIndicator(
+                    color: AppTheme.primaryColor,
+                    strokeWidth: 2,
+                  ),
+                ),
               );
-            },
-          ),
+            }
+            
+            return TabBarView(
+              controller: _tabController,
+              children: [
+                _buildAuctionsList(auctionProvider.activeAuctions),
+                _buildAuctionsList(auctionProvider.upcomingAuctions),
+                _buildAuctionsList(auctionProvider.pastAuctions),
+              ],
+            );
+          },
         ),
       ),
     );
   }
   
   Widget _buildAuctionsList(List<Auction> auctions) {
+    final theme = Theme.of(context);
+    
     if (auctions.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.gavel,
-                size: 64,
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-              ),
+            Icon(
+              Icons.terrain_outlined,
+              size: 48,
+              color: theme.colorScheme.onBackground.withOpacity(0.3),
             ),
             const SizedBox(height: 16),
             Text(
               'İhale bulunamadı',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                fontWeight: FontWeight.w500,
+              style: TextStyle(
+                color: theme.colorScheme.onBackground.withOpacity(0.7),
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
               ),
             ),
           ],
@@ -157,20 +205,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     }
     
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 16),
       itemCount: auctions.length,
-      itemBuilder: (ctx, i) => AuctionCard(
-        auction: auctions[i],
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (ctx) => AuctionDetailScreen(
-                auctionId: auctions[i].id,
-              ),
-            ),
-          );
-        },
-      ),
+      itemBuilder: (ctx, i) {
+        return Hero(
+          tag: 'auction-${auctions[i].id}',
+          child: AuctionCard(
+            auction: auctions[i],
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (ctx) => AuctionDetailScreen(
+                    auctionId: auctions[i].id,
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
-} 
+}

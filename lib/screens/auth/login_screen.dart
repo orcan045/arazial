@@ -4,6 +4,7 @@ import 'package:land_auction_app/services/auth_service.dart';
 import 'package:land_auction_app/screens/auth/signup_screen.dart';
 import 'package:land_auction_app/screens/auth/forgot_password_screen.dart';
 import 'package:land_auction_app/screens/home_screen.dart';
+import 'package:land_auction_app/theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -61,35 +62,82 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Widget _buildLogo() {
+    return Column(
+      children: [
+        Icon(
+          Icons.public,
+          size: 52,
+          color: AppTheme.primaryColor,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'arazial',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.5,
+            color: AppTheme.primaryColor,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Arazi İhale Uygulaması',
+          style: TextStyle(
+            fontSize: 16,
+            color: AppTheme.textSecondaryColor,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final size = MediaQuery.of(context).size;
     
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Giriş Yap'),
-      ),
+      backgroundColor: theme.colorScheme.background,
       body: SafeArea(
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             children: [
-              const SizedBox(height: 32),
-              Text(
-                'Arazi İhale Uygulaması',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              SizedBox(height: size.height * 0.08),
+              // App Logo/Title
+              _buildLogo(),
               const SizedBox(height: 48),
+              
+              // Error message
+              if (_errorMessage != null)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.errorColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppTheme.errorColor.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(
+                      color: AppTheme.errorColor,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              
+              // Email input field
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(
                   labelText: 'E-posta',
                   hintText: 'ornek@email.com',
-                  prefixIcon: Icon(Icons.email),
+                  prefixIcon: Icon(Icons.email_outlined),
                 ),
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
@@ -103,12 +151,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+              
+              // Password input field
               TextFormField(
                 controller: _passwordController,
                 decoration: const InputDecoration(
                   labelText: 'Şifre',
-                  prefixIcon: Icon(Icons.lock),
+                  prefixIcon: Icon(Icons.lock_outline),
                 ),
                 obscureText: true,
                 textInputAction: TextInputAction.done,
@@ -122,42 +172,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
-              if (_errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(
-                      color: theme.colorScheme.error,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _login,
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Text('Giriş Yap'),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => const SignupScreen(),
-                    ),
-                  );
-                },
-                child: const Text('Hesabınız yok mu? Kayıt olun'),
-              ),
-              const SizedBox(height: 8),
+              
+              // Forgot password link
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
@@ -169,8 +185,80 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     );
                   },
-                  child: const Text('Şifrenizi mi unuttunuz?'),
+                  child: Text(
+                    'Şifremi Unuttum',
+                    style: TextStyle(
+                      color: AppTheme.primaryColor,
+                      fontSize: 14,
+                    ),
+                  ),
                 ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Login button
+              ElevatedButton(
+                onPressed: _isLoading ? null : _login,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: _isLoading
+                    ? SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Giriş Yap',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Sign up link
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Hesabınız yok mu?',
+                    style: TextStyle(
+                      color: AppTheme.textSecondaryColor,
+                      fontSize: 14,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SignupScreen(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'Kayıt Olun',
+                      style: TextStyle(
+                        color: AppTheme.primaryColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -178,4 +266,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-} 
+}
