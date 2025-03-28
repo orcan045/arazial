@@ -149,9 +149,9 @@ class AuctionProvider with ChangeNotifier {
           .from('auctions')
           .update({'final_price': amount})
           .eq('id', auctionId);
-      debugPrint('Updated auction final price');
+      debugPrint('Updated auction final price to $amount');
 
-      // Fetch updated bids
+      // Fetch updated bids to refresh the UI
       final response = await _supabase
           .from('bids')
           .select('*, profiles:bidder_id(*)')
@@ -165,6 +165,13 @@ class AuctionProvider with ChangeNotifier {
           .toList();
       _bids = bids;
       _bidStreamController?.add(bids);
+      
+      // If we have an updated auction, add it to the auctions list
+      final updatedAuction = auction.copyWith(finalPrice: amount);
+      final auctionIndex = _auctions.indexWhere((a) => a.id == auctionId);
+      if (auctionIndex >= 0) {
+        _auctions[auctionIndex] = updatedAuction;
+      }
       
       _isLoading = false;
       notifyListeners();
@@ -208,7 +215,34 @@ class AuctionProvider with ChangeNotifier {
           .eq('id', auctionId)
           .single();
           
-        return Auction.fromJson(response);
+        // Get the latest bid for this auction to ensure price is up-to-date
+        final latestBidResponse = await _supabase
+          .from('bids')
+          .select('amount')
+          .eq('auction_id', auctionId)
+          .order('amount', ascending: false)
+          .limit(1)
+          .maybeSingle();
+          
+        // Create the auction from the response
+        Auction auction = Auction.fromJson(response);
+        
+        // Update the finalPrice if the latest bid is higher than the stored finalPrice
+        if (latestBidResponse != null) {
+          final latestBidAmount = (latestBidResponse['amount'] as num).toDouble();
+          if (auction.finalPrice == null || latestBidAmount > auction.finalPrice!) {
+            // Update the auction in Supabase
+            await _supabase
+              .from('auctions')
+              .update({'final_price': latestBidAmount})
+              .eq('id', auctionId);
+            
+            // Return an updated auction object with the correct finalPrice
+            auction = auction.copyWith(finalPrice: latestBidAmount);
+          }
+        }
+        
+        return auction;
       })
       .where((auction) => auction != null)
       .cast<Auction>()

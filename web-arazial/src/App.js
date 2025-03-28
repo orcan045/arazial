@@ -11,6 +11,8 @@ import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import Dashboard from './pages/Dashboard';
+import AuctionDetail from './pages/AuctionDetail';
+import Auctions from './pages/Auctions';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
@@ -59,6 +61,15 @@ const App = () => {
             } 
           />
           
+          <Route 
+            path="/auctions" 
+            element={
+              <Layout>
+                <Auctions />
+              </Layout>
+            } 
+          />
+          
           {/* Auth Routes */}
           <Route 
             path="/login" 
@@ -94,6 +105,17 @@ const App = () => {
               <ProtectedRoute>
                 <Layout>
                   <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          
+          <Route 
+            path="/auctions/:id" 
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <AuctionDetail />
                 </Layout>
               </ProtectedRoute>
             } 

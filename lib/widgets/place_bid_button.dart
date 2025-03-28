@@ -25,6 +25,8 @@ class _PlaceBidButtonState extends State<PlaceBidButton> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   double _latestBidAmount = 0;
+  // Track if the user has acknowledged the deposit requirement
+  bool _hasAcknowledgedDepositRequirement = false;
   
   @override
   void initState() {
@@ -90,6 +92,219 @@ class _PlaceBidButtonState extends State<PlaceBidButton> {
         );
       }
     }
+  }
+  
+  void _showDepositWarningDialog() {
+    final currencyFormat = NumberFormat.currency(
+      locale: 'tr_TR',
+      symbol: '₺',
+      decimalDigits: 0,
+    );
+    final theme = Theme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        // Constrain the dialog width
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: screenWidth * 0.85,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                Row(
+                  children: [
+                    Icon(
+                      Icons.account_balance_wallet,
+                      color: theme.colorScheme.primary,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Teminat Gerekli',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                
+                // Content
+                Text(
+                  'Bu ihaleye katılmak için teminat yatırmanız gerekiyor.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Deposit info card
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.secondaryContainer.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: theme.colorScheme.secondaryContainer,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            flex: 2,
+                            child: Text(
+                              'Teminat:',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: theme.colorScheme.onSecondaryContainer,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            flex: 3,
+                            child: Text(
+                              '${currencyFormat.format(2000)}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Flexible(
+                            flex: 2,
+                            child: Text(
+                              'Başlangıç:',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: theme.colorScheme.onSecondaryContainer,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            flex: 3,
+                            child: Text(
+                              '${currencyFormat.format(widget.auction.startPrice)}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: theme.colorScheme.onSecondaryContainer,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // Info text
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Teminat bedeli, ihale sürecinde ciddiyetinizi gösterir ve kazanmamanız durumunda iade edilir.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 20),
+                
+                // Action buttons - use Wrap to prevent overflow
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.end,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text('Daha Sonra'),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          // In a real app, this would navigate to a payment screen
+                          // For now, just acknowledge and proceed
+                          setState(() {
+                            _hasAcknowledgedDepositRequirement = true;
+                          });
+                          Navigator.of(context).pop();
+                          _showBidDialog();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        icon: const Icon(Icons.payment, size: 14),
+                        label: const Text('Teminat Yatır'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
   
   void _showBidDialog() {
@@ -198,7 +413,14 @@ class _PlaceBidButtonState extends State<PlaceBidButton> {
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      onPressed: _showBidDialog,
+      onPressed: () {
+        // If user hasn't acknowledged deposit requirement, show warning first
+        if (!_hasAcknowledgedDepositRequirement) {
+          _showDepositWarningDialog();
+        } else {
+          _showBidDialog();
+        }
+      },
       style: ElevatedButton.styleFrom(
         minimumSize: const Size(double.infinity, 50),
       ),

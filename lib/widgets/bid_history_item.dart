@@ -36,14 +36,18 @@ class BidHistoryItem extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: isHighestBid ? FontWeight.bold : null,
                           color: isHighestBid
-                              ? Theme.of(context).colorScheme.primary
+                              ? Theme.of(context).colorScheme.onPrimaryContainer
                               : null,
                         ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     DateFormat('dd MMM yyyy, HH:mm').format(bid.createdAt),
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isHighestBid 
+                          ? Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.8)
+                          : null,
+                    ),
                   ),
                 ],
               ),

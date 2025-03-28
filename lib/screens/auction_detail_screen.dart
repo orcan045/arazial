@@ -173,14 +173,27 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
+                      
                       _buildDetailRow(
                         'Mevcut Teklif',
                         currencyFormat.format(auction.currentPrice),
                         theme,
+                        emphasize: true,
                       ),
                       _buildDetailRow(
-                        'Minimum Sonraki Teklif',
+                        'Minimum Teklif',
                         currencyFormat.format(auction.minimumNextBid),
+                        theme,
+                        emphasize: true,
+                      ),
+                      _buildDetailRow(
+                        'Başlangıç Fiyatı',
+                        currencyFormat.format(auction.startPrice),
+                        theme,
+                      ),
+                      _buildDetailRow(
+                        'Minimum Artış',
+                        currencyFormat.format(auction.minIncrement),
                         theme,
                       ),
                       _buildDetailRow(
@@ -306,7 +319,7 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
     );
   }
   
-  Widget _buildDetailRow(String label, String value, ThemeData theme) {
+  Widget _buildDetailRow(String label, String value, ThemeData theme, {bool emphasize = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -315,13 +328,15 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
           Text(
               label,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.grey[600],
+              color: emphasize ? theme.colorScheme.primary : Colors.grey[600],
+              fontWeight: emphasize ? FontWeight.bold : FontWeight.normal,
             ),
           ),
           Text(
               value,
             style: theme.textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.bold,
+              color: emphasize ? theme.colorScheme.primary : null,
             ),
           ),
         ],

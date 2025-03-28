@@ -1,70 +1,51 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { useAuth } from '../context/AuthContext';
-import { getFilteredAuctions, fetchAuctions } from '../services/auctionService';
+import { fetchAuctions } from '../services/auctionService';
 import { supabase } from '../services/supabase';
 
-const DashboardContainer = styled.div`
+const PageContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
 `;
 
-const DashboardHeader = styled.div`
+const PageHeader = styled.div`
+  margin-bottom: 2.5rem;
+`;
+
+const PageTitle = styled.h1`
+  font-size: 2.25rem;
+  color: var(--color-text);
+  margin-bottom: 0.75rem;
+`;
+
+const PageDescription = styled.p`
+  color: var(--color-text-secondary);
+  font-size: 1.125rem;
+  max-width: 800px;
+`;
+
+const TabsContainer = styled.div`
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
   margin-bottom: 2rem;
 `;
 
-const WelcomeMessage = styled.h1`
-  font-size: 1.75rem;
-  color: var(--color-text);
-  margin-bottom: 0.5rem;
-`;
-
-const Subtitle = styled.p`
-  color: var(--color-text-secondary);
+const Tab = styled.button`
+  padding: 0.75rem 1.5rem;
   font-size: 1rem;
-`;
-
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 3rem;
+  font-weight: 500;
+  background: none;
+  border: none;
+  color: ${props => props.active ? 'var(--color-primary)' : 'var(--color-text-secondary)'};
+  border-bottom: 2px solid ${props => props.active ? 'var(--color-primary)' : 'transparent'};
+  cursor: pointer;
+  transition: all 0.2s ease;
   
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(2, 1fr);
+  &:hover {
+    color: var(--color-primary);
   }
-  
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(4, 1fr);
-  }
-`;
-
-const StatCard = styled.div`
-  background-color: white;
-  border-radius: var(--border-radius-lg);
-  padding: 1.5rem;
-  box-shadow: var(--shadow-sm);
-`;
-
-const StatTitle = styled.h3`
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-  margin-bottom: 0.5rem;
-`;
-
-const StatValue = styled.p`
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: var(--color-text);
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 1.5rem;
 `;
 
 const AuctionsGrid = styled.div`
@@ -97,7 +78,7 @@ const AuctionCard = styled.div`
 `;
 
 const AuctionImage = styled.div`
-  height: 150px;
+  height: 180px;
   background-color: var(--color-primary-light);
   display: flex;
   align-items: center;
@@ -188,9 +169,9 @@ const EmptyStateMessage = styled.p`
   margin: 0 auto 1.5rem;
 `;
 
-const Dashboard = () => {
-  const { user } = useAuth();
+const Auctions = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('active');
   const [auctions, setAuctions] = useState({
     active: [],
     upcoming: [],
@@ -294,51 +275,46 @@ const Dashboard = () => {
     }).format(price);
   };
   
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('tr-TR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-  
   const handleAuctionClick = (auctionId) => {
     navigate(`/auctions/${auctionId}`);
   };
   
-  return (
-    <DashboardContainer>
-      <DashboardHeader>
-        <WelcomeMessage>Hoş Geldiniz, {user?.email}</WelcomeMessage>
-        <Subtitle>İhaleleri takip edin ve tekliflerinizi yönetin</Subtitle>
-      </DashboardHeader>
-      
-      <StatsGrid>
-        <StatCard>
-          <StatTitle>Aktif İhaleler</StatTitle>
-          <StatValue>{auctions.active.length}</StatValue>
-        </StatCard>
-        <StatCard>
-          <StatTitle>Yaklaşan İhaleler</StatTitle>
-          <StatValue>{auctions.upcoming.length}</StatValue>
-        </StatCard>
-        <StatCard>
-          <StatTitle>Geçmiş İhaleler</StatTitle>
-          <StatValue>{auctions.past.length}</StatValue>
-        </StatCard>
-        <StatCard>
-          <StatTitle>Toplam İhale</StatTitle>
-          <StatValue>{auctions.active.length + auctions.upcoming.length + auctions.past.length}</StatValue>
-        </StatCard>
-      </StatsGrid>
-      
-      <SectionTitle>Aktif İhaleler</SectionTitle>
-      {loading ? (
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'active': return 'Aktif';
+      case 'upcoming': return 'Yaklaşan';
+      case 'ended': case 'past': return 'Sonlandı';
+      default: return '';
+    }
+  };
+  
+  const renderAuctions = () => {
+    let auctionsToRender = [];
+    
+    switch (activeTab) {
+      case 'active':
+        auctionsToRender = auctions.active;
+        break;
+      case 'upcoming':
+        auctionsToRender = auctions.upcoming;
+        break;
+      case 'past':
+        auctionsToRender = auctions.past;
+        break;
+      default:
+        auctionsToRender = auctions.active;
+    }
+    
+    if (loading) {
+      return (
         <EmptyState>
           <div>Yükleniyor...</div>
         </EmptyState>
-      ) : error ? (
+      );
+    }
+    
+    if (error) {
+      return (
         <EmptyState>
           <EmptyStateIcon>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -348,106 +324,103 @@ const Dashboard = () => {
           <EmptyStateTitle>Hata Oluştu</EmptyStateTitle>
           <EmptyStateMessage>{error}</EmptyStateMessage>
         </EmptyState>
-      ) : auctions.active.length === 0 ? (
+      );
+    }
+    
+    if (auctionsToRender.length === 0) {
+      return (
         <EmptyState>
           <EmptyStateIcon>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
           </EmptyStateIcon>
-          <EmptyStateTitle>Aktif İhale Bulunamadı</EmptyStateTitle>
-          <EmptyStateMessage>Şu anda aktif bir ihale bulunmamaktadır. Lütfen daha sonra tekrar kontrol edin.</EmptyStateMessage>
+          <EmptyStateTitle>
+            {activeTab === 'active' ? 'Aktif İhale Bulunamadı' : 
+             activeTab === 'upcoming' ? 'Yaklaşan İhale Bulunamadı' : 
+             'Geçmiş İhale Bulunamadı'}
+          </EmptyStateTitle>
+          <EmptyStateMessage>
+            {activeTab === 'active' ? 'Şu anda aktif bir ihale bulunmamaktadır. Lütfen daha sonra tekrar kontrol edin.' : 
+             activeTab === 'upcoming' ? 'Şu anda planlanmış yaklaşan ihale bulunmamaktadır.' : 
+             'Geçmiş ihaleler bulunamadı.'}
+          </EmptyStateMessage>
         </EmptyState>
-      ) : (
-        <AuctionsGrid>
-          {auctions.active.map((auction) => (
-            <AuctionCard key={auction.id} onClick={() => handleAuctionClick(auction.id)}>
-              <AuctionImage>
-                {auction.land_listings?.images && auction.land_listings.images.length > 0 ? (
-                  <div style={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    backgroundImage: `url(${auction.land_listings.images[0]})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }} />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                  </svg>
-                )}
-              </AuctionImage>
-              <AuctionContent>
-                <AuctionTitle>{auction.land_listings?.title || 'Arsa'}</AuctionTitle>
-                <AuctionLocation>{auction.land_listings?.location || 'Konum bilgisi yok'}</AuctionLocation>
-                <AuctionDetails>
-                  <AuctionPrice>
-                    {formatPrice(
-                      auction.highest_bid || 
-                      auction.final_price || 
-                      auction.finalPrice || 
-                      auction.start_price || 
-                      auction.startPrice
-                    )}
-                  </AuctionPrice>
-                  <AuctionStatus status="active">Aktif</AuctionStatus>
-                </AuctionDetails>
-              </AuctionContent>
-            </AuctionCard>
-          ))}
-        </AuctionsGrid>
-      )}
+      );
+    }
+    
+    return (
+      <AuctionsGrid>
+        {auctionsToRender.map((auction) => (
+          <AuctionCard key={auction.id} onClick={() => handleAuctionClick(auction.id)}>
+            <AuctionImage>
+              {auction.land_listings?.images && auction.land_listings.images.length > 0 ? (
+                <div style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  backgroundImage: `url(${auction.land_listings.images[0]})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }} />
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+              )}
+            </AuctionImage>
+            <AuctionContent>
+              <AuctionTitle>{auction.land_listings?.title || 'Arsa'}</AuctionTitle>
+              <AuctionLocation>{auction.land_listings?.location || 'Konum bilgisi yok'}</AuctionLocation>
+              <AuctionDetails>
+                <AuctionPrice>
+                  {formatPrice(
+                    activeTab === 'upcoming' 
+                      ? (auction.start_price || auction.startPrice)
+                      : (auction.highest_bid || auction.final_price || auction.finalPrice || auction.start_price || auction.startPrice)
+                  )}
+                </AuctionPrice>
+                <AuctionStatus status={activeTab}>{getStatusText(activeTab)}</AuctionStatus>
+              </AuctionDetails>
+            </AuctionContent>
+          </AuctionCard>
+        ))}
+      </AuctionsGrid>
+    );
+  };
+  
+  return (
+    <PageContainer>
+      <PageHeader>
+        <PageTitle>Arsa İhaleleri</PageTitle>
+        <PageDescription>
+          Türkiye genelinde mevcut arsa ihalelerini görüntüleyin ve tekliflerinizi verin.
+        </PageDescription>
+      </PageHeader>
       
-      <SectionTitle>Yaklaşan İhaleler</SectionTitle>
-      {loading ? (
-        <EmptyState>
-          <div>Yükleniyor...</div>
-        </EmptyState>
-      ) : auctions.upcoming.length === 0 ? (
-        <EmptyState>
-          <EmptyStateIcon>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </EmptyStateIcon>
-          <EmptyStateTitle>Yaklaşan İhale Bulunamadı</EmptyStateTitle>
-          <EmptyStateMessage>Şu anda planlanmış yaklaşan ihale bulunmamaktadır.</EmptyStateMessage>
-        </EmptyState>
-      ) : (
-        <AuctionsGrid>
-          {auctions.upcoming.map((auction) => (
-            <AuctionCard key={auction.id} onClick={() => handleAuctionClick(auction.id)}>
-              <AuctionImage>
-                {auction.land_listings?.images && auction.land_listings.images.length > 0 ? (
-                  <div style={{ 
-                    width: '100%', 
-                    height: '100%', 
-                    backgroundImage: `url(${auction.land_listings.images[0]})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }} />
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                  </svg>
-                )}
-              </AuctionImage>
-              <AuctionContent>
-                <AuctionTitle>{auction.land_listings?.title || 'Arsa'}</AuctionTitle>
-                <AuctionLocation>{auction.land_listings?.location || 'Konum bilgisi yok'}</AuctionLocation>
-                <AuctionDetails>
-                  <AuctionPrice>
-                    {formatPrice(auction.start_price || auction.startPrice)}
-                  </AuctionPrice>
-                  <AuctionStatus status="upcoming">Yaklaşan</AuctionStatus>
-                </AuctionDetails>
-              </AuctionContent>
-            </AuctionCard>
-          ))}
-        </AuctionsGrid>
-      )}
-    </DashboardContainer>
+      <TabsContainer>
+        <Tab 
+          active={activeTab === 'active'} 
+          onClick={() => setActiveTab('active')}
+        >
+          Aktif İhaleler ({auctions.active.length})
+        </Tab>
+        <Tab 
+          active={activeTab === 'upcoming'} 
+          onClick={() => setActiveTab('upcoming')}
+        >
+          Yaklaşan İhaleler ({auctions.upcoming.length})
+        </Tab>
+        <Tab 
+          active={activeTab === 'past'} 
+          onClick={() => setActiveTab('past')}
+        >
+          Sonlanan İhaleler ({auctions.past.length})
+        </Tab>
+      </TabsContainer>
+      
+      {renderAuctions()}
+    </PageContainer>
   );
 };
 
-export default Dashboard;
+export default Auctions; 
