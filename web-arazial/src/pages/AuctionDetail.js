@@ -509,25 +509,6 @@ const AuctionDetail = () => {
         </MainContent>
         
         <SideContent>
-          <Section>
-            <SectionTitle>Teklifler</SectionTitle>
-            {bids.length > 0 ? (
-              <BidsList>
-                {bids.map((bid) => (
-                  <BidItem key={bid.id}>
-                    <BidderInfo>
-                      <BidderName>{bid.profiles?.full_name || 'Anonim'}</BidderName>
-                      <BidTime>{formatDate(bid.created_at)}</BidTime>
-                    </BidderInfo>
-                    <BidAmount>{formatPrice(bid.amount)}</BidAmount>
-                  </BidItem>
-                ))}
-              </BidsList>
-            ) : (
-              <div>Henüz teklif bulunmuyor.</div>
-            )}
-          </Section>
-          
           {canBid && (
             <Section>
               <SectionTitle>Teklif Ver</SectionTitle>
@@ -553,6 +534,25 @@ const AuctionDetail = () => {
               </BidForm>
             </Section>
           )}
+
+          <Section>
+            <SectionTitle>Teklifler</SectionTitle>
+            {bids.length > 0 ? (
+              <BidsList>
+                {bids.map((bid) => (
+                  <BidItem key={bid.id}>
+                    <BidderInfo>
+                      <BidderName>{bid.profiles?.full_name || 'Anonim'}</BidderName>
+                      <BidTime>{formatDate(bid.created_at)}</BidTime>
+                    </BidderInfo>
+                    <BidAmount>{formatPrice(bid.amount)}</BidAmount>
+                  </BidItem>
+                ))}
+              </BidsList>
+            ) : (
+              <div>Henüz teklif bulunmuyor.</div>
+            )}
+          </Section>
         </SideContent>
       </ContentGrid>
     </PageContainer>

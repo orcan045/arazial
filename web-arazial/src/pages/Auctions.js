@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { fetchAuctions } from '../services/auctionService';
-import { supabase } from '../services/supabase';
+import { supabase } from '../supabaseClient';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -169,6 +169,30 @@ const EmptyStateMessage = styled.p`
   margin: 0 auto 1.5rem;
 `;
 
+// Add a styled refresh button
+const RefreshButton = styled.button`
+  background-color: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: var(--color-background-hover);
+  }
+  
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+`;
+
 const Auctions = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('active');
@@ -180,76 +204,152 @@ const Auctions = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  useEffect(() => {
-    const loadAuctions = async () => {
-      try {
-        setLoading(true);
-        
-        // First get all auctions
-        const { data, error } = await fetchAuctions();
-        
-        if (error) throw error;
-        
-        // Get the highest bid for each auction
-        const auctionsWithHighestBids = await Promise.all(
-          data.map(async (auction) => {
-            try {
-              // Fetch the highest bid for this auction
-              const { data: bids } = await supabase
-                .from('bids')
-                .select('amount')
-                .eq('auction_id', auction.id)
-                .order('amount', { ascending: false })
-                .limit(1);
-              
-              // If there's a highest bid, use it as the current price
-              if (bids && bids.length > 0) {
-                auction.highest_bid = bids[0].amount;
-              }
-            } catch (err) {
-              console.error(`Error fetching bids for auction ${auction.id}:`, err);
+  // Create a function to load auctions that can be called multiple times
+  const loadAuctions = async (forceRefresh = false) => {
+    try {
+      setLoading(true);
+      
+      // First get all auctions, passing the forceRefresh parameter
+      const { data, error } = await fetchAuctions(forceRefresh);
+      
+      if (error) throw error;
+      
+      // Add debug logging to see all auctions and their details
+      console.log('All auctions from database:', data);
+      
+      // Get the highest bid for each auction
+      const auctionsWithHighestBids = await Promise.all(
+        data.map(async (auction) => {
+          try {
+            // Fetch the highest bid for this auction
+            const { data: bids } = await supabase
+              .from('bids')
+              .select('amount')
+              .eq('auction_id', auction.id)
+              .order('amount', { ascending: false })
+              .limit(1);
+            
+            // If there's a highest bid, use it as the current price
+            if (bids && bids.length > 0) {
+              auction.highest_bid = bids[0].amount;
             }
-            return auction;
-          })
-        );
+          } catch (err) {
+            console.error(`Error fetching bids for auction ${auction.id}:`, err);
+          }
+          return auction;
+        })
+      );
+      
+      // Modify the filtering logic to ensure auctions appear in only one tab
+      // with a clear priority: active > upcoming > past
+      const now = new Date();
+      
+      // 1. First, filter active auctions - status is 'active' OR current time is within window
+      const active = auctionsWithHighestBids.filter(auction => {
+        const startTime = new Date(auction.start_time || auction.startTime);
+        const endTime = new Date(auction.end_time || auction.endTime);
+        const status = auction.status;
         
-        // Filter auctions into categories
-        const now = new Date();
+        // Either explicitly marked as active
+        if (status === 'active') return true;
         
-        const active = auctionsWithHighestBids.filter(auction => {
-          const startTime = new Date(auction.start_time || auction.startTime);
-          const endTime = new Date(auction.end_time || auction.endTime);
-          const status = auction.status;
-          return status === 'active' && now >= startTime && now <= endTime;
-        });
+        // OR current time is within auction window AND not marked as upcoming/ended
+        return status !== 'upcoming' && status !== 'ended' && 
+               now >= startTime && now <= endTime;
+      });
+      
+      // 2. Then upcoming auctions - those NOT in active that are either:
+      // - have status 'upcoming' OR 
+      // - start time is in the future
+      const activeIds = new Set(active.map(a => a.id));
+      const upcoming = auctionsWithHighestBids.filter(auction => {
+        // Skip if already in active tab
+        if (activeIds.has(auction.id)) return false;
         
-        const upcoming = auctionsWithHighestBids.filter(auction => {
-          const startTime = new Date(auction.start_time || auction.startTime);
-          const status = auction.status;
-          return status === 'upcoming' && now < startTime;
-        });
+        const startTime = new Date(auction.start_time || auction.startTime);
+        const status = auction.status;
         
-        const past = auctionsWithHighestBids.filter(auction => {
-          const endTime = new Date(auction.end_time || auction.endTime);
-          const status = auction.status;
-          return now > endTime || status === 'ended';
-        });
+        // Either explicitly marked as upcoming
+        if (status === 'upcoming') return true;
         
-        setAuctions({
-          active,
-          upcoming,
-          past
-        });
-      } catch (error) {
-        console.error('Error fetching auctions:', error);
-        setError('Couldn\'t load auctions. Please try again later.');
-      } finally {
-        setLoading(false);
+        // OR start time is in the future AND not marked as ended
+        return status !== 'ended' && now < startTime;
+      });
+      
+      // 3. Finally, past auctions - anything not in active or upcoming that:
+      // - has status 'ended' OR
+      // - current time is after end time
+      const upcomingIds = new Set(upcoming.map(a => a.id));
+      const past = auctionsWithHighestBids.filter(auction => {
+        // Skip if already in active or upcoming tabs
+        if (activeIds.has(auction.id) || upcomingIds.has(auction.id)) return false;
+        
+        const endTime = new Date(auction.end_time || auction.endTime);
+        const status = auction.status;
+        
+        // Either explicitly marked as ended
+        if (status === 'ended') return true;
+        
+        // OR current time is after end time
+        return now > endTime;
+      });
+      
+      setAuctions({
+        active,
+        upcoming,
+        past
+      });
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching auctions:', error);
+      setError('Couldn\'t load auctions. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Add event listeners for page visibility changes
+  useEffect(() => {
+    // Initial load
+    loadAuctions();
+    
+    // Set up visibility change listener
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('Page became visible, reloading auctions');
+        // Force refresh if it's been more than a minute since last load
+        const lastLoadTime = window.lastAuctionsLoadTime || 0;
+        const now = Date.now();
+        const forceRefresh = (now - lastLoadTime > 60000); // 1 minute
+        loadAuctions(forceRefresh);
+        window.lastAuctionsLoadTime = now;
       }
     };
     
-    loadAuctions();
+    // Listen for visibility changes (when user switches tabs)
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Clean up on unmount
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
+  
+  // Update the tab switching logic to not trigger a loading state unnecessarily
+  const handleTabSwitch = (tab) => {
+    // Only set loading if we don't have data for this tab yet
+    if (auctions[tab].length === 0 && !error) {
+      setLoading(true);
+      
+      // Small timeout to allow UI to update before setting loading to false
+      // if we already have the data
+      setTimeout(() => {
+        setLoading(false);
+      }, 100);
+    }
+    
+    setActiveTab(tab);
+  };
   
   const formatPrice = (price) => {
     if (price === null || price === undefined) return '₺0';
@@ -308,7 +408,13 @@ const Auctions = () => {
     if (loading) {
       return (
         <EmptyState>
-          <div>Yükleniyor...</div>
+          <EmptyStateIcon>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </EmptyStateIcon>
+          <EmptyStateTitle>Veriler Yükleniyor</EmptyStateTitle>
+          <EmptyStateMessage>Lütfen bekleyin, ihale bilgileri yükleniyor...</EmptyStateMessage>
         </EmptyState>
       );
     }
@@ -323,6 +429,14 @@ const Auctions = () => {
           </EmptyStateIcon>
           <EmptyStateTitle>Hata Oluştu</EmptyStateTitle>
           <EmptyStateMessage>{error}</EmptyStateMessage>
+          <RefreshButton onClick={() => loadAuctions(true)}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <polyline points="23 20 23 14 17 14"></polyline>
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+            </svg>
+            Yenile
+          </RefreshButton>
         </EmptyState>
       );
     }
@@ -345,6 +459,14 @@ const Auctions = () => {
              activeTab === 'upcoming' ? 'Şu anda planlanmış yaklaşan ihale bulunmamaktadır.' : 
              'Geçmiş ihaleler bulunamadı.'}
           </EmptyStateMessage>
+          <RefreshButton onClick={() => loadAuctions(true)}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <polyline points="23 20 23 14 17 14"></polyline>
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+            </svg>
+            Yenile
+          </RefreshButton>
         </EmptyState>
       );
     }
@@ -354,7 +476,15 @@ const Auctions = () => {
         {auctionsToRender.map((auction) => (
           <AuctionCard key={auction.id} onClick={() => handleAuctionClick(auction.id)}>
             <AuctionImage>
-              {auction.land_listings?.images && auction.land_listings.images.length > 0 ? (
+              {auction.images && auction.images.length > 0 ? (
+                <div style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  backgroundImage: `url(${auction.images[0]})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }} />
+              ) : auction.land_listings?.images && auction.land_listings.images.length > 0 ? (
                 <div style={{ 
                   width: '100%', 
                   height: '100%', 
@@ -369,8 +499,8 @@ const Auctions = () => {
               )}
             </AuctionImage>
             <AuctionContent>
-              <AuctionTitle>{auction.land_listings?.title || 'Arsa'}</AuctionTitle>
-              <AuctionLocation>{auction.land_listings?.location || 'Konum bilgisi yok'}</AuctionLocation>
+              <AuctionTitle>{auction.title || auction.land_listings?.title || 'Arsa'}</AuctionTitle>
+              <AuctionLocation>{auction.location || auction.land_listings?.location || 'Konum bilgisi yok'}</AuctionLocation>
               <AuctionDetails>
                 <AuctionPrice>
                   {formatPrice(
@@ -391,28 +521,40 @@ const Auctions = () => {
   return (
     <PageContainer>
       <PageHeader>
-        <PageTitle>Arsa İhaleleri</PageTitle>
-        <PageDescription>
-          Türkiye genelinde mevcut arsa ihalelerini görüntüleyin ve tekliflerinizi verin.
-        </PageDescription>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <PageTitle>Arsa İhaleleri</PageTitle>
+            <PageDescription>
+              Türkiye genelinde mevcut arsa ihalelerini görüntüleyin ve tekliflerinizi verin.
+            </PageDescription>
+          </div>
+          <RefreshButton onClick={() => loadAuctions(true)}>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <polyline points="23 20 23 14 17 14"></polyline>
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+            </svg>
+            Yenile
+          </RefreshButton>
+        </div>
       </PageHeader>
       
       <TabsContainer>
         <Tab 
           active={activeTab === 'active'} 
-          onClick={() => setActiveTab('active')}
+          onClick={() => handleTabSwitch('active')}
         >
           Aktif İhaleler ({auctions.active.length})
         </Tab>
         <Tab 
           active={activeTab === 'upcoming'} 
-          onClick={() => setActiveTab('upcoming')}
+          onClick={() => handleTabSwitch('upcoming')}
         >
           Yaklaşan İhaleler ({auctions.upcoming.length})
         </Tab>
         <Tab 
           active={activeTab === 'past'} 
-          onClick={() => setActiveTab('past')}
+          onClick={() => handleTabSwitch('past')}
         >
           Sonlanan İhaleler ({auctions.past.length})
         </Tab>

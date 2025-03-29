@@ -7,7 +7,7 @@ import Button from '../ui/Button';
 const NavbarContainer = styled.nav`
   background-color: white;
   box-shadow: var(--shadow-sm);
-  position: ${props => props.fixed ? 'fixed' : 'relative'};
+  position: ${props => props.$isFixed ? 'fixed' : 'relative'};
   top: 0;
   left: 0;
   right: 0;
@@ -16,7 +16,7 @@ const NavbarContainer = styled.nav`
   transition: all 0.3s ease;
   
   & + * {
-    padding-top: ${props => props.fixed ? '60px' : '0'};
+    padding-top: ${props => props.$isFixed ? '60px' : '0'};
   }
 `;
 
@@ -117,7 +117,7 @@ const MobileMenu = styled.div`
   display: flex;
   flex-direction: column;
   padding-top: 5rem;
-  transform: ${props => props.isOpen ? 'translateX(0)' : 'translateX(-100%)'};
+  transform: ${props => props.$isOpen ? 'translateX(0)' : 'translateX(-100%)'};
   transition: transform 0.3s ease;
   z-index: 900;
   
@@ -162,7 +162,7 @@ const CloseButton = styled.button`
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const location = useLocation();
   
   useEffect(() => {
@@ -190,7 +190,7 @@ const Navbar = () => {
   };
   
   return (
-    <NavbarContainer fixed={isScrolled}>
+    <NavbarContainer $isFixed={isScrolled}>
       <NavbarContent>
         <Logo to="/">
           <LogoIcon>
@@ -222,6 +222,11 @@ const Navbar = () => {
               <Button as={Link} to="/dashboard" variant="text">
                 Dashboard
               </Button>
+              {isAdmin && (
+                <Button as={Link} to="/admin" variant="text">
+                  Admin
+                </Button>
+              )}
               <Button onClick={handleSignOut} variant="secondary">
                 Çıkış Yap
               </Button>
@@ -245,7 +250,7 @@ const Navbar = () => {
         </MobileMenuButton>
       </NavbarContent>
       
-      <MobileMenu isOpen={isOpen}>
+      <MobileMenu $isOpen={isOpen}>
         <CloseButton onClick={() => setIsOpen(false)}>
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -270,6 +275,11 @@ const Navbar = () => {
             <MobileNavLink to="/dashboard">
               Dashboard
             </MobileNavLink>
+            {isAdmin && (
+              <MobileNavLink to="/admin">
+                Admin
+              </MobileNavLink>
+            )}
             <MobileNavLink as="button" onClick={handleSignOut}>
               Çıkış Yap
             </MobileNavLink>

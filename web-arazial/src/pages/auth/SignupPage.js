@@ -42,6 +42,26 @@ const Subtitle = styled.p`
   color: var(--color-text-secondary);
 `;
 
+const BackLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  
+  svg {
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+  }
+  
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
 const AuthForm = styled.form`
   display: flex;
   flex-direction: column;
@@ -84,10 +104,44 @@ const FormFooter = styled.div`
   }
 `;
 
+const CheckboxContainer = styled.div`
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+`;
+
+const Checkbox = styled.input`
+  margin-top: 0.25rem;
+  margin-right: 0.75rem;
+`;
+
+const CheckboxLabel = styled.label`
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  
+  a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
+
+const ErrorText = styled.div`
+  margin-top: 0.25rem;
+  color: #b91c1c;
+  font-size: 0.75rem;
+`;
+
 const SignupPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -112,6 +166,10 @@ const SignupPage = () => {
     
     if (password !== confirmPassword) {
       newErrors.confirmPassword = 'Şifreler eşleşmiyor';
+    }
+    
+    if (!termsAccepted) {
+      newErrors.terms = 'Gizlilik Politikası ve Kullanım Koşullarını kabul etmelisiniz';
     }
     
     setErrors(newErrors);
@@ -142,6 +200,13 @@ const SignupPage = () => {
 
   return (
     <AuthContainer>
+      <BackLink to="/">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Anasayfaya Dön
+      </BackLink>
+      
       <AuthHeader>
         <Logo>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -189,6 +254,19 @@ const SignupPage = () => {
             onChange={(e) => setConfirmPassword(e.target.value)}
             error={errors.confirmPassword}
           />
+          
+          <CheckboxContainer>
+            <Checkbox 
+              id="termsAgreement" 
+              type="checkbox" 
+              checked={termsAccepted} 
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+            />
+            <CheckboxLabel htmlFor="termsAgreement">
+              <Link to="/terms-of-use" target="_blank">Kullanım Koşulları</Link> ve <Link to="/privacy-policy" target="_blank">Gizlilik Politikası</Link>'nı okudum ve kabul ediyorum.
+            </CheckboxLabel>
+          </CheckboxContainer>
+          {errors.terms && <ErrorText>{errors.terms}</ErrorText>}
           
           <Button type="submit" fullWidth loading={isLoading}>
             {isLoading ? 'Kayıt Yapılıyor...' : 'Kayıt Ol'}

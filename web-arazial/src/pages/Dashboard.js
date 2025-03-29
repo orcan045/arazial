@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { getFilteredAuctions, fetchAuctions } from '../services/auctionService';
-import { supabase } from '../services/supabase';
+import { supabase } from '../supabaseClient';
 
 const DashboardContainer = styled.div`
   max-width: 1200px;
@@ -189,7 +189,7 @@ const EmptyStateMessage = styled.p`
 `;
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [auctions, setAuctions] = useState({
     active: [],
@@ -198,77 +198,97 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userStats, setUserStats] = useState({
+    totalBids: 0,
+    activeAuctions: 0,
+    wonAuctions: 0,
+    totalSpent: 0
+  });
   
   useEffect(() => {
-    const loadAuctions = async () => {
-      try {
-        setLoading(true);
-        
-        // First get all auctions
-        const { data, error } = await fetchAuctions();
-        
-        if (error) throw error;
-        
-        // Get the highest bid for each auction
-        const auctionsWithHighestBids = await Promise.all(
-          data.map(async (auction) => {
-            try {
-              // Fetch the highest bid for this auction
-              const { data: bids } = await supabase
-                .from('bids')
-                .select('amount')
-                .eq('auction_id', auction.id)
-                .order('amount', { ascending: false })
-                .limit(1);
-              
-              // If there's a highest bid, use it as the current price
-              if (bids && bids.length > 0) {
-                auction.highest_bid = bids[0].amount;
-              }
-            } catch (err) {
-              console.error(`Error fetching bids for auction ${auction.id}:`, err);
-            }
-            return auction;
-          })
-        );
-        
-        // Filter auctions into categories
-        const now = new Date();
-        
-        const active = auctionsWithHighestBids.filter(auction => {
-          const startTime = new Date(auction.start_time || auction.startTime);
-          const endTime = new Date(auction.end_time || auction.endTime);
-          const status = auction.status;
-          return status === 'active' && now >= startTime && now <= endTime;
-        });
-        
-        const upcoming = auctionsWithHighestBids.filter(auction => {
-          const startTime = new Date(auction.start_time || auction.startTime);
-          const status = auction.status;
-          return status === 'upcoming' && now < startTime;
-        });
-        
-        const past = auctionsWithHighestBids.filter(auction => {
-          const endTime = new Date(auction.end_time || auction.endTime);
-          const status = auction.status;
-          return now > endTime || status === 'ended';
-        });
-        
-        setAuctions({
-          active,
-          upcoming,
-          past
-        });
-      } catch (error) {
-        console.error('Error fetching auctions:', error);
-        setError('Couldn\'t load auctions. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Wait for auth to be loaded
+    if (authLoading) return;
+    
+    // Redirect if no user
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     
     loadAuctions();
-  }, []);
+    loadUserStats();
+  }, [user, authLoading, navigate]);
+  
+  const loadAuctions = async () => {
+    try {
+      setLoading(true);
+      
+      // First get all auctions
+      const { data, error } = await fetchAuctions();
+      
+      if (error) throw error;
+      
+      // Get the highest bid for each auction
+      const auctionsWithHighestBids = await Promise.all(
+        data.map(async (auction) => {
+          try {
+            // Fetch the highest bid for this auction
+            const { data: bids } = await supabase
+              .from('bids')
+              .select('amount')
+              .eq('auction_id', auction.id)
+              .order('amount', { ascending: false })
+              .limit(1);
+            
+            // If there's a highest bid, use it as the current price
+            if (bids && bids.length > 0) {
+              auction.highest_bid = bids[0].amount;
+            }
+          } catch (err) {
+            console.error(`Error fetching bids for auction ${auction.id}:`, err);
+          }
+          return auction;
+        })
+      );
+      
+      // Filter auctions into categories
+      const now = new Date();
+      
+      const active = auctionsWithHighestBids.filter(auction => {
+        const startTime = new Date(auction.start_time || auction.startTime);
+        const endTime = new Date(auction.end_time || auction.endTime);
+        const status = auction.status;
+        return status === 'active' && now >= startTime && now <= endTime;
+      });
+      
+      const upcoming = auctionsWithHighestBids.filter(auction => {
+        const startTime = new Date(auction.start_time || auction.startTime);
+        const status = auction.status;
+        return status === 'upcoming' && now < startTime;
+      });
+      
+      const past = auctionsWithHighestBids.filter(auction => {
+        const endTime = new Date(auction.end_time || auction.endTime);
+        const status = auction.status;
+        return now > endTime || status === 'ended';
+      });
+      
+      setAuctions({
+        active,
+        upcoming,
+        past
+      });
+    } catch (error) {
+      console.error('Error fetching auctions:', error);
+      setError('Couldn\'t load auctions. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const loadUserStats = async () => {
+    // Implementation of loadUserStats function
+  };
   
   const formatPrice = (price) => {
     if (price === null || price === undefined) return '₺0';
@@ -307,6 +327,17 @@ const Dashboard = () => {
     navigate(`/auctions/${auctionId}`);
   };
   
+  // Display loading while auth is loading
+  if (authLoading || loading) {
+    return (
+      <DashboardContainer>
+        <div style={{ textAlign: 'center', padding: '5rem 0' }}>
+          <p>Yükleniyor...</p>
+        </div>
+      </DashboardContainer>
+    );
+  }
+  
   return (
     <DashboardContainer>
       <DashboardHeader>
@@ -334,11 +365,7 @@ const Dashboard = () => {
       </StatsGrid>
       
       <SectionTitle>Aktif İhaleler</SectionTitle>
-      {loading ? (
-        <EmptyState>
-          <div>Yükleniyor...</div>
-        </EmptyState>
-      ) : error ? (
+      {error ? (
         <EmptyState>
           <EmptyStateIcon>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -399,15 +426,21 @@ const Dashboard = () => {
       )}
       
       <SectionTitle>Yaklaşan İhaleler</SectionTitle>
-      {loading ? (
+      {error ? (
         <EmptyState>
-          <div>Yükleniyor...</div>
+          <EmptyStateIcon>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </EmptyStateIcon>
+          <EmptyStateTitle>Yaklaşan İhale Bulunamadı</EmptyStateTitle>
+          <EmptyStateMessage>Şu anda planlanmış yaklaşan ihale bulunmamaktadır.</EmptyStateMessage>
         </EmptyState>
       ) : auctions.upcoming.length === 0 ? (
         <EmptyState>
           <EmptyStateIcon>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
           </EmptyStateIcon>
           <EmptyStateTitle>Yaklaşan İhale Bulunamadı</EmptyStateTitle>

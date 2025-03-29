@@ -42,6 +42,26 @@ const Subtitle = styled.p`
   color: var(--color-text-secondary);
 `;
 
+const BackLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  
+  svg {
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+  }
+  
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
 const AuthForm = styled.form`
   display: flex;
   flex-direction: column;
@@ -124,6 +144,13 @@ const ForgotPasswordPage = () => {
 
   return (
     <AuthContainer>
+      <BackLink to="/">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Anasayfaya Dön
+      </BackLink>
+      
       <AuthHeader>
         <Logo>
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
