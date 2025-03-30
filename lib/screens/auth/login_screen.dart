@@ -5,6 +5,8 @@ import 'package:land_auction_app/screens/auth/signup_screen.dart';
 import 'package:land_auction_app/screens/auth/forgot_password_screen.dart';
 import 'package:land_auction_app/screens/home_screen.dart';
 import 'package:land_auction_app/theme/app_theme.dart';
+import 'package:land_auction_app/services/lifecycle_service.dart';
+import 'package:land_auction_app/models/app_lifecycle_event.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -43,6 +45,9 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       
       if (mounted && response.session != null) {
+        // Trigger a session refresh to ensure we have the latest auth state
+        provider.Provider.of<AuthService>(context, listen: false).refreshSessionManually();
+          
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => const HomeScreen(),

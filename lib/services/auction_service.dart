@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -45,65 +46,67 @@ class AuctionService {
         }
       }
       
-      // Fetch fresh data
+      // Fetch fresh data with a direct approach
       debugPrint('Fetching fresh auctions data from Supabase');
-      final response = await _supabase
-        .from('auctions')
-        .select('*')
-        .order('created_at');
-        
-      debugPrint('Received response with ${response.length} auctions');
       
-      if (response.isNotEmpty) {
-        debugPrint('First auction in response: ${response[0]}');
-        // If we got a new format or different fields, log them for debugging
-        final sampleAuction = response[0];
-        debugPrint('Sample auction keys: ${sampleAuction.keys.toList()}');
-      }
-      
-      // Process each auction to ensure it has valid fields
-      final processedAuctions = await Future.wait(
-        (response as List).map((auction) async {
-          try {
-            // Handle custom fields that might be in the response but not in the Auction model
-            // Ensure required fields exist with proper types
-            _ensureValidAuctionFields(auction);
-            return auction;
-          } catch (e) {
-            debugPrint('Error processing auction: $e');
-            // Return a minimal valid auction to avoid crashing
-            return {
-              'id': auction['id'] ?? 'unknown-id',
-              'start_price': auction['start_price'] ?? auction['starting_price'] ?? 0,
-              'min_increment': auction['min_increment'] ?? 0,
-              'start_time': auction['start_time'] ?? auction['start_date'] ?? now.toIso8601String(),
-              'end_time': auction['end_time'] ?? auction['end_date'] ?? now.add(const Duration(days: 1)).toIso8601String(),
-              'status': auction['status'] ?? 'unknown',
-              'created_at': auction['created_at'] ?? now.toIso8601String(),
-              'updated_at': auction['updated_at'] ?? now.toIso8601String(),
-            };
-          }
-        })
-      );
-      
-      // Cache the results
       try {
-        final prefs = await SharedPreferences.getInstance();
-        final cacheData = {
-          'data': processedAuctions,
-          'timestamp': now.toIso8601String(),
-        };
-        await prefs.setString(_cacheKey, jsonEncode(cacheData));
-      } catch (storageError) {
-        debugPrint('Error storing in cache: $storageError');
+        // Make the API call with a timeout
+        final response = await _supabase
+          .from('auctions')
+          .select('*')
+          .order('created_at')
+          .timeout(const Duration(seconds: 5));
+          
+        debugPrint('Received response with ${response.length} auctions');
+        
+        if (response.isNotEmpty) {
+          // Process each auction to ensure it has valid fields
+          final processedAuctions = response.map((auction) {
+            try {
+              _ensureValidAuctionFields(auction);
+              return auction;
+            } catch (e) {
+              debugPrint('Error processing auction: $e');
+              // Return a minimal valid auction to avoid crashing
+              return {
+                'id': auction['id'] ?? 'unknown-id',
+                'start_price': auction['start_price'] ?? auction['starting_price'] ?? 0,
+                'min_increment': auction['min_increment'] ?? 0,
+                'start_time': auction['start_time'] ?? auction['start_date'] ?? now.toIso8601String(),
+                'end_time': auction['end_time'] ?? auction['end_date'] ?? now.add(const Duration(days: 1)).toIso8601String(),
+                'status': auction['status'] ?? 'unknown',
+                'created_at': auction['created_at'] ?? now.toIso8601String(),
+                'updated_at': auction['updated_at'] ?? now.toIso8601String(),
+              };
+            }
+          }).toList();
+          
+          // Cache the results
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            final cacheData = {
+              'data': processedAuctions,
+              'timestamp': now.toIso8601String(),
+            };
+            await prefs.setString(_cacheKey, jsonEncode(cacheData));
+          } catch (storageError) {
+            debugPrint('Error storing in cache: $storageError');
+          }
+          
+          debugPrint('Fetched and processed ${processedAuctions.length} auctions');
+          return {
+            'data': processedAuctions,
+            'error': null,
+            'timestamp': now
+          };
+        } else {
+          debugPrint('API returned empty response');
+          throw Exception('No auction data received');
+        }
+      } catch (apiError) {
+        debugPrint('API error: $apiError');
+        throw apiError; // Rethrow to be caught by outer try-catch
       }
-      
-      debugPrint('Fetched and processed ${processedAuctions.length} auctions');
-      return {
-        'data': processedAuctions,
-        'error': null,
-        'timestamp': now
-      };
     } catch (error) {
       debugPrint('Error fetching auctions: $error');
       

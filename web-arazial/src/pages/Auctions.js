@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { fetchAuctions } from '../services/auctionService';
-import { supabase } from '../supabaseClient';
-import { VisibilityEvents } from '../context/AuthContext';
+import { supabase } from '../services/supabase';
+import appState from '../services/appState';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -314,9 +314,9 @@ const Auctions = () => {
     // Initial data load
     loadAuctions();
     
-    // Subscribe to visibility events from the central system
-    const unsubscribe = VisibilityEvents.subscribe(() => {
-      console.log("Auctions received visibility change notification");
+    // Subscribe to refresh events from the central system
+    const unsubscribe = appState.onRefresh(() => {
+      console.log("[Auctions] Received refresh notification");
       loadAuctions();
     });
     

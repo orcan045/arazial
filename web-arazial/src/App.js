@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import GlobalStyles from './styles/GlobalStyles';
 import { useState, useEffect } from 'react';
+import appState from './services/appState';
 
 // Layout Components
 import Layout from './components/layout/Layout';
@@ -22,67 +23,90 @@ import UserSettings from './pages/UserSettings';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
 
+// Loading spinner component
+const LoadingSpinner = ({ message, loadingTime, retryAction }) => (
+  <div style={{ 
+    display: 'flex', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    height: '100vh',
+    flexDirection: 'column',
+    gap: '16px',
+    background: 'var(--color-background)'
+  }}>
+    <div style={{ width: '50px', height: '50px', border: '5px solid var(--color-background)', 
+                borderTop: '5px solid var(--color-primary)', borderRadius: '50%', 
+                animation: 'spin 1s linear infinite' }}></div>
+    <p>{message} ({loadingTime}s)</p>
+    
+    {loadingTime > 5 && (
+      <button 
+        onClick={retryAction}
+        style={{
+          padding: '8px 16px',
+          background: 'var(--color-primary)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          marginTop: '16px'
+        }}
+      >
+        Yeniden Dene
+      </button>
+    )}
+    
+    <style>{`
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `}</style>
+  </div>
+);
+
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
   const { user, loading, reloadUserProfile } = useAuth();
   const [loadingTime, setLoadingTime] = useState(0);
+  const [maxLoadingTime, setMaxLoadingTime] = useState(15); // Auto-retry after 15 seconds
   
   useEffect(() => {
     let timer;
     if (loading) {
       timer = setInterval(() => {
-        setLoadingTime(prev => prev + 1);
+        setLoadingTime(prev => {
+          // Auto-retry after maxLoadingTime seconds
+          if (prev + 1 >= maxLoadingTime) {
+            console.log("Auto-retrying profile load after timeout");
+            reloadUserProfile();
+            return 0; // Reset timer after auto-retry
+          }
+          return prev + 1;
+        });
       }, 1000);
     } else {
       setLoadingTime(0);
     }
     
     return () => clearInterval(timer);
-  }, [loading]);
+  }, [loading, reloadUserProfile, maxLoadingTime]);
+  
+  const handleRetry = () => {
+    console.log("Manual retry of profile loading");
+    setLoadingTime(0);
+    reloadUserProfile();
+    // Increase timeout for next retry
+    setMaxLoadingTime(prev => Math.min(prev + 5, 30));
+  };
   
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        flexDirection: 'column',
-        gap: '16px',
-        background: 'var(--color-background)'
-      }}>
-        <div style={{ width: '50px', height: '50px', border: '5px solid var(--color-background)', 
-                    borderTop: '5px solid var(--color-primary)', borderRadius: '50%', 
-                    animation: 'spin 1s linear infinite' }}></div>
-        <p>Oturum bilgileri yükleniyor... ({loadingTime}s)</p>
-        
-        {loadingTime > 5 && (
-          <button 
-            onClick={() => {
-              console.log("Force refreshing profile!");
-              reloadUserProfile();
-            }}
-            style={{
-              padding: '8px 16px',
-              background: 'var(--color-primary)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              marginTop: '16px'
-            }}
-          >
-            Yeniden Dene
-          </button>
-        )}
-        
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
+      <LoadingSpinner 
+        message="Oturum bilgileri yükleniyor..."
+        loadingTime={loadingTime}
+        retryAction={handleRetry}
+      />
     );
   }
   
@@ -97,63 +121,44 @@ const ProtectedRoute = ({ children }) => {
 const AdminRoute = ({ children }) => {
   const { user, isAdmin, loading, reloadUserProfile } = useAuth();
   const [loadingTime, setLoadingTime] = useState(0);
+  const [maxLoadingTime, setMaxLoadingTime] = useState(15); // Auto-retry after 15 seconds
   
   useEffect(() => {
     let timer;
     if (loading) {
       timer = setInterval(() => {
-        setLoadingTime(prev => prev + 1);
+        setLoadingTime(prev => {
+          // Auto-retry after maxLoadingTime seconds
+          if (prev + 1 >= maxLoadingTime) {
+            console.log("Auto-retrying admin profile load after timeout");
+            reloadUserProfile();
+            return 0; // Reset timer after auto-retry
+          }
+          return prev + 1;
+        });
       }, 1000);
     } else {
       setLoadingTime(0);
     }
     
     return () => clearInterval(timer);
-  }, [loading]);
+  }, [loading, reloadUserProfile, maxLoadingTime]);
+  
+  const handleRetry = () => {
+    console.log("Manual retry of admin profile loading");
+    setLoadingTime(0);
+    reloadUserProfile();
+    // Increase timeout for next retry
+    setMaxLoadingTime(prev => Math.min(prev + 5, 30));
+  };
   
   if (loading) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        flexDirection: 'column',
-        gap: '16px',
-        background: 'var(--color-background)'
-      }}>
-        <div style={{ width: '50px', height: '50px', border: '5px solid var(--color-background)', 
-                    borderTop: '5px solid var(--color-primary)', borderRadius: '50%', 
-                    animation: 'spin 1s linear infinite' }}></div>
-        <p>Yönetici bilgileri kontrol ediliyor... ({loadingTime}s)</p>
-        
-        {loadingTime > 5 && (
-          <button 
-            onClick={() => {
-              console.log("Force refreshing admin profile!");
-              reloadUserProfile();
-            }}
-            style={{
-              padding: '8px 16px',
-              background: 'var(--color-primary)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              marginTop: '16px'
-            }}
-          >
-            Yeniden Dene
-          </button>
-        )}
-        
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
+      <LoadingSpinner 
+        message="Yönetici bilgileri kontrol ediliyor..."
+        loadingTime={loadingTime}
+        retryAction={handleRetry}
+      />
     );
   }
   
@@ -186,6 +191,33 @@ const AuthLayout = ({ children }) => {
 };
 
 const App = () => {
+  // Initialize and clean up appState
+  useEffect(() => {
+    // Ensure appState is initialized first
+    console.log('[App] Initializing appState');
+    
+    // Trigger manual refresh on app load
+    appState.forceRefresh();
+    
+    // Dynamic import to prevent circular dependencies
+    import('./services/auctionService')
+      .then(({ setupBackgroundRefresh }) => {
+        if (typeof setupBackgroundRefresh === 'function') {
+          console.log('[App] Setting up auction background refresh');
+          setupBackgroundRefresh();
+        }
+      })
+      .catch(error => {
+        console.error('[App] Failed to initialize auction service:', error);
+      });
+    
+    // Clean up on unmount
+    return () => {
+      console.log('[App] Cleaning up appState');
+      appState.cleanup();
+    };
+  }, []);
+  
   return (
     <Router>
       <AuthProvider>

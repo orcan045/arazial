@@ -1,9 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
+// We're now importing supabase from the services folder to unify the clients
+// This ensures we only have one Supabase instance across the entire app
+import { supabase } from './services/supabase';
 
-// Get Supabase URL and anonymous key from environment variables or use placeholders
-// In a production environment, these should be set in environment variables
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://your-supabase-url.supabase.co';
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'your-supabase-anon-key';
-
-// Create a single supabase client for the entire app
-export const supabase = createClient(supabaseUrl, supabaseAnonKey); 
+// Re-export for backward compatibility with existing imports
+export { supabase }; 

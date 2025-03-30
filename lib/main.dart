@@ -9,6 +9,7 @@ import 'package:land_auction_app/screens/home_screen.dart';
 import 'package:land_auction_app/screens/my_bids_screen.dart';
 import 'package:land_auction_app/theme/app_theme.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:land_auction_app/services/lifecycle_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,11 +42,24 @@ class MyApp extends StatelessWidget {
     
     return provider.MultiProvider(
       providers: [
+        provider.Provider<LifecycleService>(
+          create: (_) => LifecycleService(),
+          dispose: (_, service) => service.dispose(),
+        ),
         provider.Provider(
-          create: (_) => AuthService(supabase),
+          create: (context) {
+            final lifecycleService = provider.Provider.of<LifecycleService>(context, listen: false);
+            final authService = AuthService(supabase);
+            // Connect lifecycle service with auth service
+            authService.setLifecycleService(lifecycleService);
+            return authService;
+          },
         ),
         provider.ChangeNotifierProvider(
-          create: (_) => AuctionProvider(supabase),
+          create: (context) {
+            final lifecycleService = provider.Provider.of<LifecycleService>(context, listen: false);
+            return AuctionProvider(supabase, lifecycleService);
+          },
         ),
       ],
       child: MaterialApp(

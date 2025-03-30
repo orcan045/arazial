@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { getAuctionById, getAuctionBids, placeBid } from '../services/auctionService';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
-import { VisibilityEvents } from '../context/AuthContext';
+import appState from '../services/appState';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -270,9 +270,9 @@ const AuctionDetail = () => {
     // Initial data load
     fetchData();
     
-    // Subscribe to visibility events from the central system
-    const unsubscribe = VisibilityEvents.subscribe(() => {
-      console.log("AuctionDetail received visibility change notification");
+    // Subscribe to refresh events from the central system
+    const unsubscribe = appState.onRefresh(() => {
+      console.log("[AuctionDetail] Received refresh notification");
       fetchData();
     });
     

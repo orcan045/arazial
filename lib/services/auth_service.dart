@@ -1,7 +1,14 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:async';
+import 'package:land_auction_app/models/app_lifecycle_event.dart';
+import 'package:land_auction_app/services/lifecycle_service.dart';
 
 class AuthService {
   final SupabaseClient _supabase;
+  StreamSubscription<AppLifecycleEvent>? _lifecycleSubscription;
+  DateTime? _lastSessionCheck;
+  LifecycleService? _lifecycleService;
   
   AuthService(this._supabase);
   
@@ -10,6 +17,67 @@ class AuthService {
   bool get isAuthenticated => currentUser != null;
   
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
+  
+  // Set the lifecycle service - should be called after creation
+  void setLifecycleService(LifecycleService service) {
+    _lifecycleService = service;
+    _setupLifecycleListener();
+  }
+  
+  // Setup lifecycle listener for auth session refreshing
+  void _setupLifecycleListener() {
+    if (_lifecycleService == null) return;
+    
+    _lifecycleSubscription = _lifecycleService!.lifecycleEvents.listen((event) async {
+      if (event.type == AppLifecycleEventType.resumed) {
+        final now = DateTime.now();
+        final lastCheck = _lastSessionCheck ?? DateTime(1970);
+        
+        // Only refresh session if it's been more than 2 minutes since last check
+        if (now.difference(lastCheck).inMinutes > 2) {
+          debugPrint('Auth service: refreshing session after app resume');
+          try {
+            await _refreshSession();
+          } catch (e) {
+            debugPrint('Error refreshing session on resume: $e');
+            
+            // If refreshing failed, try to recover
+            try {
+              // First check if we still have a valid session
+              final result = await _supabase.auth.getSession();
+              if (result.session == null) {
+                debugPrint('Session lost, attempting to recover from local storage');
+                // Try to restore from persistent storage
+                await _supabase.auth.refreshSession();
+              }
+            } catch (recoveryError) {
+              debugPrint('Recovery failed: $recoveryError');
+            }
+          }
+        }
+      }
+    });
+  }
+  
+  // Private method to refresh the auth session
+  Future<void> _refreshSession() async {
+    try {
+      // Set a timeout to prevent hanging
+      await _supabase.auth.refreshSession().timeout(
+        const Duration(seconds: 5),
+        onTimeout: () {
+          debugPrint('Session refresh timed out');
+          throw TimeoutException('Session refresh timed out');
+        },
+      );
+      
+      _lastSessionCheck = DateTime.now();
+      debugPrint('Auth session refreshed successfully');
+    } catch (e) {
+      debugPrint('Error refreshing auth session: $e');
+      // Don't rethrow, just log - we want this to be non-blocking
+    }
+  }
   
   Future<AuthResponse> signUp({
     required String email,
@@ -25,14 +93,17 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    return await _supabase.auth.signInWithPassword(
+    final response = await _supabase.auth.signInWithPassword(
       email: email,
       password: password,
     );
+    _lastSessionCheck = DateTime.now();
+    return response;
   }
   
   Future<void> signOut() async {
     await _supabase.auth.signOut();
+    _lastSessionCheck = null;
   }
   
   Future<void> resetPassword(String email) async {
@@ -43,6 +114,7 @@ class AuthService {
     await _supabase.auth.updateUser(
       UserAttributes(password: newPassword),
     );
+    _lastSessionCheck = DateTime.now();
   }
 
   // Get user profile
@@ -76,5 +148,18 @@ class AuthService {
         .from('profiles')
         .update(updates)
         .eq('id', currentUser!.id);
+  }
+  
+  // Clean up resources
+  void dispose() {
+    _lifecycleSubscription?.cancel();
+  }
+
+  // Public method to manually refresh the session - used after login
+  Future<void> refreshSessionManually() async {
+    _lastSessionCheck = DateTime.now();
+    await _refreshSession();
+    
+    // Don't try to trigger lifecycle events directly
   }
 } 

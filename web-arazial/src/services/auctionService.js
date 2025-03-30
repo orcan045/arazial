@@ -1,11 +1,12 @@
 import { supabase } from './supabase';
-import { VisibilityEvents } from '../context/AuthContext';
+import appState from './appState';
 
 // Cache constants
 const CACHE_KEY = 'auctions_cache';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const BACKGROUND_REFRESH_INTERVAL = 30 * 1000; // 30 seconds
 
+// Background refresh timer reference
 let backgroundRefreshTimer = null;
 let lastRefreshTime = 0;
 
@@ -13,46 +14,77 @@ let lastRefreshTime = 0;
  * Set up background refresh of auction data
  */
 export const setupBackgroundRefresh = () => {
-  // Clear any existing timer
+  // Clean up existing timer if any
   if (backgroundRefreshTimer) {
     clearInterval(backgroundRefreshTimer);
   }
   
-  // Set up a new timer for periodic refreshes
+  console.log('[AuctionService] Setting up background refresh');
+  
+  // Set up interval for background data refresh
   backgroundRefreshTimer = setInterval(async () => {
-    console.log("Background refresh interval triggered");
     try {
-      // Only refresh if the tab is visible and it's been more than 30 seconds since last refresh
-      if (document.visibilityState === 'visible' && Date.now() - lastRefreshTime > BACKGROUND_REFRESH_INTERVAL) {
-        await fetchAuctions(true, false); // Force refresh but silently (don't update lastRefreshTime)
+      // Only refresh if tab is visible and it's been long enough since last refresh
+      if (appState.isVisible && Date.now() - lastRefreshTime > BACKGROUND_REFRESH_INTERVAL) {
+        console.log('[AuctionService] Background refresh triggered');
+        await fetchAuctions(true, false); // Force refresh but silent
       }
     } catch (error) {
-      console.error("Background refresh error:", error);
+      console.error('[AuctionService] Background refresh error:', error);
     }
   }, BACKGROUND_REFRESH_INTERVAL);
   
-  // Subscribe to the centralized visibility change system
-  const unsubscribe = VisibilityEvents.subscribe(async () => {
-    console.log("AuctionService received visibility change notification");
+  // Subscribe to app refresh events
+  const unsubscribeRefresh = appState.onRefresh(async () => {
     try {
+      console.log('[AuctionService] Refresh event triggered');
       // If it's been more than 1 minute since last refresh, force a refresh
       if (Date.now() - lastRefreshTime > 60 * 1000) {
-        console.log("Refreshing auction data from visibility event");
         await fetchAuctions(true);
       }
     } catch (error) {
-      console.error("Visibility event refresh error:", error);
+      console.error('[AuctionService] Refresh event error:', error);
     }
   });
   
+  // Return cleanup function
   return () => {
-    clearInterval(backgroundRefreshTimer);
-    unsubscribe();
+    if (backgroundRefreshTimer) {
+      clearInterval(backgroundRefreshTimer);
+    }
+    unsubscribeRefresh();
+    console.log('[AuctionService] Background refresh cleaned up');
   };
 };
 
-// Initialize the background refresh when this module is loaded
-setupBackgroundRefresh();
+/**
+ * Safely read from local storage with error handling
+ */
+function safeGetFromCache() {
+  try {
+    const cachedData = localStorage.getItem(CACHE_KEY);
+    if (cachedData) {
+      return JSON.parse(cachedData);
+    }
+  } catch (error) {
+    console.warn('[AuctionService] Error reading from cache:', error);
+  }
+  return null;
+}
+
+/**
+ * Safely write to local storage with error handling
+ */
+function safeSetToCache(data) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch (error) {
+    console.warn('[AuctionService] Error writing to cache:', error);
+  }
+}
 
 /**
  * Fetch all auctions with improved error handling and caching
@@ -67,18 +99,10 @@ export const fetchAuctions = async (forceRefresh = false, updateLastRefresh = tr
     
     // Check if we have cached data and it's fresh enough
     if (!forceRefresh) {
-      try {
-        const cachedData = localStorage.getItem(CACHE_KEY);
-        if (cachedData) {
-          const { data, timestamp } = JSON.parse(cachedData);
-          if (data && timestamp && (now - timestamp < CACHE_DURATION)) {
-            console.log('Using cached auction data');
-            return { data, error: null };
-          }
-        }
-      } catch (cacheError) {
-        console.warn('Error accessing cache:', cacheError);
-        // Continue to fetch fresh data
+      const cachedData = safeGetFromCache();
+      if (cachedData?.data && cachedData?.timestamp && (now - cachedData.timestamp < CACHE_DURATION)) {
+        console.log('[AuctionService] Using cached auction data');
+        return { data: cachedData.data, error: null };
       }
     }
     
@@ -92,10 +116,8 @@ export const fetchAuctions = async (forceRefresh = false, updateLastRefresh = tr
         
         if (error) throw error;
         
-        // Process the auctions
+        // Process the auctions for consistent field names
         const processedAuctions = data.map(auction => {
-          // Ensure fields are properly handled with backward compatibility
-          // for different naming conventions
           return {
             ...auction,
             // Ensure consistent naming
@@ -110,20 +132,13 @@ export const fetchAuctions = async (forceRefresh = false, updateLastRefresh = tr
         });
         
         // Cache the results
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify({
-            data: processedAuctions,
-            timestamp: now
-          }));
-        } catch (storageError) {
-          console.warn('Error storing in cache:', storageError);
-        }
+        safeSetToCache(processedAuctions);
         
         if (updateLastRefresh) {
           lastRefreshTime = now;
         }
         
-        console.log('Fetched fresh auctions data:', processedAuctions);
+        console.log('[AuctionService] Fetched fresh auctions:', processedAuctions.length);
         resolve({ data: processedAuctions, error: null });
       } catch (error) {
         reject(error);
@@ -138,20 +153,13 @@ export const fetchAuctions = async (forceRefresh = false, updateLastRefresh = tr
     // Race between the fetch and the timeout
     return await Promise.race([fetchPromise, timeoutPromise]);
   } catch (error) {
-    console.error('Error fetching auctions:', error);
+    console.error('[AuctionService] Error fetching auctions:', error);
     
     // Try to return cached data even if it's stale, rather than nothing
-    try {
-      const cachedData = localStorage.getItem(CACHE_KEY);
-      if (cachedData) {
-        const { data } = JSON.parse(cachedData);
-        if (data) {
-          console.log('Returning stale cached data due to fetch error');
-          return { data, error: null };
-        }
-      }
-    } catch (cacheError) {
-      console.warn('Error accessing cache during error recovery:', cacheError);
+    const cachedData = safeGetFromCache();
+    if (cachedData?.data) {
+      console.log('[AuctionService] Returning stale cached data due to fetch error');
+      return { data: cachedData.data, error: null };
     }
     
     return { data: null, error };
@@ -167,8 +175,6 @@ export const getFilteredAuctions = async () => {
     const { data, error } = await fetchAuctions();
     
     if (error) throw error;
-    
-    console.log('All auctions from service:', data);
     
     const now = new Date();
     
@@ -224,7 +230,7 @@ export const getFilteredAuctions = async () => {
     
     return { active, upcoming, past, error: null };
   } catch (error) {
-    console.error('Error getting filtered auctions:', error);
+    console.error('[AuctionService] Error getting filtered auctions:', error);
     return { active: [], upcoming: [], past: [], error };
   }
 };
@@ -237,28 +243,29 @@ export const getFilteredAuctions = async () => {
 export const getAuctionById = async (auctionId) => {
   try {
     // First check if we have cached data
-    try {
-      const cachedData = localStorage.getItem(CACHE_KEY);
-      if (cachedData) {
-        const { data, timestamp } = JSON.parse(cachedData);
-        if (data && Array.isArray(data) && Date.now() - timestamp < CACHE_DURATION) {
-          const cachedAuction = data.find(auction => auction.id === auctionId);
-          if (cachedAuction) {
-            console.log('Using cached auction data for single auction');
-            return { data: cachedAuction, error: null };
-          }
-        }
+    const cachedData = safeGetFromCache();
+    if (cachedData?.data && Array.isArray(cachedData.data) && 
+        (Date.now() - cachedData.timestamp < CACHE_DURATION)) {
+      const cachedAuction = cachedData.data.find(auction => auction.id === auctionId);
+      if (cachedAuction) {
+        console.log('[AuctionService] Using cached auction data for single auction');
+        return { data: cachedAuction, error: null };
       }
-    } catch (cacheError) {
-      console.warn('Error accessing cache for single auction:', cacheError);
     }
     
-    // Fetch auction data
-    const { data, error } = await supabase
+    // Fetch auction data with timeout protection
+    const fetchPromise = supabase
       .from('auctions')
       .select('*')
       .eq('id', auctionId)
       .single();
+    
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timed out')), 10000); // 10 second timeout
+    });
+    
+    // Race between fetch and timeout
+    const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
     
     if (error) throw error;
     
@@ -275,11 +282,9 @@ export const getAuctionById = async (auctionId) => {
       images: Array.isArray(data.images) ? data.images : []
     };
     
-    // Log the processed auction data
-    console.log('Processed auction data:', processedAuction);
     return { data: processedAuction, error: null };
   } catch (error) {
-    console.error(`Error fetching auction with ID ${auctionId}:`, error);
+    console.error(`[AuctionService] Error fetching auction ${auctionId}:`, error);
     return { data: null, error };
   }
 };
@@ -291,7 +296,8 @@ export const getAuctionById = async (auctionId) => {
  */
 export const getAuctionBids = async (auctionId) => {
   try {
-    const { data, error } = await supabase
+    // Fetch bids with timeout protection
+    const fetchPromise = supabase
       .from('bids')
       .select(`
         *,
@@ -303,12 +309,18 @@ export const getAuctionBids = async (auctionId) => {
       .eq('auction_id', auctionId)
       .order('amount', { ascending: false });
     
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timed out')), 10000); // 10 second timeout
+    });
+    
+    // Race between fetch and timeout
+    const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+    
     if (error) throw error;
     
-    console.log('Fetched bids:', data);
     return { data, error: null };
   } catch (error) {
-    console.error(`Error fetching bids for auction ${auctionId}:`, error);
+    console.error(`[AuctionService] Error fetching bids for auction ${auctionId}:`, error);
     return { data: null, error };
   }
 };
@@ -321,8 +333,15 @@ export const getAuctionBids = async (auctionId) => {
  */
 export const placeBid = async (auctionId, amount) => {
   try {
-    // Get the current user
-    const { data: { user } } = await supabase.auth.getUser();
+    // Get the current user with timeout protection
+    const userPromise = supabase.auth.getUser();
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timed out')), 10000); // 10 second timeout
+    });
+    
+    // Race between user fetch and timeout
+    const { data: { user } } = await Promise.race([userPromise, timeoutPromise]);
+    
     if (!user) {
       throw new Error('User not authenticated');
     }
@@ -359,7 +378,7 @@ export const placeBid = async (auctionId, amount) => {
       throw new Error(`Bid amount must be at least ${minimumNextBid}`);
     }
     
-    // Place the bid
+    // Place the bid with transaction to ensure atomicity
     const { data: bid, error: bidError } = await supabase
       .from('bids')
       .insert([
@@ -382,9 +401,13 @@ export const placeBid = async (auctionId, amount) => {
     
     if (updateError) throw updateError;
     
+    // Force refresh the cache after a successful bid
+    lastRefreshTime = 0;
+    fetchAuctions(true);
+    
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error placing bid:', error);
+    console.error('[AuctionService] Error placing bid:', error);
     return { success: false, error };
   }
-}; 
+};

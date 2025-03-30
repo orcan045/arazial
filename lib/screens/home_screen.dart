@@ -8,6 +8,7 @@ import 'package:land_auction_app/widgets/app_drawer.dart';
 import 'package:land_auction_app/theme/app_theme.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
+import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +20,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   bool _isInit = true;
   late TabController _tabController;
+  Timer? _loadingTimer;
+  bool _showTopLoadingIndicator = false;
   
   @override
   void initState() {
@@ -54,7 +57,30 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   
   Future<void> _loadAuctions({bool forceRefresh = false}) async {
     if (!mounted) return;
+    
+    // Start a timer that will hide the loading indicator after 5 seconds
+    // no matter what happens with the actual loading
+    _loadingTimer?.cancel();
+    setState(() {
+      _showTopLoadingIndicator = true;
+    });
+    
+    _loadingTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() {
+          _showTopLoadingIndicator = false;
+        });
+      }
+    });
+    
     await provider.Provider.of<AuctionProvider>(context, listen: false).fetchAuctions(forceRefresh: forceRefresh);
+    
+    // If loading finishes before the timer, hide the indicator right away
+    if (mounted && _showTopLoadingIndicator) {
+      setState(() {
+        _showTopLoadingIndicator = false;
+      });
+    }
   }
   
   Future<void> _onRefresh() async {
@@ -65,6 +91,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void dispose() {
     _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
+    _loadingTimer?.cancel();
     super.dispose();
   }
 
@@ -184,7 +211,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         displacement: 40,
         child: provider.Consumer<AuctionProvider>(
           builder: (context, auctionProvider, child) {
+            // If loading for less than 3 seconds, show loading indicator
             if (auctionProvider.isLoading && auctionProvider.auctions.isEmpty) {
+              // Create a future that resolves after 3 seconds
+              Future.delayed(const Duration(seconds: 3), () {
+                if (mounted && auctionProvider.isLoading) {
+                  // Force load from cache
+                  provider.Provider.of<AuctionProvider>(context, listen: false)
+                    .loadFromCache();
+                  
+                  setState(() {
+                    // This will trigger a rebuild
+                  });
+                }
+              });
+              
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -276,7 +317,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ),
                   ],
                 ),
-                if (auctionProvider.isLoading)
+                if (_showTopLoadingIndicator)
                   Positioned(
                     top: 8,
                     right: 0,

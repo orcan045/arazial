@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { getFilteredAuctions, fetchAuctions } from '../services/auctionService';
-import { supabase } from '../supabaseClient';
-import { VisibilityEvents } from '../context/AuthContext';
+import { supabase } from '../services/supabase';
+import appState from '../services/appState';
 
 const DashboardContainer = styled.div`
   max-width: 1200px;
@@ -276,9 +276,9 @@ const Dashboard = () => {
     loadUserBids();
     loadUserStats();
     
-    // Subscribe to visibility events from the central system
-    const unsubscribe = VisibilityEvents.subscribe(() => {
-      console.log("Dashboard received visibility change notification");
+    // Subscribe to refresh events from the central system
+    const unsubscribe = appState.onRefresh(() => {
+      console.log("[Dashboard] Received refresh notification");
       loadUserBids();
       loadUserStats();
     });

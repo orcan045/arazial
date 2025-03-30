@@ -4,14 +4,18 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:land_auction_app/models/auction.dart';
 import 'package:land_auction_app/models/bid.dart';
+import 'package:land_auction_app/models/app_lifecycle_event.dart';
 import 'package:land_auction_app/services/auth_service.dart';
 import 'package:land_auction_app/services/auction_service.dart';
+import 'package:land_auction_app/services/lifecycle_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuctionProvider with ChangeNotifier {
   final SupabaseClient _supabase;
+  final LifecycleService _lifecycleService;
   late final AuthService _authService;
   late final AuctionService _auctionService;
+  StreamSubscription<AppLifecycleEvent>? _lifecycleSubscription;
   
   List<Auction> _auctions = [];
   List<Auction> _activeAuctions = [];
@@ -24,15 +28,20 @@ class AuctionProvider with ChangeNotifier {
   bool _hasError = false;
   String? _errorMessage;
   DateTime? _lastFetchTime;
+  DateTime? _lastVisibleTime;
   StreamController<List<Bid>>? _bidStreamController;
   
   // Caching constants
   static const String _cacheKey = 'auctions_cache';
   static const Duration _cacheDuration = Duration(minutes: 5);
   
-  AuctionProvider(this._supabase) {
+  AuctionProvider(this._supabase, this._lifecycleService) {
     _authService = AuthService(_supabase);
     _auctionService = AuctionService(_supabase);
+    _lastVisibleTime = DateTime.now();
+    
+    // Listen to lifecycle events
+    _setupLifecycleListener();
     
     // Initialize: fetch auctions from backend immediately
     fetchAuctions(forceRefresh: true);
@@ -57,55 +66,43 @@ class AuctionProvider with ChangeNotifier {
       });
   }
   
+  // Setup lifecycle listener
+  void _setupLifecycleListener() {
+    _lifecycleSubscription = _lifecycleService.lifecycleEvents.listen((event) {
+      if (event.type == AppLifecycleEventType.resumed) {
+        debugPrint('AuctionProvider: App resumed, checking if refresh needed');
+        
+        final now = DateTime.now();
+        final lastVisible = _lastVisibleTime ?? now;
+        final timeSinceVisible = now.difference(lastVisible);
+        
+        // Only refresh data if app has been in background for more than 1 minute
+        if (timeSinceVisible.inMinutes > 1) {
+          debugPrint('App was in background for ${timeSinceVisible.inMinutes} minutes, refreshing data');
+          fetchAuctions(forceRefresh: true);
+        } else {
+          debugPrint('App was in background for less than a minute, no refresh needed');
+        }
+        
+        _lastVisibleTime = now;
+      } else if (event.type == AppLifecycleEventType.paused) {
+        // Record when app went to background
+        _lastVisibleTime = DateTime.now();
+      }
+    });
+  }
+  
   // Initialize data on startup
   Future<void> _initializeData() async {
     // First try to load from cache
-    await _loadFromCache();
+    await loadFromCache();
     // Then fetch fresh data from backend
     await fetchAuctions();
   }
   
-  // Load auctions from cache
+  // Load auctions from cache - kept for backward compatibility
   Future<void> _loadFromCache() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final cachedData = prefs.getString(_cacheKey);
-      
-      if (cachedData != null) {
-        final Map<String, dynamic> cacheMap = jsonDecode(cachedData);
-        final timestamp = DateTime.parse(cacheMap['timestamp']);
-        final now = DateTime.now();
-        
-        // Use cache if it's fresh enough
-        if (now.difference(timestamp) < _cacheDuration) {
-          final Map<String, List<dynamic>> auctionsData = cacheMap['data'];
-          
-          _auctions = auctionsData['all']
-              ?.map((json) => Auction.fromJson(json))
-              ?.toList() ?? [];
-              
-          _activeAuctions = auctionsData['active']
-              ?.map((json) => Auction.fromJson(json))
-              ?.toList() ?? [];
-              
-          _upcomingAuctions = auctionsData['upcoming']
-              ?.map((json) => Auction.fromJson(json))
-              ?.toList() ?? [];
-              
-          _pastAuctions = auctionsData['past']
-              ?.map((json) => Auction.fromJson(json))
-              ?.toList() ?? [];
-              
-          _lastFetchTime = timestamp;
-          notifyListeners();
-          debugPrint('Loaded auctions from cache: ${_auctions.length} total, ${_activeAuctions.length} active');
-        } else {
-          debugPrint('Cache expired, will fetch fresh data');
-        }
-      }
-    } catch (e) {
-      debugPrint('Error loading from cache: $e');
-    }
+    await loadFromCache();
   }
   
   // Save auctions to cache
@@ -128,6 +125,15 @@ class AuctionProvider with ChangeNotifier {
     }
   }
   
+  // Clean up resources
+  @override
+  void dispose() {
+    _lifecycleSubscription?.cancel();
+    _bidSubscription?.cancel();
+    _bidStreamController?.close();
+    super.dispose();
+  }
+  
   List<Auction> get auctions => [..._auctions];
   List<Auction> get activeAuctions => [..._activeAuctions];
   List<Auction> get upcomingAuctions => [..._upcomingAuctions];
@@ -147,51 +153,97 @@ class AuctionProvider with ChangeNotifier {
   }
   
   Future<void> fetchAuctions({bool forceRefresh = false}) async {
-    // Skip fetching if we're already loading and it's not a forced refresh
-    if (_isLoading && !forceRefresh) return;
+    // Skip if already loading and not forced
+    if (_isLoading && !forceRefresh) {
+      debugPrint('Already loading auctions, skipping fetch');
+      return;
+    }
+    
+    // Create a guaranteed timeout
+    Timer? timeoutTimer;
     
     try {
       _isLoading = true;
-      _hasError = false;
-      _errorMessage = null;
       notifyListeners();
       
-      // Use the service to get filtered auctions
-      final result = await _auctionService.getFilteredAuctions();
+      // Set a hard deadline to finish loading
+      timeoutTimer = Timer(const Duration(seconds: 8), () {
+        if (_isLoading) {
+          debugPrint('EMERGENCY: Force ending loading state after timeout');
+          _isLoading = false;
+          
+          // Don't call notifyListeners() from a timer callback directly
+          // Instead, use a microtask to ensure it's run on the next event loop
+          Future.microtask(() => notifyListeners());
+        }
+      });
       
-      if (result['error'] != null) {
-        throw result['error'];
+      // Load cached data first for fast user experience
+      await _loadFromCache();
+      
+      // Only fetch fresh data if we're forcing a refresh or there's no data
+      if (forceRefresh || _auctions.isEmpty) {
+        try {
+          // A 5-second timeout to prevent blocking
+          final result = await _auctionService.getFilteredAuctions()
+              .timeout(const Duration(seconds: 5));
+          
+          if (result['error'] != null) {
+            debugPrint('Error from API: ${result['error']}');
+            // Don't throw - just log and continue
+          } else {
+            _lastFetchTime = result['timestamp'] ?? DateTime.now();
+            
+            // Process active auctions - safe against null
+            final activeData = result['active'] as List? ?? [];
+            final newActive = _parseAuctionsList(activeData);
+            if (newActive.isNotEmpty) {
+              _activeAuctions = newActive;
+            }
+            
+            // Process upcoming auctions - safe against null
+            final upcomingData = result['upcoming'] as List? ?? [];
+            final newUpcoming = _parseAuctionsList(upcomingData);
+            if (newUpcoming.isNotEmpty) {
+              _upcomingAuctions = newUpcoming;
+            }
+            
+            // Process past auctions - safe against null
+            final pastData = result['past'] as List? ?? [];
+            final newPast = _parseAuctionsList(pastData);
+            if (newPast.isNotEmpty) {
+              _pastAuctions = newPast;
+            }
+            
+            // Combine all auctions to maintain the full list
+            _auctions = [..._activeAuctions, ..._upcomingAuctions, ..._pastAuctions];
+            
+            // Only save to cache if we got valid data
+            if (_auctions.isNotEmpty) {
+              _saveToCache();
+            }
+          }
+        } catch (fetchError) {
+          debugPrint('Error fetching fresh data: $fetchError');
+          // Don't set hasError to avoid error UI if we have cached data
+        }
       }
-      
-      _lastFetchTime = result['timestamp'] ?? DateTime.now();
-      
-      // Process active auctions
-      final activeData = result['active'] as List;
-      _activeAuctions = _parseAuctionsList(activeData);
-      debugPrint('Parsed ${_activeAuctions.length} active auctions');
-      
-      // Process upcoming auctions
-      final upcomingData = result['upcoming'] as List;
-      _upcomingAuctions = _parseAuctionsList(upcomingData);
-      debugPrint('Parsed ${_upcomingAuctions.length} upcoming auctions');
-      
-      // Process past auctions
-      final pastData = result['past'] as List;
-      _pastAuctions = _parseAuctionsList(pastData);
-      debugPrint('Parsed ${_pastAuctions.length} past auctions');
-      
-      // Combine all auctions to maintain the full list
-      _auctions = [..._activeAuctions, ..._upcomingAuctions, ..._pastAuctions];
-      
-      debugPrint('Total auctions: ${_auctions.length}');
-      
     } catch (error) {
-      debugPrint('Error fetching auctions: $error');
-      _hasError = true;
-      _errorMessage = error.toString();
+      debugPrint('Unexpected error in fetchAuctions: $error');
+      // Only show errors if we have no data to display
+      if (_auctions.isEmpty) {
+        _hasError = true;
+        _errorMessage = 'Veriler alınamadı. Tekrar deneyin.';
+      }
     } finally {
+      // Always cancel the timeout timer
+      timeoutTimer?.cancel();
+      
+      // Always end the loading state
       _isLoading = false;
       notifyListeners();
+      
+      debugPrint('Fetch auctions completed. Total: ${_auctions.length} auctions');
     }
   }
   
@@ -322,7 +374,7 @@ class AuctionProvider with ChangeNotifier {
   Future<List<Bid>> getAuctionBids(String auctionId, {bool forceRefresh = false}) async {
     try {
       // Check cache first
-      final cacheKey = 'auction_bids_${auctionId}';
+      final cacheKey = 'auction_bids_$auctionId';
       
       // Skip cache if force refresh requested
       if (!forceRefresh) {
@@ -429,13 +481,6 @@ class AuctionProvider with ChangeNotifier {
       .asBroadcastStream();
   }
   
-  @override
-  void dispose() {
-    _bidSubscription?.cancel();
-    _bidStreamController?.close();
-    super.dispose();
-  }
-
   Stream<List<Bid>> subscribeToAuctionBids(String auctionId) {
     debugPrint('Subscribing to bids for auction $auctionId');
     
@@ -585,6 +630,57 @@ class AuctionProvider with ChangeNotifier {
     } catch (e) {
       debugPrint('Error fetching user bids: $e');
       return [];
+    }
+  }
+
+  // Load auctions from cache
+  Future<void> loadFromCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedData = prefs.getString(_cacheKey);
+      
+      if (cachedData != null) {
+        final Map<String, dynamic> cacheMap = jsonDecode(cachedData);
+        final timestamp = DateTime.parse(cacheMap['timestamp']);
+        final now = DateTime.now();
+        
+        // Use cache if it's fresh enough
+        if (now.difference(timestamp) < _cacheDuration) {
+          final Map<String, List<dynamic>> auctionsData = cacheMap['data'] as Map<String, List<dynamic>>;
+          
+          if (auctionsData.containsKey('all')) {
+            _auctions = auctionsData['all']!
+                .map((json) => Auction.fromJson(json))
+                .toList();
+          }
+          
+          if (auctionsData.containsKey('active')) {
+            _activeAuctions = auctionsData['active']!
+                .map((json) => Auction.fromJson(json))
+                .toList();
+          }
+          
+          if (auctionsData.containsKey('upcoming')) {
+            _upcomingAuctions = auctionsData['upcoming']!
+                .map((json) => Auction.fromJson(json))
+                .toList();
+          }
+          
+          if (auctionsData.containsKey('past')) {
+            _pastAuctions = auctionsData['past']!
+                .map((json) => Auction.fromJson(json))
+                .toList();
+          }
+              
+          _lastFetchTime = timestamp;
+          notifyListeners();
+          debugPrint('Loaded auctions from cache: ${_auctions.length} total, ${_activeAuctions.length} active');
+        } else {
+          debugPrint('Cache expired, will fetch fresh data');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading from cache: $e');
     }
   }
 } 
