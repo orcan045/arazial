@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { getFilteredAuctions, fetchAuctions } from '../services/auctionService';
 import { supabase } from '../supabaseClient';
+import { VisibilityEvents } from '../context/AuthContext';
 
 const DashboardContainer = styled.div`
   max-width: 1200px;
@@ -188,6 +189,61 @@ const EmptyStateMessage = styled.p`
   margin: 0 auto 1.5rem;
 `;
 
+const BidsList = styled.ul`
+  list-style: none;
+  padding: 0;
+`;
+
+const BidItem = styled.li`
+  background-color: white;
+  border-radius: var(--border-radius-lg);
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+  }
+`;
+
+const BidItemContent = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const BidItemTitle = styled.h3`
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--color-text);
+`;
+
+const BidItemDetail = styled.div`
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+`;
+
+const BidItemStatus = styled.span`
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--border-radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: ${props => 
+    props.status === 'won' ? 'rgba(5, 150, 105, 0.1)' : 
+    props.status === 'lost' ? 'rgba(239, 68, 68, 0.1)' : 
+    'rgba(107, 114, 128, 0.1)'
+  };
+  color: ${props => 
+    props.status === 'won' ? 'rgb(5, 150, 105)' : 
+    props.status === 'lost' ? 'rgb(239, 68, 68)' : 
+    'rgb(107, 114, 128)'
+  };
+`;
+
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -196,6 +252,7 @@ const Dashboard = () => {
     upcoming: [],
     past: []
   });
+  const [userBids, setUserBids] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userStats, setUserStats] = useState({
@@ -215,62 +272,95 @@ const Dashboard = () => {
       return;
     }
     
-    loadAuctions();
+    // Initial data load
+    loadUserBids();
     loadUserStats();
+    
+    // Subscribe to visibility events from the central system
+    const unsubscribe = VisibilityEvents.subscribe(() => {
+      console.log("Dashboard received visibility change notification");
+      loadUserBids();
+      loadUserStats();
+    });
+    
+    // Clean up subscription when component unmounts
+    return () => {
+      unsubscribe();
+    };
   }, [user, authLoading, navigate]);
   
-  const loadAuctions = async () => {
+  const loadUserBids = async () => {
     try {
       setLoading(true);
       
-      // First get all auctions
-      const { data, error } = await fetchAuctions();
+      // Get all bids made by the current user
+      const { data: userBidsData, error: bidsError } = await supabase
+        .from('bids')
+        .select(`
+          *,
+          auctions (*)
+        `)
+        .eq('bidder_id', user.id)
+        .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (bidsError) throw bidsError;
       
-      // Get the highest bid for each auction
-      const auctionsWithHighestBids = await Promise.all(
-        data.map(async (auction) => {
-          try {
-            // Fetch the highest bid for this auction
-            const { data: bids } = await supabase
-              .from('bids')
-              .select('amount')
-              .eq('auction_id', auction.id)
-              .order('amount', { ascending: false })
-              .limit(1);
-            
-            // If there's a highest bid, use it as the current price
-            if (bids && bids.length > 0) {
-              auction.highest_bid = bids[0].amount;
-            }
-          } catch (err) {
-            console.error(`Error fetching bids for auction ${auction.id}:`, err);
+      console.log('User bids:', userBidsData);
+      
+      // Extract unique auctions from the bids
+      const uniqueAuctions = {};
+      const userBidsWithAuctions = [];
+      
+      for (const bid of userBidsData) {
+        if (bid.auctions) {
+          // Process each auction to ensure consistent field naming
+          const auction = {
+            ...bid.auctions,
+            startPrice: bid.auctions.start_price || bid.auctions.startPrice,
+            minIncrement: bid.auctions.min_increment || bid.auctions.minIncrement,
+            startTime: bid.auctions.start_time || bid.auctions.startTime,
+            endTime: bid.auctions.end_time || bid.auctions.endTime,
+            finalPrice: bid.auctions.final_price || bid.auctions.finalPrice,
+            images: Array.isArray(bid.auctions.images) ? bid.auctions.images : []
+          };
+          
+          // Add to uniqueAuctions if not already there, or update if this bid is higher
+          if (!uniqueAuctions[auction.id] || bid.amount > uniqueAuctions[auction.id].highestBid) {
+            uniqueAuctions[auction.id] = {
+              ...auction,
+              highestBid: bid.amount,
+              bidDate: bid.created_at
+            };
           }
-          return auction;
-        })
-      );
+          
+          // Add to user bids list
+          userBidsWithAuctions.push({
+            ...bid,
+            auction: auction
+          });
+        }
+      }
       
-      // Filter auctions into categories
+      // Convert uniqueAuctions to array
+      const auctionsArray = Object.values(uniqueAuctions);
+      
+      // Categorize auctions
       const now = new Date();
       
-      const active = auctionsWithHighestBids.filter(auction => {
+      const active = auctionsArray.filter(auction => {
         const startTime = new Date(auction.start_time || auction.startTime);
         const endTime = new Date(auction.end_time || auction.endTime);
-        const status = auction.status;
-        return status === 'active' && now >= startTime && now <= endTime;
+        return now >= startTime && now <= endTime;
       });
       
-      const upcoming = auctionsWithHighestBids.filter(auction => {
+      const upcoming = auctionsArray.filter(auction => {
         const startTime = new Date(auction.start_time || auction.startTime);
-        const status = auction.status;
-        return status === 'upcoming' && now < startTime;
+        return now < startTime;
       });
       
-      const past = auctionsWithHighestBids.filter(auction => {
+      const past = auctionsArray.filter(auction => {
         const endTime = new Date(auction.end_time || auction.endTime);
-        const status = auction.status;
-        return now > endTime || status === 'ended';
+        return now > endTime;
       });
       
       setAuctions({
@@ -278,16 +368,49 @@ const Dashboard = () => {
         upcoming,
         past
       });
+      
+      setUserBids(userBidsWithAuctions);
+      setError(null);
     } catch (error) {
-      console.error('Error fetching auctions:', error);
-      setError('Couldn\'t load auctions. Please try again later.');
+      console.error('Error fetching user bids:', error);
+      setError('Teklifleriniz yüklenemedi. Lütfen daha sonra tekrar deneyin.');
     } finally {
       setLoading(false);
     }
   };
   
   const loadUserStats = async () => {
-    // Implementation of loadUserStats function
+    try {
+      // Get total number of bids
+      const { count: totalBids, error: countError } = await supabase
+        .from('bids')
+        .select('*', { count: 'exact' })
+        .eq('bidder_id', user.id);
+      
+      if (countError) throw countError;
+      
+      // Get won auctions (where user is the winner)
+      const { data: wonAuctions, error: wonError } = await supabase
+        .from('auctions')
+        .select('*')
+        .eq('winner_id', user.id);
+      
+      if (wonError) throw wonError;
+      
+      // Calculate total spent on won auctions
+      const totalSpent = wonAuctions.reduce((sum, auction) => {
+        return sum + (auction.final_price || auction.start_price || 0);
+      }, 0);
+      
+      setUserStats({
+        totalBids: totalBids || 0,
+        activeAuctions: auctions.active.length,
+        wonAuctions: wonAuctions.length,
+        totalSpent
+      });
+    } catch (error) {
+      console.error('Error loading user stats:', error);
+    }
   };
   
   const formatPrice = (price) => {
@@ -319,7 +442,9 @@ const Dashboard = () => {
     return date.toLocaleDateString('tr-TR', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
   
@@ -342,29 +467,99 @@ const Dashboard = () => {
     <DashboardContainer>
       <DashboardHeader>
         <WelcomeMessage>Hoş Geldiniz, {user?.email}</WelcomeMessage>
-        <Subtitle>İhaleleri takip edin ve tekliflerinizi yönetin</Subtitle>
+        <Subtitle>Tekliflerinizi ve ihalelerinizi yönetin</Subtitle>
       </DashboardHeader>
       
       <StatsGrid>
+        <StatCard>
+          <StatTitle>Toplam Teklif</StatTitle>
+          <StatValue>{userStats.totalBids}</StatValue>
+        </StatCard>
         <StatCard>
           <StatTitle>Aktif İhaleler</StatTitle>
           <StatValue>{auctions.active.length}</StatValue>
         </StatCard>
         <StatCard>
-          <StatTitle>Yaklaşan İhaleler</StatTitle>
-          <StatValue>{auctions.upcoming.length}</StatValue>
+          <StatTitle>Kazanılan İhaleler</StatTitle>
+          <StatValue>{userStats.wonAuctions}</StatValue>
         </StatCard>
         <StatCard>
-          <StatTitle>Geçmiş İhaleler</StatTitle>
-          <StatValue>{auctions.past.length}</StatValue>
-        </StatCard>
-        <StatCard>
-          <StatTitle>Toplam İhale</StatTitle>
-          <StatValue>{auctions.active.length + auctions.upcoming.length + auctions.past.length}</StatValue>
+          <StatTitle>Toplam Harcama</StatTitle>
+          <StatValue>{formatPrice(userStats.totalSpent)}</StatValue>
         </StatCard>
       </StatsGrid>
       
-      <SectionTitle>Aktif İhaleler</SectionTitle>
+      <SectionTitle>Son Tekliflerim</SectionTitle>
+      {error ? (
+        <EmptyState>
+          <EmptyStateIcon>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </EmptyStateIcon>
+          <EmptyStateTitle>Hata Oluştu</EmptyStateTitle>
+          <EmptyStateMessage>{error}</EmptyStateMessage>
+        </EmptyState>
+      ) : userBids.length === 0 ? (
+        <EmptyState>
+          <EmptyStateIcon>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+          </EmptyStateIcon>
+          <EmptyStateTitle>Henüz Teklif Vermediniz</EmptyStateTitle>
+          <EmptyStateMessage>Henüz hiçbir ihaleye teklif vermediniz. İhalelere göz atarak teklif verebilirsiniz.</EmptyStateMessage>
+        </EmptyState>
+      ) : (
+        <div>
+          <BidsList>
+            {userBids.slice(0, 5).map((bid) => (
+              <BidItem key={bid.id} onClick={() => handleAuctionClick(bid.auction.id)}>
+                <BidItemContent>
+                  <BidItemTitle>
+                    {bid.auction.title || 'Arsa İhalesi'}
+                  </BidItemTitle>
+                  <BidItemDetail>
+                    <span>Teklif: {formatPrice(bid.amount)}</span>
+                    <span>Tarih: {formatDate(bid.created_at)}</span>
+                  </BidItemDetail>
+                </BidItemContent>
+                <BidItemStatus status={
+                  new Date() > new Date(bid.auction.end_time) 
+                    ? bid.auction.winner_id === user.id 
+                      ? 'won' 
+                      : 'lost'
+                    : 'active'
+                }>
+                  {new Date() > new Date(bid.auction.end_time) 
+                    ? bid.auction.winner_id === user.id 
+                      ? 'Kazandınız' 
+                      : 'Kaybettiniz'
+                    : 'Aktif'}
+                </BidItemStatus>
+              </BidItem>
+            ))}
+          </BidsList>
+          {userBids.length > 5 && (
+            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+              <button 
+                onClick={() => navigate('/bids')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-primary)',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+              >
+                Tüm Teklifleri Görüntüle
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      
+      <SectionTitle>Teklif Verdiğim Aktif İhaleler</SectionTitle>
       {error ? (
         <EmptyState>
           <EmptyStateIcon>
@@ -382,19 +577,19 @@ const Dashboard = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
           </EmptyStateIcon>
-          <EmptyStateTitle>Aktif İhale Bulunamadı</EmptyStateTitle>
-          <EmptyStateMessage>Şu anda aktif bir ihale bulunmamaktadır. Lütfen daha sonra tekrar kontrol edin.</EmptyStateMessage>
+          <EmptyStateTitle>Aktif İhalede Teklifiniz Bulunmuyor</EmptyStateTitle>
+          <EmptyStateMessage>Şu anda aktif olan ve teklif verdiğiniz bir ihale bulunmamaktadır.</EmptyStateMessage>
         </EmptyState>
       ) : (
         <AuctionsGrid>
           {auctions.active.map((auction) => (
             <AuctionCard key={auction.id} onClick={() => handleAuctionClick(auction.id)}>
               <AuctionImage>
-                {auction.land_listings?.images && auction.land_listings.images.length > 0 ? (
+                {auction.images && auction.images.length > 0 ? (
                   <div style={{ 
                     width: '100%', 
                     height: '100%', 
-                    backgroundImage: `url(${auction.land_listings.images[0]})`,
+                    backgroundImage: `url(${auction.images[0]})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center'
                   }} />
@@ -405,12 +600,12 @@ const Dashboard = () => {
                 )}
               </AuctionImage>
               <AuctionContent>
-                <AuctionTitle>{auction.land_listings?.title || 'Arsa'}</AuctionTitle>
-                <AuctionLocation>{auction.land_listings?.location || 'Konum bilgisi yok'}</AuctionLocation>
+                <AuctionTitle>{auction.title || 'Arsa'}</AuctionTitle>
+                <AuctionLocation>{auction.location || 'Konum bilgisi yok'}</AuctionLocation>
                 <AuctionDetails>
                   <AuctionPrice>
                     {formatPrice(
-                      auction.highest_bid || 
+                      auction.highestBid || 
                       auction.final_price || 
                       auction.finalPrice || 
                       auction.start_price || 
@@ -425,7 +620,7 @@ const Dashboard = () => {
         </AuctionsGrid>
       )}
       
-      <SectionTitle>Yaklaşan İhaleler</SectionTitle>
+      <SectionTitle>Teklif Verdiğim Yaklaşan İhaleler</SectionTitle>
       {error ? (
         <EmptyState>
           <EmptyStateIcon>
@@ -433,8 +628,8 @@ const Dashboard = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </EmptyStateIcon>
-          <EmptyStateTitle>Yaklaşan İhale Bulunamadı</EmptyStateTitle>
-          <EmptyStateMessage>Şu anda planlanmış yaklaşan ihale bulunmamaktadır.</EmptyStateMessage>
+          <EmptyStateTitle>Hata Oluştu</EmptyStateTitle>
+          <EmptyStateMessage>{error}</EmptyStateMessage>
         </EmptyState>
       ) : auctions.upcoming.length === 0 ? (
         <EmptyState>
@@ -443,19 +638,19 @@ const Dashboard = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
             </svg>
           </EmptyStateIcon>
-          <EmptyStateTitle>Yaklaşan İhale Bulunamadı</EmptyStateTitle>
-          <EmptyStateMessage>Şu anda planlanmış yaklaşan ihale bulunmamaktadır.</EmptyStateMessage>
+          <EmptyStateTitle>Yaklaşan İhalede Teklifiniz Bulunmuyor</EmptyStateTitle>
+          <EmptyStateMessage>Şu anda yaklaşan ve teklif verdiğiniz bir ihale bulunmamaktadır.</EmptyStateMessage>
         </EmptyState>
       ) : (
         <AuctionsGrid>
           {auctions.upcoming.map((auction) => (
             <AuctionCard key={auction.id} onClick={() => handleAuctionClick(auction.id)}>
               <AuctionImage>
-                {auction.land_listings?.images && auction.land_listings.images.length > 0 ? (
+                {auction.images && auction.images.length > 0 ? (
                   <div style={{ 
                     width: '100%', 
                     height: '100%', 
-                    backgroundImage: `url(${auction.land_listings.images[0]})`,
+                    backgroundImage: `url(${auction.images[0]})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center'
                   }} />
@@ -466,8 +661,8 @@ const Dashboard = () => {
                 )}
               </AuctionImage>
               <AuctionContent>
-                <AuctionTitle>{auction.land_listings?.title || 'Arsa'}</AuctionTitle>
-                <AuctionLocation>{auction.land_listings?.location || 'Konum bilgisi yok'}</AuctionLocation>
+                <AuctionTitle>{auction.title || 'Arsa'}</AuctionTitle>
+                <AuctionLocation>{auction.location || 'Konum bilgisi yok'}</AuctionLocation>
                 <AuctionDetails>
                   <AuctionPrice>
                     {formatPrice(auction.start_price || auction.startPrice)}

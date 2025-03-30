@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { fetchAuctions } from '../services/auctionService';
 import { supabase } from '../supabaseClient';
+import { VisibilityEvents } from '../context/AuthContext';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -310,28 +311,18 @@ const Auctions = () => {
   
   // Add event listeners for page visibility changes
   useEffect(() => {
-    // Initial load
+    // Initial data load
     loadAuctions();
     
-    // Set up visibility change listener
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('Page became visible, reloading auctions');
-        // Force refresh if it's been more than a minute since last load
-        const lastLoadTime = window.lastAuctionsLoadTime || 0;
-        const now = Date.now();
-        const forceRefresh = (now - lastLoadTime > 60000); // 1 minute
-        loadAuctions(forceRefresh);
-        window.lastAuctionsLoadTime = now;
-      }
-    };
+    // Subscribe to visibility events from the central system
+    const unsubscribe = VisibilityEvents.subscribe(() => {
+      console.log("Auctions received visibility change notification");
+      loadAuctions();
+    });
     
-    // Listen for visibility changes (when user switches tabs)
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Clean up on unmount
+    // Clean up subscription when component unmounts
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      unsubscribe();
     };
   }, []);
   
@@ -484,14 +475,6 @@ const Auctions = () => {
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
                 }} />
-              ) : auction.land_listings?.images && auction.land_listings.images.length > 0 ? (
-                <div style={{ 
-                  width: '100%', 
-                  height: '100%', 
-                  backgroundImage: `url(${auction.land_listings.images[0]})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
-                }} />
               ) : (
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -499,8 +482,8 @@ const Auctions = () => {
               )}
             </AuctionImage>
             <AuctionContent>
-              <AuctionTitle>{auction.title || auction.land_listings?.title || 'Arsa'}</AuctionTitle>
-              <AuctionLocation>{auction.location || auction.land_listings?.location || 'Konum bilgisi yok'}</AuctionLocation>
+              <AuctionTitle>{auction.title || 'Arsa'}</AuctionTitle>
+              <AuctionLocation>{auction.location || 'Konum bilgisi yok'}</AuctionLocation>
               <AuctionDetails>
                 <AuctionPrice>
                   {formatPrice(

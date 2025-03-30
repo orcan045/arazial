@@ -1,24 +1,77 @@
 import { supabase } from './supabase';
+import { VisibilityEvents } from '../context/AuthContext';
+
+// Cache constants
+const CACHE_KEY = 'auctions_cache';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const BACKGROUND_REFRESH_INTERVAL = 30 * 1000; // 30 seconds
+
+let backgroundRefreshTimer = null;
+let lastRefreshTime = 0;
+
+/**
+ * Set up background refresh of auction data
+ */
+export const setupBackgroundRefresh = () => {
+  // Clear any existing timer
+  if (backgroundRefreshTimer) {
+    clearInterval(backgroundRefreshTimer);
+  }
+  
+  // Set up a new timer for periodic refreshes
+  backgroundRefreshTimer = setInterval(async () => {
+    console.log("Background refresh interval triggered");
+    try {
+      // Only refresh if the tab is visible and it's been more than 30 seconds since last refresh
+      if (document.visibilityState === 'visible' && Date.now() - lastRefreshTime > BACKGROUND_REFRESH_INTERVAL) {
+        await fetchAuctions(true, false); // Force refresh but silently (don't update lastRefreshTime)
+      }
+    } catch (error) {
+      console.error("Background refresh error:", error);
+    }
+  }, BACKGROUND_REFRESH_INTERVAL);
+  
+  // Subscribe to the centralized visibility change system
+  const unsubscribe = VisibilityEvents.subscribe(async () => {
+    console.log("AuctionService received visibility change notification");
+    try {
+      // If it's been more than 1 minute since last refresh, force a refresh
+      if (Date.now() - lastRefreshTime > 60 * 1000) {
+        console.log("Refreshing auction data from visibility event");
+        await fetchAuctions(true);
+      }
+    } catch (error) {
+      console.error("Visibility event refresh error:", error);
+    }
+  });
+  
+  return () => {
+    clearInterval(backgroundRefreshTimer);
+    unsubscribe();
+  };
+};
+
+// Initialize the background refresh when this module is loaded
+setupBackgroundRefresh();
 
 /**
  * Fetch all auctions with improved error handling and caching
  * @param {boolean} forceRefresh - Whether to force a refresh from the database
+ * @param {boolean} updateLastRefresh - Whether to update the last refresh time
  * @returns {Promise<{data: Array, error: Error}>}
  */
-export const fetchAuctions = async (forceRefresh = false) => {
+export const fetchAuctions = async (forceRefresh = false, updateLastRefresh = true) => {
   try {
     // Use a local cache with a timestamp to prevent excessive refetching
-    const now = new Date().getTime();
-    const cacheKey = 'auctions_cache';
-    const cacheDuration = 5 * 60 * 1000; // 5 minutes
+    const now = Date.now();
     
     // Check if we have cached data and it's fresh enough
     if (!forceRefresh) {
       try {
-        const cachedData = localStorage.getItem(cacheKey);
+        const cachedData = localStorage.getItem(CACHE_KEY);
         if (cachedData) {
           const { data, timestamp } = JSON.parse(cachedData);
-          if (data && timestamp && (now - timestamp < cacheDuration)) {
+          if (data && timestamp && (now - timestamp < CACHE_DURATION)) {
             console.log('Using cached auction data');
             return { data, error: null };
           }
@@ -34,48 +87,44 @@ export const fetchAuctions = async (forceRefresh = false) => {
       try {
         const { data, error } = await supabase
           .from('auctions')
-          .select(`
-            *,
-            land_listings (*)
-          `)
+          .select('*')
           .order('created_at');
         
         if (error) throw error;
         
-        // For any auctions missing land_listings, fetch them separately
-        const auctionsWithLandListings = await Promise.all(
-          data.map(async (auction) => {
-            if (!auction.land_listings && auction.land_id) {
-              try {
-                const { data: landData, error: landError } = await supabase
-                  .from('land_listings')
-                  .select('*')
-                  .eq('id', auction.land_id)
-                  .single();
-                
-                if (!landError && landData) {
-                  auction.land_listings = landData;
-                }
-              } catch (err) {
-                console.error(`Error fetching land data for auction ${auction.id}:`, err);
-              }
-            }
-            return auction;
-          })
-        );
+        // Process the auctions
+        const processedAuctions = data.map(auction => {
+          // Ensure fields are properly handled with backward compatibility
+          // for different naming conventions
+          return {
+            ...auction,
+            // Ensure consistent naming
+            startPrice: auction.start_price || auction.startPrice,
+            minIncrement: auction.min_increment || auction.minIncrement,
+            startTime: auction.start_time || auction.startTime,
+            endTime: auction.end_time || auction.endTime,
+            finalPrice: auction.final_price || auction.finalPrice,
+            // Ensure images is always an array
+            images: Array.isArray(auction.images) ? auction.images : []
+          };
+        });
         
         // Cache the results
         try {
-          localStorage.setItem(cacheKey, JSON.stringify({
-            data: auctionsWithLandListings,
+          localStorage.setItem(CACHE_KEY, JSON.stringify({
+            data: processedAuctions,
             timestamp: now
           }));
         } catch (storageError) {
           console.warn('Error storing in cache:', storageError);
         }
         
-        console.log('Fetched fresh auctions data:', auctionsWithLandListings);
-        resolve({ data: auctionsWithLandListings, error: null });
+        if (updateLastRefresh) {
+          lastRefreshTime = now;
+        }
+        
+        console.log('Fetched fresh auctions data:', processedAuctions);
+        resolve({ data: processedAuctions, error: null });
       } catch (error) {
         reject(error);
       }
@@ -93,7 +142,7 @@ export const fetchAuctions = async (forceRefresh = false) => {
     
     // Try to return cached data even if it's stale, rather than nothing
     try {
-      const cachedData = localStorage.getItem('auctions_cache');
+      const cachedData = localStorage.getItem(CACHE_KEY);
       if (cachedData) {
         const { data } = JSON.parse(cachedData);
         if (data) {
@@ -187,34 +236,48 @@ export const getFilteredAuctions = async () => {
  */
 export const getAuctionById = async (auctionId) => {
   try {
-    // First try to get auction with land_listings included
+    // First check if we have cached data
+    try {
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      if (cachedData) {
+        const { data, timestamp } = JSON.parse(cachedData);
+        if (data && Array.isArray(data) && Date.now() - timestamp < CACHE_DURATION) {
+          const cachedAuction = data.find(auction => auction.id === auctionId);
+          if (cachedAuction) {
+            console.log('Using cached auction data for single auction');
+            return { data: cachedAuction, error: null };
+          }
+        }
+      }
+    } catch (cacheError) {
+      console.warn('Error accessing cache for single auction:', cacheError);
+    }
+    
+    // Fetch auction data
     const { data, error } = await supabase
       .from('auctions')
-      .select(`
-        *,
-        land_listings (*)
-      `)
+      .select('*')
       .eq('id', auctionId)
       .single();
     
     if (error) throw error;
     
-    // If land_listings is null, fetch it separately
-    if (!data.land_listings && data.land_id) {
-      const { data: landData, error: landError } = await supabase
-        .from('land_listings')
-        .select('*')
-        .eq('id', data.land_id)
-        .single();
-      
-      if (!landError && landData) {
-        data.land_listings = landData;
-      }
-    }
+    // Ensure consistent field naming for the frontend
+    const processedAuction = {
+      ...data,
+      // Ensure consistent naming
+      startPrice: data.start_price || data.startPrice,
+      minIncrement: data.min_increment || data.minIncrement,
+      startTime: data.start_time || data.startTime,
+      endTime: data.end_time || data.endTime,
+      finalPrice: data.final_price || data.finalPrice,
+      // Ensure images is always an array
+      images: Array.isArray(data.images) ? data.images : []
+    };
     
-    // Log the entire data object to see exact field names and values
-    console.log('Raw auction data from Supabase:', JSON.stringify(data, null, 2));
-    return { data, error: null };
+    // Log the processed auction data
+    console.log('Processed auction data:', processedAuction);
+    return { data: processedAuction, error: null };
   } catch (error) {
     console.error(`Error fetching auction with ID ${auctionId}:`, error);
     return { data: null, error };

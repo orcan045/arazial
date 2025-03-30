@@ -7,6 +7,7 @@ import 'package:land_auction_app/widgets/auction_card.dart';
 import 'package:land_auction_app/widgets/app_drawer.dart';
 import 'package:land_auction_app/theme/app_theme.dart';
 import 'dart:ui';
+import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,6 +24,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_handleTabChange);
+  }
+  
+  void _handleTabChange() {
+    if (_tabController.indexIsChanging) {
+      return;
+    }
+    
+    if (_tabController.index == 0) {
+      // For active auctions, we want fresh data more often
+      _loadAuctions(forceRefresh: true);
+    } else {
+      // For upcoming and past, we can use cached data if available
+      _loadAuctions(forceRefresh: false);
+    }
   }
   
   @override
@@ -30,23 +46,24 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     super.didChangeDependencies();
     if (_isInit) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _loadAuctions();
+        _loadAuctions(forceRefresh: true);
       });
       _isInit = false;
     }
   }
   
-  Future<void> _loadAuctions() async {
+  Future<void> _loadAuctions({bool forceRefresh = false}) async {
     if (!mounted) return;
-    await provider.Provider.of<AuctionProvider>(context, listen: false).fetchAuctions();
+    await provider.Provider.of<AuctionProvider>(context, listen: false).fetchAuctions(forceRefresh: forceRefresh);
   }
   
   Future<void> _onRefresh() async {
-    await provider.Provider.of<AuctionProvider>(context, listen: false).fetchAuctions();
+    await provider.Provider.of<AuctionProvider>(context, listen: false).fetchAuctions(forceRefresh: true);
   }
   
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
   }
@@ -72,6 +89,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ),
       ],
     );
+  }
+  
+  String _formatLastUpdated(DateTime? lastUpdated) {
+    if (lastUpdated == null) {
+      return '';
+    }
+    
+    final now = DateTime.now();
+    final difference = now.difference(lastUpdated);
+    
+    if (difference.inSeconds < 60) {
+      return 'Şimdi güncellendi';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} dakika önce güncellendi';
+    } else {
+      return DateFormat('HH:mm').format(lastUpdated) + ' güncellendi';
+    }
   }
   
   @override
@@ -150,25 +184,141 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         displacement: 40,
         child: provider.Consumer<AuctionProvider>(
           builder: (context, auctionProvider, child) {
-            if (auctionProvider.isLoading) {
+            if (auctionProvider.isLoading && auctionProvider.auctions.isEmpty) {
               return Center(
-                child: SizedBox(
-                  width: 32,
-                  height: 32,
-                  child: CircularProgressIndicator(
-                    color: AppTheme.primaryColor,
-                    strokeWidth: 2,
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: CircularProgressIndicator(
+                        color: AppTheme.primaryColor,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'İhaleler yükleniyor...',
+                      style: TextStyle(
+                        color: theme.colorScheme.onBackground.withOpacity(0.7),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
               );
             }
             
-            return TabBarView(
-              controller: _tabController,
+            if (auctionProvider.hasError && auctionProvider.auctions.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: theme.colorScheme.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'İhaleler yüklenirken bir hata oluştu',
+                      style: TextStyle(
+                        color: theme.colorScheme.error,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () => _loadAuctions(forceRefresh: true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text('Tekrar Dene'),
+                    ),
+                  ],
+                ),
+              );
+            }
+            
+            return Stack(
               children: [
-                _buildAuctionsList(auctionProvider.activeAuctions),
-                _buildAuctionsList(auctionProvider.upcomingAuctions),
-                _buildAuctionsList(auctionProvider.pastAuctions),
+                Column(
+                  children: [
+                    // Last updated indicator
+                    if (auctionProvider.lastFetchTime != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+                        child: Center(
+                          child: Text(
+                            _formatLastUpdated(auctionProvider.lastFetchTime),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.onBackground.withOpacity(0.5),
+                            ),
+                          ),
+                        ),
+                      ),
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildAuctionsList(auctionProvider.activeAuctions),
+                          _buildAuctionsList(auctionProvider.upcomingAuctions),
+                          _buildAuctionsList(auctionProvider.pastAuctions),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (auctionProvider.isLoading)
+                  Positioned(
+                    top: 8,
+                    right: 0,
+                    left: 0,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                color: AppTheme.primaryColor,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Yenileniyor...',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             );
           },
@@ -197,6 +347,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 color: theme.colorScheme.onBackground.withOpacity(0.7),
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Debug button (only for development)
+            OutlinedButton.icon(
+              onPressed: () => _loadAuctions(forceRefresh: true),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Debug: Yenile'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.primaryColor,
               ),
             ),
           ],

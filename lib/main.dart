@@ -5,10 +5,16 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:land_auction_app/providers/auction_provider.dart';
 import 'package:land_auction_app/services/auth_service.dart';
 import 'package:land_auction_app/screens/auth/login_screen.dart';
+import 'package:land_auction_app/screens/home_screen.dart';
+import 'package:land_auction_app/screens/my_bids_screen.dart';
 import 'package:land_auction_app/theme/app_theme.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize date formatting for Turkish locale
+  await initializeDateFormatting('tr_TR', null);
   
   // Load environment variables
   try {
@@ -46,7 +52,12 @@ class MyApp extends StatelessWidget {
         title: 'Arazi İhale Uygulaması',
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        home: const LoginScreen(),
+        initialRoute: '/login',
+        routes: {
+          '/': (ctx) => const HomeScreen(),
+          '/login': (ctx) => const LoginScreen(),
+          '/my-bids': (ctx) => const MyBidsScreen(),
+        },
       ),
     );
   }

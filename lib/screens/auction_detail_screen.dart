@@ -70,48 +70,25 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                 SizedBox(
                   height: 250,
                   width: double.infinity,
-                  child: auction.landListing?.images != null &&
-                          auction.landListing!.images.isNotEmpty
-                      ? PageView.builder(
-                          itemCount: auction.landListing!.images.length,
-                          itemBuilder: (context, index) {
-                            return CachedNetworkImage(
-                              imageUrl: auction.landListing!.images[index],
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => const Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                              errorWidget: (context, url, error) =>
-                                  const Icon(Icons.error),
-                            );
-                          },
-                        )
-                      : Container(
-                          color: Colors.grey[200],
-                          child: const Icon(
-                            Icons.landscape,
-                            size: 64,
-                            color: Colors.grey,
-                          ),
-                        ),
+                  child: _buildImageCarousel(auction),
                 ),
 
                 // Title and Status
                 Padding(
                   padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Row(
                         children: [
                           Expanded(
                             child: Text(
-                              auction.landListing?.title ?? 'Arazi İhalesi',
+                              _getAuctionTitle(auction),
                               style: theme.textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+                              ),
+                            ),
+                          ),
                           _buildStatusChip(context, auction),
                         ],
                       ),
@@ -127,7 +104,7 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              auction.landListing?.location ?? 'Konum belirtilmemiş',
+                              _getAuctionLocation(auction),
                               style: theme.textTheme.bodyLarge,
                             ),
                           ),
@@ -144,11 +121,11 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '${auction.landListing?.areaSize ?? 0} ${auction.landListing?.areaUnit ?? 'm²'}',
+                            '${auction.areaSize ?? 0} ${auction.areaUnit ?? 'm²'}',
                             style: theme.textTheme.bodyLarge,
-          ),
-        ],
-      ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 16),
 
                       // Description
@@ -160,7 +137,7 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        auction.landListing?.description ?? 'Açıklama bulunmuyor.',
+                        _getAuctionDescription(auction),
                         style: theme.textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 16),
@@ -342,5 +319,45 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildImageCarousel(Auction auction) {
+    if (auction.images.isNotEmpty) {
+      return PageView.builder(
+        itemCount: auction.images.length,
+        itemBuilder: (context, index) {
+          return CachedNetworkImage(
+            imageUrl: auction.images[index],
+            fit: BoxFit.cover,
+            placeholder: (context, url) => const Center(
+              child: CircularProgressIndicator(),
+            ),
+            errorWidget: (context, url, error) =>
+                const Icon(Icons.error),
+          );
+        },
+      );
+    } else {
+      return Container(
+        color: Colors.grey[200],
+        child: const Icon(
+          Icons.landscape,
+          size: 64,
+          color: Colors.grey,
+        ),
+      );
+    }
+  }
+
+  String _getAuctionTitle(Auction auction) {
+    return auction.title ?? 'Arazi İhalesi';
+  }
+
+  String _getAuctionLocation(Auction auction) {
+    return auction.location ?? 'Konum belirtilmemiş';
+  }
+
+  String _getAuctionDescription(Auction auction) {
+    return auction.description ?? 'Açıklama bulunmuyor.';
   }
 } 

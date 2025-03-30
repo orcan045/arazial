@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as provider;
 import 'package:land_auction_app/services/auth_service.dart';
+import 'package:land_auction_app/screens/my_bids_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:land_auction_app/theme/app_theme.dart';
 
@@ -63,16 +64,7 @@ class AppDrawer extends StatelessWidget {
                         title: 'Teklifleriniz',
                         onTap: () {
                           Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Teklif geçmişi ekranı henüz uygulanmamış'),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: AppTheme.primaryColor,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          );
+                          Navigator.of(context).pushNamed('/my-bids');
                         },
                       ),
                       _buildMenuItem(

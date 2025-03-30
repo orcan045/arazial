@@ -46,38 +46,7 @@ class AuctionCard extends StatelessWidget {
                 SizedBox(
                   height: 180,
                   width: double.infinity,
-                  child: auction.landListing?.images != null && 
-                         auction.landListing!.images.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: auction.landListing!.images.first,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Center(
-                            child: SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                color: AppTheme.primaryColor,
-                                strokeWidth: 2,
-                              ),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            color: AppTheme.surfaceSecondaryColor,
-                            child: Icon(
-                              Icons.image_not_supported_outlined,
-                              size: 42,
-                              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
-                            ),
-                          ),
-                        )
-                      : Container(
-                          color: AppTheme.surfaceSecondaryColor,
-                          child: Icon(
-                            Icons.terrain_outlined,
-                            size: 42,
-                            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
-                          ),
-                        ),
+                  child: _getAuctionImage(theme),
                 ),
                 // Gradient overlay for darker images
                 Positioned.fill(
@@ -136,7 +105,7 @@ class AuctionCard extends StatelessWidget {
                 children: [
                   // Title with clean typography
                   Text(
-                    auction.landListing?.title ?? 'Arazi İhalesi',
+                    _getAuctionTitle(),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -158,7 +127,7 @@ class AuctionCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          auction.landListing?.location ?? 'Konum belirtilmemiş',
+                          _getAuctionLocation(),
                           style: TextStyle(
                             color: AppTheme.textSecondaryColor,
                             fontSize: 13,
@@ -175,7 +144,7 @@ class AuctionCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${auction.landListing?.areaSize ?? 0} ${auction.landListing?.areaUnit ?? 'm²'}',
+                        '${auction.areaSize ?? 0} ${auction.areaUnit ?? 'm²'}',
                         style: TextStyle(
                           color: AppTheme.textSecondaryColor,
                           fontSize: 13,
@@ -264,5 +233,52 @@ class AuctionCard extends StatelessWidget {
     if (date == null) return 'Belirtilmemiş';
     
     return DateFormat('dd.MM.yyyy HH:mm').format(date);
+  }
+
+  Widget _getAuctionImage(ThemeData theme) {
+    // Check if the auction has images
+    if (auction.images.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: auction.images.first,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              color: AppTheme.primaryColor,
+              strokeWidth: 2,
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => Container(
+          color: AppTheme.surfaceSecondaryColor,
+          child: Icon(
+            Icons.image_not_supported_outlined,
+            size: 42,
+            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
+          ),
+        ),
+      );
+    }
+    // Default fallback
+    else {
+      return Container(
+        color: AppTheme.surfaceSecondaryColor,
+        child: Icon(
+          Icons.terrain_outlined,
+          size: 42,
+          color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
+        ),
+      );
+    }
+  }
+
+  String _getAuctionTitle() {
+    return auction.title ?? 'Arazi İhalesi';
+  }
+
+  String _getAuctionLocation() {
+    return auction.location ?? 'Konum belirtilmemiş';
   }
 }

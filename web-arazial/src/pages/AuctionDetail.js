@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { getAuctionById, getAuctionBids, placeBid } from '../services/auctionService';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../services/supabase';
+import { VisibilityEvents } from '../context/AuthContext';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -229,23 +231,34 @@ const AuctionDetail = () => {
   const [bidLoading, setBidLoading] = useState(false);
   
   useEffect(() => {
-    const fetchAuctionDetails = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        setError(null);
         
         // Fetch auction details
         const { data: auctionData, error: auctionError } = await getAuctionById(id);
         if (auctionError) throw auctionError;
         
+        if (!auctionData) {
+          throw new Error('Auction not found');
+        }
+        
         console.log('Auction data received:', auctionData);
         setAuction(auctionData);
         
         // Fetch bids
-        const { data: bidsData, error: bidsError } = await getAuctionBids(id);
+        const { data: bidsData, error: bidsError } = await supabase
+          .from('bids')
+          .select(`
+            *,
+            profiles (full_name, avatar_url)
+          `)
+          .eq('auction_id', id)
+          .order('amount', { ascending: false });
+        
         if (bidsError) throw bidsError;
         
-        setBids(bidsData);
+        setBids(bidsData || []);
       } catch (err) {
         console.error('Error fetching auction details:', err);
         setError('Couldn\'t load auction details. Please try again later.');
@@ -254,7 +267,19 @@ const AuctionDetail = () => {
       }
     };
     
-    fetchAuctionDetails();
+    // Initial data load
+    fetchData();
+    
+    // Subscribe to visibility events from the central system
+    const unsubscribe = VisibilityEvents.subscribe(() => {
+      console.log("AuctionDetail received visibility change notification");
+      fetchData();
+    });
+    
+    // Clean up subscription when component unmounts
+    return () => {
+      unsubscribe();
+    };
   }, [id]);
   
   const handleSubmitBid = async (e) => {
@@ -400,8 +425,8 @@ const AuctionDetail = () => {
       </BackButton>
       
       <AuctionHeader>
-        <AuctionTitle>{auction.land_listings?.title || 'Arsa'}</AuctionTitle>
-        <AuctionLocation>{auction.land_listings?.location || 'Konum bilgisi yok'}</AuctionLocation>
+        <AuctionTitle>{auction.title || 'Arsa'}</AuctionTitle>
+        <AuctionLocation>{auction.location || 'Konum bilgisi yok'}</AuctionLocation>
         <AuctionStatus status={status}>{getStatusText(status)}</AuctionStatus>
       </AuctionHeader>
       
@@ -413,24 +438,20 @@ const AuctionDetail = () => {
               <PropertyItem>
                 <PropertyLabel>Yüz Ölçümü</PropertyLabel>
                 <PropertyValue>
-                  {auction.land_listings?.area_size 
-                    ? `${auction.land_listings.area_size} ${auction.land_listings.area_unit || 'm²'}` 
+                  {auction.area_size 
+                    ? `${auction.area_size} ${auction.area_unit || 'm²'}` 
                     : '—'}
                 </PropertyValue>
               </PropertyItem>
               <PropertyItem>
                 <PropertyLabel>Konum</PropertyLabel>
-                <PropertyValue>{auction.land_listings?.location || '—'}</PropertyValue>
-              </PropertyItem>
-              <PropertyItem>
-                <PropertyLabel>Durum</PropertyLabel>
-                <PropertyValue>{auction.land_listings?.status || '—'}</PropertyValue>
+                <PropertyValue>{auction.location || '—'}</PropertyValue>
               </PropertyItem>
               <PropertyItem>
                 <PropertyLabel>İlan Tarihi</PropertyLabel>
                 <PropertyValue>
-                  {auction.land_listings?.created_at 
-                    ? formatDate(auction.land_listings.created_at) 
+                  {auction.created_at 
+                    ? formatDate(auction.created_at) 
                     : '—'}
                 </PropertyValue>
               </PropertyItem>
@@ -440,13 +461,13 @@ const AuctionDetail = () => {
           <Section>
             <SectionTitle>Detaylı Bilgiler</SectionTitle>
             <div style={{ marginBottom: '1rem', lineHeight: '1.6' }}>
-              {auction.land_listings?.description || 'Bu arsa için ayrıntılı açıklama bulunmamaktadır.'}
+              {auction.description || 'Bu arsa için ayrıntılı açıklama bulunmamaktadır.'}
             </div>
-            {auction.land_listings?.images && auction.land_listings.images.length > 0 && (
+            {auction.images && auction.images.length > 0 && (
               <div style={{ marginTop: '1rem' }}>
                 <h4 style={{ fontSize: '1rem', marginBottom: '0.5rem' }}>Görseller</h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  {auction.land_listings.images.map((image, index) => (
+                  {auction.images.map((image, index) => (
                     <div 
                       key={index} 
                       style={{ 

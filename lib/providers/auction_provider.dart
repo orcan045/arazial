@@ -1,58 +1,142 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:land_auction_app/models/auction.dart';
 import 'package:land_auction_app/models/bid.dart';
 import 'package:land_auction_app/services/auth_service.dart';
+import 'package:land_auction_app/services/auction_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuctionProvider with ChangeNotifier {
   final SupabaseClient _supabase;
   late final AuthService _authService;
+  late final AuctionService _auctionService;
   
   List<Auction> _auctions = [];
+  List<Auction> _activeAuctions = [];
+  List<Auction> _upcomingAuctions = [];
+  List<Auction> _pastAuctions = [];
+  
   List<Bid> _bids = [];
   StreamSubscription<List<Map<String, dynamic>>>? _bidSubscription;
   bool _isLoading = false;
+  bool _hasError = false;
+  String? _errorMessage;
+  DateTime? _lastFetchTime;
   StreamController<List<Bid>>? _bidStreamController;
+  
+  // Caching constants
+  static const String _cacheKey = 'auctions_cache';
+  static const Duration _cacheDuration = Duration(minutes: 5);
   
   AuctionProvider(this._supabase) {
     _authService = AuthService(_supabase);
+    _auctionService = AuctionService(_supabase);
+    
+    // Initialize: fetch auctions from backend immediately
+    fetchAuctions(forceRefresh: true);
+    
     // Subscribe to auction changes
     _supabase.from('auctions')
       .stream(primaryKey: ['id'])
       .order('created_at')
       .listen((List<Map<String, dynamic>> data) async {
-        try {
-          // Fetch complete auction data with land listings
-          final response = await _supabase
-            .from('auctions')
-            .select('*, land_listings(*)')
-            .in_('id', data.map((d) => d['id']).toList());
-            
-          _auctions = (response as List)
-            .map((json) => Auction.fromJson(json))
-            .toList();
-          notifyListeners();
-        } catch (e) {
-          debugPrint('Error mapping auction data: $e');
+        debugPrint('Received auction update from Supabase realtime. Data count: ${data.length}');
+        if (data.isNotEmpty) {
+          debugPrint('First auction update: ${data[0]}');
         }
+        
+        // When we get a realtime update, fetch fresh data to ensure we have everything
+        await fetchAuctions(forceRefresh: true);
+      },
+      onError: (error) {
+        debugPrint('Error in auction stream: $error');
+        // PostgrestError has been replaced with more specific error types in Supabase
+        // Just log the error details without trying to cast to a specific type
       });
   }
   
-  List<Auction> get auctions => [..._auctions];
-  bool get isLoading => _isLoading;
+  // Initialize data on startup
+  Future<void> _initializeData() async {
+    // First try to load from cache
+    await _loadFromCache();
+    // Then fetch fresh data from backend
+    await fetchAuctions();
+  }
   
-  List<Auction> get activeAuctions => _auctions
-    .where((auction) => auction.isActive)
-    .toList();
-    
-  List<Auction> get upcomingAuctions => _auctions
-    .where((auction) => auction.isUpcoming)
-    .toList();
-    
-  List<Auction> get pastAuctions => _auctions
-    .where((auction) => auction.hasEnded)
-    .toList();
+  // Load auctions from cache
+  Future<void> _loadFromCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedData = prefs.getString(_cacheKey);
+      
+      if (cachedData != null) {
+        final Map<String, dynamic> cacheMap = jsonDecode(cachedData);
+        final timestamp = DateTime.parse(cacheMap['timestamp']);
+        final now = DateTime.now();
+        
+        // Use cache if it's fresh enough
+        if (now.difference(timestamp) < _cacheDuration) {
+          final Map<String, List<dynamic>> auctionsData = cacheMap['data'];
+          
+          _auctions = auctionsData['all']
+              ?.map((json) => Auction.fromJson(json))
+              ?.toList() ?? [];
+              
+          _activeAuctions = auctionsData['active']
+              ?.map((json) => Auction.fromJson(json))
+              ?.toList() ?? [];
+              
+          _upcomingAuctions = auctionsData['upcoming']
+              ?.map((json) => Auction.fromJson(json))
+              ?.toList() ?? [];
+              
+          _pastAuctions = auctionsData['past']
+              ?.map((json) => Auction.fromJson(json))
+              ?.toList() ?? [];
+              
+          _lastFetchTime = timestamp;
+          notifyListeners();
+          debugPrint('Loaded auctions from cache: ${_auctions.length} total, ${_activeAuctions.length} active');
+        } else {
+          debugPrint('Cache expired, will fetch fresh data');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading from cache: $e');
+    }
+  }
+  
+  // Save auctions to cache
+  Future<void> _saveToCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cacheData = {
+        'timestamp': DateTime.now().toIso8601String(),
+        'data': {
+          'all': _auctions.map((a) => a.toJson()).toList(),
+          'active': _activeAuctions.map((a) => a.toJson()).toList(),
+          'upcoming': _upcomingAuctions.map((a) => a.toJson()).toList(),
+          'past': _pastAuctions.map((a) => a.toJson()).toList(),
+        }
+      };
+      await prefs.setString(_cacheKey, jsonEncode(cacheData));
+      debugPrint('Saved auctions to cache: ${_auctions.length} total, ${_activeAuctions.length} active');
+    } catch (e) {
+      debugPrint('Error saving to cache: $e');
+    }
+  }
+  
+  List<Auction> get auctions => [..._auctions];
+  List<Auction> get activeAuctions => [..._activeAuctions];
+  List<Auction> get upcomingAuctions => [..._upcomingAuctions];
+  List<Auction> get pastAuctions => [..._pastAuctions];
+  
+  bool get isLoading => _isLoading;
+  bool get hasError => _hasError;
+  String? get errorMessage => _errorMessage;
+  DateTime? get lastFetchTime => _lastFetchTime;
   
   Auction? getAuctionById(String id) {
     try {
@@ -62,33 +146,81 @@ class AuctionProvider with ChangeNotifier {
     }
   }
   
-  Future<void> fetchAuctions() async {
+  Future<void> fetchAuctions({bool forceRefresh = false}) async {
+    // Skip fetching if we're already loading and it's not a forced refresh
+    if (_isLoading && !forceRefresh) return;
+    
     try {
       _isLoading = true;
+      _hasError = false;
+      _errorMessage = null;
       notifyListeners();
       
-      final response = await _supabase
-        .from('auctions')
-        .select('*, land_listings(*)')
-        .order('created_at');
-        
-      _auctions = (response as List)
-        .map((json) {
-          try {
-            return Auction.fromJson(json);
-    } catch (e) {
-            debugPrint('Error mapping auction: $e');
-            return null;
-          }
-        })
-        .whereType<Auction>()
-        .toList();
+      // Use the service to get filtered auctions
+      final result = await _auctionService.getFilteredAuctions();
+      
+      if (result['error'] != null) {
+        throw result['error'];
+      }
+      
+      _lastFetchTime = result['timestamp'] ?? DateTime.now();
+      
+      // Process active auctions
+      final activeData = result['active'] as List;
+      _activeAuctions = _parseAuctionsList(activeData);
+      debugPrint('Parsed ${_activeAuctions.length} active auctions');
+      
+      // Process upcoming auctions
+      final upcomingData = result['upcoming'] as List;
+      _upcomingAuctions = _parseAuctionsList(upcomingData);
+      debugPrint('Parsed ${_upcomingAuctions.length} upcoming auctions');
+      
+      // Process past auctions
+      final pastData = result['past'] as List;
+      _pastAuctions = _parseAuctionsList(pastData);
+      debugPrint('Parsed ${_pastAuctions.length} past auctions');
+      
+      // Combine all auctions to maintain the full list
+      _auctions = [..._activeAuctions, ..._upcomingAuctions, ..._pastAuctions];
+      
+      debugPrint('Total auctions: ${_auctions.length}');
+      
     } catch (error) {
       debugPrint('Error fetching auctions: $error');
+      _hasError = true;
+      _errorMessage = error.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+  
+  List<Auction> _parseAuctionsList(List auctionsData) {
+    final result = <Auction>[];
+    
+    debugPrint('Parsing ${auctionsData.length} auctions');
+    
+    for (var i = 0; i < auctionsData.length; i++) {
+      try {
+        final item = auctionsData[i];
+        debugPrint('Sample auction data ${i+1}/${auctionsData.length}: $item');
+        
+        // Check if the item has the required fields
+        if (item['id'] == null) {
+          debugPrint('Skipping auction with missing id field');
+          continue;
+        }
+        
+        final auction = Auction.fromJson(item);
+        result.add(auction);
+        debugPrint('Successfully parsed auction: ${auction.id}');
+      } catch (e) {
+        debugPrint('Error parsing auction at index $i: $e');
+      }
+    }
+    
+    debugPrint('Successfully parsed ${result.length}/${auctionsData.length} auctions');
+    return result;
   }
   
   Future<bool> placeBid(String auctionId, double amount) async {
@@ -173,6 +305,9 @@ class AuctionProvider with ChangeNotifier {
         _auctions[auctionIndex] = updatedAuction;
       }
       
+      // Refresh all auctions to ensure everything is up-to-date
+      fetchAuctions(forceRefresh: true);
+      
       _isLoading = false;
       notifyListeners();
       return true;
@@ -184,20 +319,65 @@ class AuctionProvider with ChangeNotifier {
     }
   }
   
-  Future<List<Bid>> getAuctionBids(String auctionId) async {
-    final response = await _supabase
-        .from('bids')
-        .select('''
-          *,
-          profiles (
-            id,
-            full_name
-          )
-        ''')
-        .eq('auction_id', auctionId)
-        .order('amount', ascending: false);
-    
-    return response.map<Bid>((json) => Bid.fromJson(json)).toList();
+  Future<List<Bid>> getAuctionBids(String auctionId, {bool forceRefresh = false}) async {
+    try {
+      // Check cache first
+      final cacheKey = 'auction_bids_${auctionId}';
+      
+      // Skip cache if force refresh requested
+      if (!forceRefresh) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          final cachedData = prefs.getString(cacheKey);
+          
+          if (cachedData != null) {
+            final map = jsonDecode(cachedData);
+            final timestamp = DateTime.parse(map['timestamp']);
+            final now = DateTime.now();
+            
+            // Use cache if it's fresh (less than 1 minute old)
+            if (now.difference(timestamp) < const Duration(minutes: 1)) {
+              final List<dynamic> bidsData = map['data'];
+              return bidsData.map<Bid>((json) => Bid.fromJson(json)).toList();
+            }
+          }
+        } catch (e) {
+          debugPrint('Error accessing bid cache: $e');
+        }
+      }
+      
+      // Fetch fresh data
+      final response = await _supabase
+          .from('bids')
+          .select('''
+            *,
+            profiles (
+              id,
+              full_name
+            )
+          ''')
+          .eq('auction_id', auctionId)
+          .order('amount', ascending: false);
+      
+      final bids = response.map<Bid>((json) => Bid.fromJson(json)).toList();
+      
+      // Cache the results
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final cacheData = {
+          'timestamp': DateTime.now().toIso8601String(),
+          'data': response,
+        };
+        await prefs.setString(cacheKey, jsonEncode(cacheData));
+      } catch (e) {
+        debugPrint('Error saving bids to cache: $e');
+      }
+      
+      return bids;
+    } catch (e) {
+      debugPrint('Error fetching auction bids: $e');
+      return [];
+    }
   }
   
   Stream<Auction> subscribeToAuction(String auctionId) {
@@ -326,4 +506,85 @@ class AuctionProvider with ChangeNotifier {
   }
 
   List<Bid> get bids => [..._bids];
+  
+  // Method to fetch user's bids
+  Future<List<Bid>> fetchUserBids({bool forceRefresh = false}) async {
+    if (_authService.currentUser == null) return [];
+    
+    try {
+      // Check cache first
+      final cacheKey = 'user_bids_${_authService.currentUser!.id}';
+      
+      // Skip cache if force refresh requested
+      if (!forceRefresh) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          final cachedData = prefs.getString(cacheKey);
+          
+          if (cachedData != null) {
+            final map = jsonDecode(cachedData);
+            final timestamp = DateTime.parse(map['timestamp']);
+            final now = DateTime.now();
+            
+            // Use cache if it's fresh (less than 2 minutes old)
+            if (now.difference(timestamp) < const Duration(minutes: 2)) {
+              final List<dynamic> bidsData = map['data'];
+              return bidsData.map<Bid>((json) => Bid.fromJson(json)).toList();
+            }
+          }
+        } catch (e) {
+          debugPrint('Error accessing user bids cache: $e');
+        }
+      }
+      
+      // Fetch fresh user's bids with auction details
+      final response = await _supabase
+          .from('bids')
+          .select('''
+            *,
+            auctions (
+              id, 
+              title, 
+              location, 
+              status, 
+              start_time, 
+              end_time,
+              start_price,
+              final_price,
+              images
+            )
+          ''')
+          .eq('bidder_id', _authService.currentUser!.id)
+          .order('created_at', ascending: false);
+      
+      debugPrint('Fetched user bids: ${response.length}');
+      
+      final List<Bid> userBids = [];
+      for (var bidData in response) {
+        try {
+          final bid = Bid.fromJson(bidData);
+          userBids.add(bid);
+        } catch (e) {
+          debugPrint('Error parsing bid: $e');
+        }
+      }
+      
+      // Cache the results
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final cacheData = {
+          'timestamp': DateTime.now().toIso8601String(),
+          'data': response,
+        };
+        await prefs.setString(cacheKey, jsonEncode(cacheData));
+      } catch (e) {
+        debugPrint('Error saving user bids to cache: $e');
+      }
+      
+      return userBids;
+    } catch (e) {
+      debugPrint('Error fetching user bids: $e');
+      return [];
+    }
+  }
 } 
