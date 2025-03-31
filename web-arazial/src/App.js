@@ -341,7 +341,7 @@ const App = () => {
           />
           
           <Route 
-            path="/admin" 
+            path="/admin/dashboard" 
             element={
               <AdminRoute>
                 <Layout>
@@ -349,6 +349,11 @@ const App = () => {
                 </Layout>
               </AdminRoute>
             } 
+          />
+          
+          <Route 
+            path="/admin" 
+            element={<Navigate to="/admin/dashboard" />} 
           />
           
           <Route 

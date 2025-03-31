@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { getFilteredAuctions, fetchAuctions } from '../services/auctionService';
 import { supabase } from '../services/supabase';
 import appState from '../services/appState';
+import CountdownTimer from '../components/CountdownTimer';
 
 const DashboardContainer = styled.div`
   max-width: 1200px;
@@ -90,6 +91,7 @@ const AuctionCard = styled.div`
   box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
   cursor: pointer;
+  position: relative;
   
   &:hover {
     transform: translateY(-5px);
@@ -103,6 +105,7 @@ const AuctionImage = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
   
   svg {
     width: 3rem;
@@ -131,6 +134,7 @@ const AuctionLocation = styled.p`
 const AuctionDetails = styled.div`
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 0.875rem;
 `;
 
@@ -242,6 +246,19 @@ const BidItemStatus = styled.span`
     props.status === 'lost' ? 'rgb(239, 68, 68)' : 
     'rgb(107, 114, 128)'
   };
+`;
+
+const AuctionCardOverlay = styled.div`
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 10;
+`;
+
+const CountdownWrapper = styled.div`
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: flex-end;
 `;
 
 const Dashboard = () => {
@@ -605,15 +622,20 @@ const Dashboard = () => {
                 <AuctionDetails>
                   <AuctionPrice>
                     {formatPrice(
-                      auction.highestBid || 
-                      auction.final_price || 
-                      auction.finalPrice || 
-                      auction.start_price || 
-                      auction.startPrice
+                      auction.final_price || auction.finalPrice || auction.start_price || auction.startPrice
                     )}
                   </AuctionPrice>
                   <AuctionStatus status="active">Aktif</AuctionStatus>
                 </AuctionDetails>
+                {auction.end_time && (
+                  <CountdownWrapper>
+                    <CountdownTimer 
+                      endTime={auction.end_time || auction.endTime || auction.end_date} 
+                      compact={true}
+                      auctionId={auction.id}
+                    />
+                  </CountdownWrapper>
+                )}
               </AuctionContent>
             </AuctionCard>
           ))}

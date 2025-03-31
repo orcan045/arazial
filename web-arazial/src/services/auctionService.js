@@ -206,8 +206,8 @@ export const getFilteredAuctions = async () => {
       // Either explicitly marked as upcoming
       if (status === 'upcoming') return true;
       
-      // OR start time is in the future AND not marked as ended
-      return status !== 'ended' && now < startTime;
+      // OR start time is in the future AND not marked as ended or active
+      return status !== 'ended' && status !== 'active' && now < startTime;
     });
     
     // 3. Finally, past auctions - anything not in active or upcoming that:
@@ -350,6 +350,22 @@ export const placeBid = async (auctionId, amount) => {
     const { data: auction, error: auctionError } = await getAuctionById(auctionId);
     if (auctionError) throw auctionError;
     
+    // Check if auction is active and can accept bids
+    const now = new Date();
+    const startTime = new Date(auction.start_time || auction.startTime || auction.start_date || auction.startDate);
+    const endTime = new Date(auction.end_time || auction.endTime || auction.end_date || auction.endDate);
+    
+    // Allow bidding if:
+    // 1. Auction is explicitly marked as 'active' in database (admin override)
+    // 2. OR auction is within its start/end time window
+    const isActive = 
+      auction.status === 'active' || 
+      (now >= startTime && now <= endTime && auction.status !== 'ended');
+    
+    if (!isActive) {
+      throw new Error('This auction is not currently active');
+    }
+    
     // Get the latest bid for this auction
     const { data: latestBids, error: bidsError } = await supabase
       .from('bids')
@@ -409,5 +425,39 @@ export const placeBid = async (auctionId, amount) => {
   } catch (error) {
     console.error('[AuctionService] Error placing bid:', error);
     return { success: false, error };
+  }
+};
+
+/**
+ * Complete an auction and set the winner
+ * @param {string} auctionId - The ID of the auction to complete
+ * @returns {Promise<{success: boolean, error: Error, data: Object|null}>}
+ */
+export const completeAuction = async (auctionId) => {
+  try {
+    // Call the database function to complete the auction and set winner
+    const { data, error } = await supabase.rpc(
+      'complete_specific_auction',
+      { auction_id: auctionId }
+    );
+    
+    if (error) throw error;
+    
+    if (!data) {
+      return { 
+        success: false, 
+        error: new Error('Auction could not be completed'), 
+        data: null 
+      };
+    }
+    
+    // Force refresh the cache after completion
+    lastRefreshTime = 0;
+    await fetchAuctions(true);
+    
+    return { success: true, error: null, data };
+  } catch (error) {
+    console.error('[AuctionService] Error completing auction:', error);
+    return { success: false, error, data: null };
   }
 };

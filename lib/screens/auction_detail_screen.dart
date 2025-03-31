@@ -92,6 +92,9 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                           _buildStatusChip(context, auction),
                         ],
                       ),
+                      
+                      auction.isActive ? _buildCountdownTimer(auction) : const SizedBox.shrink(),
+                      
                       const SizedBox(height: 16),
 
                       // Location
@@ -359,5 +362,28 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
 
   String _getAuctionDescription(Auction auction) {
     return auction.description ?? 'Açıklama bulunmuyor.';
+  }
+
+  Widget _buildCountdownTimer(Auction auction) {
+    if (!auction.isActive) return const SizedBox();
+    
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 16),
+      child: CountdownTimer(
+        seconds: auction.remainingTimeInSeconds,
+        auctionId: auction.id,
+        compact: false,
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        onFinish: () {
+          provider.Provider.of<AuctionProvider>(context, listen: false)
+            .fetchAuctions(forceRefresh: true);
+        },
+      ),
+    );
   }
 } 

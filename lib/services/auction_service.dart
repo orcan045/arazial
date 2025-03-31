@@ -211,55 +211,105 @@ class AuctionService {
         throw result['error'];
       }
       
-      final data = result['data'] as List;
-      debugPrint('Filtering ${data.length} auctions');
+      // Handle different data structures that might be returned
+      final dynamic rawData = result['data'];
+      List<Map<String, dynamic>> auctionsList = [];
+      
+      // Extract the actual list of auctions regardless of format
+      if (rawData is List) {
+        // Direct list of auctions
+        debugPrint('Data is a direct List of auctions');
+        auctionsList = List<Map<String, dynamic>>.from(
+          rawData.map((item) => item as Map<String, dynamic>)
+        );
+      } else if (rawData is Map<String, dynamic>) {
+        // Map structure that might contain auctions
+        debugPrint('Data is a Map structure, extracting auctions list');
+        // Try to find a list within the map
+        if (rawData.containsKey('auctions') && rawData['auctions'] is List) {
+          auctionsList = List<Map<String, dynamic>>.from(
+            (rawData['auctions'] as List).map((item) => item as Map<String, dynamic>)
+          );
+        } else {
+          // Just use all the map values that are maps themselves as individual auctions
+          final possibleAuctions = rawData.entries
+              .where((entry) => entry.value is Map<String, dynamic>)
+              .map((entry) => entry.value as Map<String, dynamic>)
+              .toList();
+              
+          if (possibleAuctions.isNotEmpty) {
+            auctionsList = possibleAuctions;
+          } else {
+            throw Exception('Could not find auctions data in the response');
+          }
+        }
+      } else {
+        throw Exception('Unknown data format in auctions response: ${rawData.runtimeType}');
+      }
+      
+      debugPrint('Found ${auctionsList.length} auctions to filter');
       
       final now = DateTime.now();
       
       // 1. First, filter active auctions
-      final active = data.where((auction) {
-        final startTime = DateTime.parse(auction['start_time']);
-        final endTime = DateTime.parse(auction['end_time']);
-        final status = auction['status'];
-        
-        // Either explicitly marked as active
-        if (status == 'active') return true;
-        
-        // OR current time is within auction window AND not marked as upcoming/ended
-        return status != 'upcoming' && status != 'ended' &&
-               now.isAfter(startTime) && now.isBefore(endTime);
+      final active = auctionsList.where((auction) {
+        try {
+          final startTime = DateTime.parse(auction['start_time']);
+          final endTime = DateTime.parse(auction['end_time']);
+          final status = auction['status'];
+          
+          // Either explicitly marked as active
+          if (status == 'active') return true;
+          
+          // OR current time is within auction window AND not marked as upcoming/ended
+          return status != 'upcoming' && status != 'ended' &&
+                 now.isAfter(startTime) && now.isBefore(endTime);
+        } catch (e) {
+          debugPrint('Error processing auction for active filter: $e');
+          return false;
+        }
       }).toList();
       
       // 2. Then upcoming auctions
       final activeIds = active.map((a) => a['id']).toSet();
-      final upcoming = data.where((auction) {
-        // Skip if already in active tab
-        if (activeIds.contains(auction['id'])) return false;
-        
-        final startTime = DateTime.parse(auction['start_time']);
-        final status = auction['status'];
-        
-        // Either explicitly marked as upcoming
-        if (status == 'upcoming') return true;
-        
-        // OR start time is in the future AND not marked as ended
-        return status != 'ended' && now.isBefore(startTime);
+      final upcoming = auctionsList.where((auction) {
+        try {
+          // Skip if already in active tab
+          if (activeIds.contains(auction['id'])) return false;
+          
+          final startTime = DateTime.parse(auction['start_time']);
+          final status = auction['status'];
+          
+          // Either explicitly marked as upcoming
+          if (status == 'upcoming') return true;
+          
+          // OR start time is in the future AND not marked as ended
+          return status != 'ended' && now.isBefore(startTime);
+        } catch (e) {
+          debugPrint('Error processing auction for upcoming filter: $e');
+          return false;
+        }
       }).toList();
       
       // 3. Finally, past auctions
       final upcomingIds = upcoming.map((a) => a['id']).toSet();
-      final past = data.where((auction) {
-        // Skip if already in active or upcoming tabs
-        if (activeIds.contains(auction['id']) || upcomingIds.contains(auction['id'])) return false;
-        
-        final endTime = DateTime.parse(auction['end_time']);
-        final status = auction['status'];
-        
-        // Either explicitly marked as ended
-        if (status == 'ended') return true;
-        
-        // OR current time is after end time
-        return now.isAfter(endTime);
+      final past = auctionsList.where((auction) {
+        try {
+          // Skip if already in active or upcoming tabs
+          if (activeIds.contains(auction['id']) || upcomingIds.contains(auction['id'])) return false;
+          
+          final endTime = DateTime.parse(auction['end_time']);
+          final status = auction['status'];
+          
+          // Either explicitly marked as ended
+          if (status == 'ended') return true;
+          
+          // OR current time is after end time
+          return now.isAfter(endTime);
+        } catch (e) {
+          debugPrint('Error processing auction for past filter: $e');
+          return false;
+        }
       }).toList();
       
       debugPrint('Filtered auctions: ${active.length} active, ${upcoming.length} upcoming, ${past.length} past');

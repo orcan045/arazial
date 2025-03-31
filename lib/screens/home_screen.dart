@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart' as provider;
 import 'package:land_auction_app/models/auction.dart';
 import 'package:land_auction_app/providers/auction_provider.dart';
@@ -28,6 +29,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_handleTabChange);
+    
+    // Set status bar appearance for a more premium feel
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+      ),
+    );
   }
   
   void _handleTabChange() {
@@ -96,22 +105,40 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildLogo() {
+    final theme = Theme.of(context);
+    
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Logo - more luxury real estate icon
         Icon(
-          Icons.public,
-          color: AppTheme.primaryColor,
-          size: 24,
+          Icons.real_estate_agent_rounded,
+          color: theme.colorScheme.primary,
+          size: 28,
         ),
-        const SizedBox(width: 8),
-        Text(
-          'arazial',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 22,
-            color: AppTheme.primaryColor,
-            letterSpacing: 0.5,
+        const SizedBox(width: 10),
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: 'ARAZI',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                  color: theme.colorScheme.primary,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              TextSpan(
+                text: 'AL',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                  color: theme.colorScheme.tertiary,
+                  letterSpacing: 0.8,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -129,12 +156,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     if (difference.inSeconds < 60) {
       return 'Şimdi güncellendi';
     } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes} dakika önce güncellendi';
+      return '${difference.inMinutes} dk önce güncellendi';
     } else {
       return DateFormat('HH:mm').format(lastUpdated) + ' güncellendi';
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -144,24 +171,37 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       appBar: AppBar(
         centerTitle: true,
         elevation: 2,
+        shadowColor: Colors.black.withOpacity(0.05),
         backgroundColor: theme.colorScheme.surface,
         title: _buildLogo(),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(
+              Icons.menu_rounded,
+              size: 26,
+              color: theme.colorScheme.primary,
+            ),
+            onPressed: () {
+              Scaffold.of(context).openDrawer();
+            },
+          ),
+        ),
         actions: [
           IconButton(
             icon: Icon(
-              Icons.search_outlined,
-              color: theme.colorScheme.onSurface,
-              size: 22,
+              Icons.search_rounded,
+              color: theme.colorScheme.primary,
+              size: 26,
             ),
-            splashRadius: 20,
+            splashRadius: 24,
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: const Text('Arama özelliği yakında eklenecek'),
                   behavior: SnackBarBehavior.floating,
-                  backgroundColor: AppTheme.primaryColor,
+                  backgroundColor: theme.colorScheme.primary,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               );
@@ -169,35 +209,97 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
+          preferredSize: const Size.fromHeight(54),
           child: Container(
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: theme.colorScheme.onBackground.withOpacity(0.1),
+                  color: theme.colorScheme.onBackground.withOpacity(0.08),
                   width: 1,
                 ),
               ),
             ),
             child: TabBar(
               controller: _tabController,
-              labelStyle: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+                letterSpacing: 0.3,
               ),
-              unselectedLabelStyle: TextStyle(
-                fontWeight: FontWeight.w400,
-                fontSize: 14,
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 15,
+                letterSpacing: 0.3,
               ),
-              labelColor: AppTheme.primaryColor,
+              labelColor: theme.colorScheme.primary,
               unselectedLabelColor: theme.colorScheme.onBackground.withOpacity(0.6),
-              indicatorColor: AppTheme.primaryColor,
-              indicatorWeight: 2,
+              indicatorColor: theme.colorScheme.primary,
+              indicatorWeight: 3,
               indicatorSize: TabBarIndicatorSize.label,
-              tabs: const [
-                Tab(text: 'Aktif'),
-                Tab(text: 'Yaklaşan'),
-                Tab(text: 'Geçmiş'),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              tabs: [
+                // Active tab with counter badge
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Tab(text: 'Aktif'),
+                    provider.Consumer<AuctionProvider>(
+                      builder: (context, provider, _) {
+                        if (provider.activeAuctions.isEmpty) return const SizedBox.shrink();
+                        
+                        return Container(
+                          margin: const EdgeInsets.only(left: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            provider.activeAuctions.length.toString(),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                // Upcoming tab with counter badge
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Tab(text: 'Yaklaşan'),
+                    provider.Consumer<AuctionProvider>(
+                      builder: (context, provider, _) {
+                        if (provider.upcomingAuctions.isEmpty) return const SizedBox.shrink();
+                        
+                        return Container(
+                          margin: const EdgeInsets.only(left: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.tertiary,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            provider.upcomingAuctions.length.toString(),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                // Past auctions tab
+                const Tab(text: 'Geçmiş'),
               ],
             ),
           ),
@@ -206,12 +308,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       drawer: const AppDrawer(),
       body: RefreshIndicator(
         onRefresh: _onRefresh,
-        color: AppTheme.primaryColor,
+        color: theme.colorScheme.primary,
         backgroundColor: theme.colorScheme.surface,
         displacement: 40,
+        edgeOffset: 8,
+        strokeWidth: 2.5,
         child: provider.Consumer<AuctionProvider>(
           builder: (context, auctionProvider, child) {
-            // If loading for less than 3 seconds, show loading indicator
+            // If loading for less than 3 seconds, show premium loading indicator
             if (auctionProvider.isLoading && auctionProvider.auctions.isEmpty) {
               // Create a future that resolves after 3 seconds
               Future.delayed(const Duration(seconds: 3), () {
@@ -230,20 +334,52 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(
-                      width: 32,
-                      height: 32,
+                    // Use a business-themed loading animation
+                    Container(
+                      width: 60,
+                      height: 60,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
                       child: CircularProgressIndicator(
-                        color: AppTheme.primaryColor,
-                        strokeWidth: 2,
+                        color: theme.colorScheme.primary,
+                        strokeWidth: 3,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                     Text(
-                      'İhaleler yükleniyor...',
-                      style: TextStyle(
-                        color: theme.colorScheme.onBackground.withOpacity(0.7),
-                        fontSize: 14,
+                      'Arazi İhaleleri Yükleniyor',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: theme.colorScheme.primary.withOpacity(0.1),
+                        ),
+                      ),
+                      child: Text(
+                        'Lütfen bekleyiniz...',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          fontSize: 14,
+                          letterSpacing: 0.2,
+                        ),
                       ),
                     ),
                   ],
@@ -253,36 +389,61 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             
             if (auctionProvider.hasError && auctionProvider.auctions.isEmpty) {
               return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: theme.colorScheme.error,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'İhaleler yüklenirken bir hata oluştu',
-                      style: TextStyle(
-                        color: theme.colorScheme.error,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 32),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () => _loadAuctions(forceRefresh: true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        size: 56,
+                        color: theme.colorScheme.error,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Bağlantı Hatası',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: theme.colorScheme.error,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      child: const Text('Tekrar Dene'),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        'İhaleler yüklenirken bir sorun oluştu. Lütfen internet bağlantınızı kontrol edip tekrar deneyiniz.',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () => _loadAuctions(forceRefresh: true),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Tekrar Dene'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }
@@ -291,16 +452,28 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               children: [
                 Column(
                   children: [
-                    // Last updated indicator
+                    // Last updated indicator with improved styling
                     if (auctionProvider.lastFetchTime != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.only(top: 12, bottom: 8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          border: Border(
+                            bottom: BorderSide(
+                              color: theme.colorScheme.onBackground.withOpacity(0.05),
+                              width: 1,
+                            ),
+                          ),
+                        ),
                         child: Center(
                           child: Text(
                             _formatLastUpdated(auctionProvider.lastFetchTime),
                             style: TextStyle(
                               fontSize: 12,
-                              color: theme.colorScheme.onBackground.withOpacity(0.5),
+                              fontWeight: FontWeight.w500,
+                              color: theme.colorScheme.onBackground.withOpacity(0.4),
+                              letterSpacing: 0.2,
                             ),
                           ),
                         ),
@@ -309,50 +482,57 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       child: TabBarView(
                         controller: _tabController,
                         children: [
-                          _buildAuctionsList(auctionProvider.activeAuctions),
-                          _buildAuctionsList(auctionProvider.upcomingAuctions),
-                          _buildAuctionsList(auctionProvider.pastAuctions),
+                          _buildAuctionsList(auctionProvider.activeAuctions, 'active'),
+                          _buildAuctionsList(auctionProvider.upcomingAuctions, 'upcoming'),
+                          _buildAuctionsList(auctionProvider.pastAuctions, 'past'),
                         ],
                       ),
                     ),
                   ],
                 ),
+                // Elegant loading indicator overlay
                 if (_showTopLoadingIndicator)
                   Positioned(
-                    top: 8,
+                    top: 12,
                     right: 0,
                     left: 0,
                     child: Center(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 4,
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
                           ],
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withOpacity(0.1),
+                            width: 1,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             SizedBox(
-                              width: 16,
-                              height: 16,
+                              width: 18,
+                              height: 18,
                               child: CircularProgressIndicator(
-                                color: AppTheme.primaryColor,
+                                color: theme.colorScheme.primary,
                                 strokeWidth: 2,
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Text(
-                              'Yenileniyor...',
+                              'Veriler güncelleniyor',
                               style: TextStyle(
-                                fontSize: 12,
-                                color: theme.colorScheme.onSurface,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: theme.colorScheme.primary,
+                                letterSpacing: 0.2,
                               ),
                             ),
                           ],
@@ -365,63 +545,155 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           },
         ),
       ),
+      // Floating action button for quick refresh
+      floatingActionButton: provider.Consumer<AuctionProvider>(
+        builder: (context, auctionProvider, _) {
+          // Only show when we have data loaded
+          if (auctionProvider.isLoading || auctionProvider.auctions.isEmpty) {
+            return const SizedBox.shrink();
+          }
+          
+          return FloatingActionButton(
+            onPressed: () => _loadAuctions(forceRefresh: true),
+            backgroundColor: theme.colorScheme.primary,
+            foregroundColor: Colors.white,
+            elevation: 4,
+            tooltip: 'Yenile',
+            child: const Icon(Icons.refresh_rounded),
+          );
+        },
+      ),
     );
   }
   
-  Widget _buildAuctionsList(List<Auction> auctions) {
+  Widget _buildAuctionsList(List<Auction> auctions, String type) {
     final theme = Theme.of(context);
     
     if (auctions.isEmpty) {
+      // More business-like empty state with appropriate messaging
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.terrain_outlined,
-              size: 48,
-              color: theme.colorScheme.onBackground.withOpacity(0.3),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'İhale bulunamadı',
-              style: TextStyle(
-                color: theme.colorScheme.onBackground.withOpacity(0.7),
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          margin: const EdgeInsets.symmetric(horizontal: 32),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
+            ],
+            border: Border.all(
+              color: theme.colorScheme.primary.withOpacity(0.1),
+              width: 1,
             ),
-            const SizedBox(height: 24),
-            // Debug button (only for development)
-            OutlinedButton.icon(
-              onPressed: () => _loadAuctions(forceRefresh: true),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Debug: Yenile'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.primaryColor,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Different icons for different tab types
+              Icon(
+                type == 'active' 
+                  ? Icons.gavel_rounded
+                  : type == 'upcoming' 
+                    ? Icons.event_available_rounded
+                    : Icons.history_rounded,
+                size: 56,
+                color: type == 'active' 
+                  ? theme.colorScheme.primary.withOpacity(0.3)
+                  : type == 'upcoming'
+                    ? theme.colorScheme.tertiary.withOpacity(0.3)
+                    : theme.colorScheme.onBackground.withOpacity(0.2),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Text(
+                type == 'active' 
+                  ? 'Aktif İhale Bulunamadı'
+                  : type == 'upcoming'
+                    ? 'Yaklaşan İhale Bulunamadı'
+                    : 'Geçmiş İhale Bulunamadı',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                type == 'active' 
+                  ? 'Şu anda aktif bir ihale bulunmamaktadır.'
+                  : type == 'upcoming'
+                    ? 'Yaklaşan ihale takvimi henüz açıklanmamıştır.'
+                    : 'Geçmiş ihale kaydı bulunamadı.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              // Only show refresh button on development
+              OutlinedButton.icon(
+                onPressed: () => _loadAuctions(forceRefresh: true),
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Yenile'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: theme.colorScheme.primary,
+                  side: BorderSide(color: theme.colorScheme.primary),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
     
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 16),
-      itemCount: auctions.length,
-      itemBuilder: (ctx, i) {
-        return Hero(
-          tag: 'auction-${auctions[i].id}',
-          child: AuctionCard(
-            auction: auctions[i],
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (ctx) => AuctionDetailScreen(
-                    auctionId: auctions[i].id,
-                  ),
-                ),
-              );
-            },
+    // Grid view for better layout on larger screens
+    final screenWidth = MediaQuery.of(context).size.width;
+    final useTwoColumns = screenWidth > 600;
+    
+    return Container(
+      color: theme.colorScheme.background,
+      child: useTwoColumns 
+        ? GridView.builder(
+            padding: const EdgeInsets.all(16),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.85,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
+            itemCount: auctions.length,
+            itemBuilder: _buildAuctionItem,
+          )
+        : ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: auctions.length,
+            itemBuilder: _buildAuctionItem,
+          ),
+    );
+  }
+  
+  Widget _buildAuctionItem(BuildContext ctx, int i) {
+    final auctionProvider = provider.Provider.of<AuctionProvider>(context, listen: false);
+    final auctionsList = _tabController.index == 0 
+        ? auctionProvider.activeAuctions
+        : _tabController.index == 1
+            ? auctionProvider.upcomingAuctions
+            : auctionProvider.pastAuctions;
+    
+    if (i >= auctionsList.length) return const SizedBox.shrink();
+    
+    return AuctionCard(
+      auction: auctionsList[i],
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (ctx) => AuctionDetailScreen(
+              auctionId: auctionsList[i].id,
+            ),
           ),
         );
       },

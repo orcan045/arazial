@@ -16,25 +16,28 @@ const Label = styled.label`
 
 const StyledInput = styled.input`
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1.125rem;
   font-size: 1rem;
-  border: 1px solid ${props => props.error ? 'var(--color-error)' : '#e5e7eb'};
-  border-radius: var(--border-radius-md);
-  background-color: white;
+  border: 1.2px solid ${props => props.error ? 'var(--color-error)' : 'var(--color-text-secondary)'};
+  border-opacity: 0.15;
+  border-radius: 10px;
+  background-color: var(--color-surface);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   
   &:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    border-width: 1.5px;
+    box-shadow: 0 0 0 3px rgba(15, 52, 96, 0.1);
   }
   
   &::placeholder {
-    color: #9ca3af;
+    color: var(--color-text-secondary);
+    opacity: 0.5;
   }
   
   &:disabled {
-    background-color: #f3f4f6;
+    background-color: var(--color-surface-secondary);
     cursor: not-allowed;
   }
 `;

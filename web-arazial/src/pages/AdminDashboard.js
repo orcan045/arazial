@@ -450,6 +450,26 @@ const ImageGallery = styled.div`
   }
 `;
 
+// Add Turkish cities list after the CloseIcon component
+const CloseIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+// Turkish cities list in alphabetical order
+const turkishCities = [
+  'Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray', 'Amasya', 'Ankara', 'Antalya', 'Ardahan', 'Artvin',
+  'Aydın', 'Balıkesir', 'Bartın', 'Batman', 'Bayburt', 'Bilecik', 'Bingöl', 'Bitlis', 'Bolu', 'Burdur',
+  'Bursa', 'Çanakkale', 'Çankırı', 'Çorum', 'Denizli', 'Diyarbakır', 'Düzce', 'Edirne', 'Elazığ', 'Erzincan',
+  'Erzurum', 'Eskişehir', 'Gaziantep', 'Giresun', 'Gümüşhane', 'Hakkari', 'Hatay', 'Iğdır', 'Isparta', 'İstanbul',
+  'İzmir', 'Kahramanmaraş', 'Karabük', 'Karaman', 'Kars', 'Kastamonu', 'Kayseri', 'Kırıkkale', 'Kırklareli', 'Kırşehir',
+  'Kilis', 'Kocaeli', 'Konya', 'Kütahya', 'Malatya', 'Manisa', 'Mardin', 'Mersin', 'Muğla', 'Muş',
+  'Nevşehir', 'Niğde', 'Ordu', 'Osmaniye', 'Rize', 'Sakarya', 'Samsun', 'Siirt', 'Sinop', 'Sivas',
+  'Şanlıurfa', 'Şırnak', 'Tekirdağ', 'Tokat', 'Trabzon', 'Tunceli', 'Uşak', 'Van', 'Yalova', 'Yozgat', 'Zonguldak'
+];
+
 function AdminDashboard() {
   const navigate = useNavigate();
   const { user, isAdmin: authIsAdmin, loading: authLoading, userRole } = useAuth();
@@ -476,6 +496,8 @@ function AdminDashboard() {
     startTime: '12:00', // Default time
     endTime: '12:00', // Default end time
     location: '',
+    city: '', // Add city field
+    locationDetails: '', // Add locationDetails field
     status: 'upcoming',
     images: []
   });
@@ -709,6 +731,13 @@ function AdminDashboard() {
       const price = auctionForm.startingPrice ? parseFloat(auctionForm.startingPrice.replace(',', '.')) : 0;
       const minIncrement = auctionForm.minIncrement ? parseFloat(auctionForm.minIncrement.replace(',', '.')) : 0;
 
+      // Create combined location string with city and location details
+      const locationString = auctionForm.city 
+        ? (auctionForm.locationDetails 
+            ? `${auctionForm.locationDetails}, ${auctionForm.city}` 
+            : auctionForm.city)
+        : auctionForm.locationDetails;
+
       // Update handleCreateAuction to use this improved function
       const auctionData = {
         title: auctionForm.title,
@@ -720,7 +749,7 @@ function AdminDashboard() {
         end_date: formatDateForDatabase(auctionForm.endDate),
         start_time: formatDateForDatabase(auctionForm.startDate, auctionForm.startTime) || new Date().toISOString(),
         end_time: formatDateForDatabase(auctionForm.endDate, auctionForm.endTime) || new Date(Date.now() + 7*24*60*60*1000).toISOString(), // Default to 7 days later
-        location: auctionForm.location,
+        location: locationString,
         status: auctionForm.status,
         created_by: user?.id,
         images: imageUrls
@@ -766,6 +795,8 @@ function AdminDashboard() {
         startTime: '12:00', // Default time
         endTime: '12:00', // Default end time
         location: '',
+        city: '',
+        locationDetails: '',
         status: 'upcoming',
         images: []
       });
@@ -999,6 +1030,30 @@ function AdminDashboard() {
         
       if (auctionError) throw auctionError;
       
+      // Parse location into city and location details if possible
+      let city = '';
+      let locationDetails = '';
+      
+      if (auctionData.location) {
+        // Try to extract city from location
+        for (const turkishCity of turkishCities) {
+          if (auctionData.location.includes(turkishCity)) {
+            city = turkishCity;
+            // Extract location details by removing the city
+            locationDetails = auctionData.location.replace(`, ${city}`, '').replace(`${city}`, '').trim();
+            if (locationDetails.endsWith(',')) {
+              locationDetails = locationDetails.slice(0, -1).trim();
+            }
+            break;
+          }
+        }
+        
+        // If no city was found, use the full location as location details
+        if (!city) {
+          locationDetails = auctionData.location;
+        }
+      }
+      
       // Set auction form data
       setAuctionForm({
         title: auctionData.title || '',
@@ -1009,7 +1064,9 @@ function AdminDashboard() {
         endDate: formatDateForInput(auctionData.end_date) || '',
         startTime: auctionData.start_time || formatTimeForInput(auctionData.start_date) || '12:00',
         endTime: auctionData.end_time || formatTimeForInput(auctionData.end_date) || '12:00',
-        location: auctionData.location || '',
+        location: '', // Old field, now split into city and locationDetails
+        city: city,
+        locationDetails: locationDetails,
         status: auctionData.status || 'upcoming',
         images: auctionData.images || []
       });
@@ -1190,29 +1247,35 @@ function AdminDashboard() {
       
       // Parse the price
       const price = auctionForm.startingPrice ? parseFloat(auctionForm.startingPrice.replace(',', '.')) : 0;
+      const minIncrement = auctionForm.minIncrement ? parseFloat(auctionForm.minIncrement.replace(',', '.')) : 0;
 
-      // Prepare update data
-      const updateData = {
+      // Create combined location string with city and location details
+      const locationString = auctionForm.city 
+        ? (auctionForm.locationDetails 
+            ? `${auctionForm.locationDetails}, ${auctionForm.city}` 
+            : auctionForm.city)
+        : auctionForm.locationDetails;
+
+      // Update auction data
+      const auctionData = {
         title: auctionForm.title,
         description: auctionForm.description,
         starting_price: price,
-        start_price: price, // Include both column names to handle database discrepancy
         min_increment: minIncrement,
         start_date: formatDateForDatabase(auctionForm.startDate),
         end_date: formatDateForDatabase(auctionForm.endDate),
-        start_time: formatDateForDatabase(auctionForm.startDate, auctionForm.startTime) || new Date().toISOString(),
-        end_time: formatDateForDatabase(auctionForm.endDate, auctionForm.endTime) || new Date(Date.now() + 7*24*60*60*1000).toISOString(),
-        location: auctionForm.location,
+        start_time: formatDateForDatabase(auctionForm.startDate, auctionForm.startTime),
+        end_time: formatDateForDatabase(auctionForm.endDate, auctionForm.endTime),
+        location: locationString,
         status: auctionForm.status,
-        images: imageUrls,
-        updated_at: new Date().toISOString()
+        images: imageUrls
       };
       
-      console.log("Attempting to update auction with data:", updateData);
+      console.log("Attempting to update auction with data:", auctionData);
       
       const { data, error } = await supabase
         .from('auctions')
-        .update(updateData)
+        .update(auctionData)
         .eq('id', selectedAuctionId);
         
       if (error) {
@@ -2057,14 +2120,30 @@ function AdminDashboard() {
               
               <FormRow>
                 <FormGroup>
-                  <Label htmlFor="location">Konum</Label>
-                  <Input 
-                    type="text" 
-                    id="location" 
-                    name="location"
-                    value={auctionForm.location}
+                  <Label htmlFor="city">Şehir</Label>
+                  <Select 
+                    id="city" 
+                    name="city"
+                    value={auctionForm.city}
                     onChange={handleAuctionFormChange}
                     required
+                  >
+                    <option value="">Şehir Seçiniz</option>
+                    {turkishCities.map(city => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                  </Select>
+                </FormGroup>
+                
+                <FormGroup>
+                  <Label htmlFor="locationDetails">Konum Detayları</Label>
+                  <Input 
+                    type="text" 
+                    id="locationDetails" 
+                    name="locationDetails"
+                    value={auctionForm.locationDetails}
+                    onChange={handleAuctionFormChange}
+                    placeholder="Mahalle, cadde, vs."
                   />
                 </FormGroup>
               </FormRow>
@@ -2554,7 +2633,8 @@ function AdminDashboard() {
                   }}>
                     <div>
                       <p><strong>Başlangıç Fiyatı:</strong> {parseFloat(auctionForm.startingPrice).toLocaleString('tr-TR')} TL</p>
-                      <p><strong>Konum:</strong> {auctionForm.location}</p>
+                      <p><strong>Minimum Artış:</strong> {parseFloat(auctionForm.minIncrement).toLocaleString('tr-TR')} TL</p>
+                      <p><strong>Konum:</strong> {auctionForm.city ? `${auctionForm.locationDetails ? `${auctionForm.locationDetails}, ` : ''}${auctionForm.city}` : auctionForm.location}</p>
                       <p><strong>Durum:</strong> {getStatusText(auctionForm.status)}</p>
                     </div>
                     <div>
@@ -2801,14 +2881,30 @@ function AdminDashboard() {
               
               <FormRow>
                 <FormGroup>
-                  <Label htmlFor="location">Konum</Label>
-                  <Input 
-                    type="text" 
-                    id="location" 
-                    name="location"
-                    value={auctionForm.location}
+                  <Label htmlFor="city">Şehir</Label>
+                  <Select 
+                    id="city" 
+                    name="city"
+                    value={auctionForm.city}
                     onChange={handleAuctionFormChange}
                     required
+                  >
+                    <option value="">Şehir Seçiniz</option>
+                    {turkishCities.map(city => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                  </Select>
+                </FormGroup>
+                
+                <FormGroup>
+                  <Label htmlFor="locationDetails">Konum Detayları</Label>
+                  <Input 
+                    type="text" 
+                    id="locationDetails" 
+                    name="locationDetails"
+                    value={auctionForm.locationDetails}
+                    onChange={handleAuctionFormChange}
+                    placeholder="Mahalle, cadde, vs."
                   />
                 </FormGroup>
               </FormRow>

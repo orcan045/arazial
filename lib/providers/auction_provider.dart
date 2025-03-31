@@ -646,32 +646,80 @@ class AuctionProvider with ChangeNotifier {
         
         // Use cache if it's fresh enough
         if (now.difference(timestamp) < _cacheDuration) {
-          final Map<String, List<dynamic>> auctionsData = cacheMap['data'] as Map<String, List<dynamic>>;
-          
-          if (auctionsData.containsKey('all')) {
-            _auctions = auctionsData['all']!
-                .map((json) => Auction.fromJson(json))
-                .toList();
-          }
-          
-          if (auctionsData.containsKey('active')) {
-            _activeAuctions = auctionsData['active']!
-                .map((json) => Auction.fromJson(json))
-                .toList();
-          }
-          
-          if (auctionsData.containsKey('upcoming')) {
-            _upcomingAuctions = auctionsData['upcoming']!
-                .map((json) => Auction.fromJson(json))
-                .toList();
-          }
-          
-          if (auctionsData.containsKey('past')) {
-            _pastAuctions = auctionsData['past']!
-                .map((json) => Auction.fromJson(json))
-                .toList();
-          }
+          // Handle potential type inconsistencies in the cached data
+          if (cacheMap.containsKey('data')) {
+            final dynamic dataObject = cacheMap['data'];
+            
+            // If data is a Map and it contains our expected keys
+            if (dataObject is Map<String, dynamic>) {
+              debugPrint('Cache data is a Map structure');
+              final Map<String, dynamic> dataMap = dataObject;
               
+              // Process the 'all' auctions list if it exists
+              if (dataMap.containsKey('all') && dataMap['all'] is List) {
+                final List<dynamic> allData = dataMap['all'] as List<dynamic>;
+                _auctions = allData
+                    .map((json) => Auction.fromJson(json as Map<String, dynamic>))
+                    .toList();
+              }
+              
+              // Process the 'active' auctions list
+              if (dataMap.containsKey('active') && dataMap['active'] is List) {
+                final List<dynamic> activeData = dataMap['active'] as List<dynamic>;
+                _activeAuctions = activeData
+                    .map((json) => Auction.fromJson(json as Map<String, dynamic>))
+                    .toList();
+              }
+              
+              // Process the 'upcoming' auctions list
+              if (dataMap.containsKey('upcoming') && dataMap['upcoming'] is List) {
+                final List<dynamic> upcomingData = dataMap['upcoming'] as List<dynamic>;
+                _upcomingAuctions = upcomingData
+                    .map((json) => Auction.fromJson(json as Map<String, dynamic>))
+                    .toList();
+              }
+              
+              // Process the 'past' auctions list
+              if (dataMap.containsKey('past') && dataMap['past'] is List) {
+                final List<dynamic> pastData = dataMap['past'] as List<dynamic>;
+                _pastAuctions = pastData
+                    .map((json) => Auction.fromJson(json as Map<String, dynamic>))
+                    .toList();
+              }
+            } 
+            // If data is a List (older cache format)
+            else if (dataObject is List) {
+              debugPrint('Cache data is a List structure - older format');
+              final List<dynamic> dataList = dataObject;
+              
+              // Create auction objects from the list
+              _auctions = dataList
+                  .map((json) => Auction.fromJson(json as Map<String, dynamic>))
+                  .toList();
+                  
+              // Reset other lists to empty since we don't have categorized data
+              _activeAuctions = [];
+              _upcomingAuctions = [];
+              _pastAuctions = [];
+              
+              // Filter auctions into the appropriate categories
+              final now = DateTime.now();
+              
+              for (final auction in _auctions) {
+                if (auction.isActive) {
+                  _activeAuctions.add(auction);
+                } else if (auction.startTime.isAfter(now)) {
+                  _upcomingAuctions.add(auction);
+                } else {
+                  _pastAuctions.add(auction);
+                }
+              }
+            }
+            else {
+              debugPrint('Unexpected data format in cache: ${dataObject.runtimeType}');
+            }
+          }
+                
           _lastFetchTime = timestamp;
           notifyListeners();
           debugPrint('Loaded auctions from cache: ${_auctions.length} total, ${_activeAuctions.length} active');
@@ -681,6 +729,35 @@ class AuctionProvider with ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error loading from cache: $e');
+    }
+  }
+
+  // Add a method to complete an auction and set the winner
+  Future<bool> completeAuction(String auctionId) async {
+    try {
+      debugPrint('Attempting to complete auction: $auctionId');
+      
+      // Call the Supabase RPC function to complete the auction
+      final response = await _supabase.rpc(
+        'complete_specific_auction',
+        params: {'auction_id': auctionId},
+      );
+      
+      if (response == true) {
+        debugPrint('Successfully completed auction: $auctionId');
+        
+        // Force refresh the auction data
+        await fetchAuctions(forceRefresh: true);
+        
+        // Return success
+        return true;
+      } else {
+        debugPrint('Failed to complete auction: $auctionId, response: $response');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('Error completing auction: $e');
+      return false;
     }
   }
 } 

@@ -44,8 +44,8 @@ class AuthService {
             // If refreshing failed, try to recover
             try {
               // First check if we still have a valid session
-              final result = await _supabase.auth.getSession();
-              if (result.session == null) {
+              final session = _supabase.auth.currentSession;
+              if (session == null) {
                 debugPrint('Session lost, attempting to recover from local storage');
                 // Try to restore from persistent storage
                 await _supabase.auth.refreshSession();
