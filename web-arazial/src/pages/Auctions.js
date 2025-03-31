@@ -1621,21 +1621,21 @@ const Auctions = () => {
   
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'active': 
+      case 'active':
         return (
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
             <polygon points="10 8 16 12 10 16 10 8" />
           </svg>
         );
-      case 'upcoming': 
+      case 'upcoming':
         return (
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
             <polyline points="12 6 12 12 16 14" />
           </svg>
         );
-      default: 
+      default:
         return (
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
@@ -1647,7 +1647,7 @@ const Auctions = () => {
   
   // Render auction in grid view
   const renderAuctionCard = (auction) => {
-    return (
+      return (
       <AuctionCard onClick={() => handleAuctionClick(auction.id)}>
         <AuctionImage>
           {auction.property_type && (
@@ -1858,20 +1858,20 @@ const Auctions = () => {
           </EmptyStateMessage>
           {Object.values(filters).some(value => value && value !== 'all') && (
             <RefreshButton onClick={clearFilters}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
+            </svg>
               Filtreleri Temizle
-            </RefreshButton>
+          </RefreshButton>
           )}
         </EmptyState>
       );
     }
     
     if (viewMode === 'grid') {
-      return (
+    return (
         <>
-          <AuctionsGrid>
+      <AuctionsGrid>
             {paginatedAuctions.map(auction => (
               <GridItemWrapper key={auction.id}>
                 {renderAuctionCard(auction)}
@@ -2020,7 +2020,7 @@ const Auctions = () => {
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
-                          </svg>
+                </svg>
                         </button>
                       </CityTag>
                     ))
@@ -2146,14 +2146,14 @@ const Auctions = () => {
   return (
     <PageContainer>
       <PageHeader>
-        <div>
-          <PageTitle>Arsa İhaleleri</PageTitle>
-          <PageDescription>
-            Türkiye genelinde mevcut arsa ihalelerini görüntüleyin ve tekliflerinizi verin.
-          </PageDescription>
+          <div>
+            <PageTitle>Arsa İhaleleri</PageTitle>
+            <PageDescription>
+              Türkiye genelinde mevcut arsa ihalelerini görüntüleyin ve tekliflerinizi verin.
+            </PageDescription>
         </div>
       </PageHeader>
-
+      
       <TabsContainer>
         <Tab 
           active={activeTab === 'active'} 
@@ -2244,8 +2244,8 @@ const Auctions = () => {
               </RefreshButton>
             </div>
           </ContentHeader>
-          
-          {renderAuctions()}
+      
+      {renderAuctions()}
         </MainContentArea>
       </FiltersAndContentWrapper>
       
