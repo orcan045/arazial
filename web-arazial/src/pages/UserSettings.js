@@ -451,7 +451,7 @@ const UserSettings = () => {
             <SectionTitle>Hesap ve Veriler</SectionTitle>
             
             <p>
-              Arazial platformuna kayıtlı verilerinizi yönetin. Burada hesabınızı silebilir veya 
+              Arazialcom platformuna kayıtlı verilerinizi yönetin. Burada hesabınızı silebilir veya 
               verilerinizin bir kopyasını indirebilirsiniz.
             </p>
             

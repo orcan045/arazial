@@ -466,7 +466,7 @@ const LandingPage = () => {
             Arazi ve Arsa <span className="gold-text">Alım Satımı</span> Artık Çevrimiçi
           </HeroTitle>
           <HeroSubtitle>
-            Arsa ve arazi ihalelerini artık online olarak takip edebilir, teklifler verebilir ve kazanabilirsiniz. Geleceğinize yatırım yapmak için en doğru adres Arazial.
+            Arsa ve arazi ihalelerini artık online olarak takip edebilir, teklifler verebilir ve kazanabilirsiniz. Geleceğinize yatırım yapmak için en doğru adres Arazialcom.
           </HeroSubtitle>
           <ButtonGroup>
             <HeroButton 
@@ -493,9 +493,9 @@ const LandingPage = () => {
       </HeroSection>
       
       <FeaturesSection id="features">
-        <SectionTitle>Neden Arazial?</SectionTitle>
+        <SectionTitle>Neden Arazialcom?</SectionTitle>
         <SectionSubtitle>
-          Arazial, arazi ihalelerine katılmanın en kolay ve en güvenli yoludur.
+          Arazialcom, arazi ihalelerine katılmanın en kolay ve en güvenli yoludur.
         </SectionSubtitle>
         <FeaturesGrid>
           <FeatureCard>
@@ -575,7 +575,7 @@ const LandingPage = () => {
       <HowItWorksSection>
         <SectionTitle>Nasıl Çalışır?</SectionTitle>
         <SectionSubtitle>
-          Arazial platformumuzu kullanarak arazi ihalelerine katılmak çok kolay.
+          Arazialcom platformumuzu kullanarak arazi ihalelerine katılmak çok kolay.
         </SectionSubtitle>
         <ProcessSteps>
           <ProcessStep>

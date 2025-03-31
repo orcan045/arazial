@@ -332,7 +332,7 @@ const Contact = () => {
               E-posta
             </InfoLabel>
             <InfoText>
-              <InfoLink href="mailto:info@arazial.com">info@arazial.com</InfoLink>
+              <InfoLink href="mailto:info@arazialcom.com">info@arazialcom.com</InfoLink>
             </InfoText>
           </InfoItem>
           

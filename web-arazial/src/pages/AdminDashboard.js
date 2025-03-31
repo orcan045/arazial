@@ -3145,7 +3145,7 @@ function AdminDashboard() {
               <Input 
                 type="text" 
                 id="siteName" 
-                defaultValue="Arazial"
+                defaultValue="Arazialcom"
               />
             </FormGroup>
             
@@ -3154,7 +3154,7 @@ function AdminDashboard() {
               <Input 
                 type="email" 
                 id="contactEmail" 
-                defaultValue="info@arazial.com"
+                defaultValue="info@arazialcom.com"
               />
             </FormGroup>
             

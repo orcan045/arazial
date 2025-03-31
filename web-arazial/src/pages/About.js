@@ -56,7 +56,7 @@ const About = () => {
       <HeroSection>
         <PageTitle>Hakkımızda</PageTitle>
         <Subtitle>
-          Arazial, Türkiye'nin ilk dijital arazi ihale platformu olarak gayrimenkul sektöründe 
+          Arazialcom, Türkiye'nin ilk dijital arazi ihale platformu olarak gayrimenkul sektöründe 
           şeffaflık ve erişilebilirlik sağlamayı amaçlayan yenilikçi bir girişimdir.
         </Subtitle>
         <Divider />
@@ -65,7 +65,7 @@ const About = () => {
       <SectionContent>
         <SectionTitle>Vizyonumuz</SectionTitle>
         <TextBlock>
-          Arazial'da vizyonumuz, Türkiye'deki arazi ihalelerini dijitalleştirerek daha geniş bir kitleye ulaştırmak 
+          Arazialcom'da vizyonumuz, Türkiye'deki arazi ihalelerini dijitalleştirerek daha geniş bir kitleye ulaştırmak 
           ve ihale süreçlerini daha şeffaf, güvenli ve erişilebilir hale getirmektir. Gayrimenkul sektöründeki 
           geleneksel ve zaman alıcı ihale süreçlerinin yerini, modern teknolojileri kullanarak daha verimli ve 
           kullanıcı dostu bir platform sunuyoruz.
@@ -86,7 +86,7 @@ const About = () => {
           kullanıcı deneyimi, platformumuzun temel değerlerini oluşturmaktadır.
         </TextBlock>
         <TextBlock>
-          Arazial olarak, her bir ihalenin güvenli, adil ve verimli bir şekilde gerçekleşmesini sağlayarak, 
+          Arazialcom olarak, her bir ihalenin güvenli, adil ve verimli bir şekilde gerçekleşmesini sağlayarak, 
           hem alıcılara hem de satıcılara değer katmayı hedefliyoruz. Platformumuzun kullanımı kolay arayüzü 
           ve şeffaf ihale süreci sayesinde, gayrimenkul alım satımında yeni bir standart oluşturuyoruz.
         </TextBlock>
