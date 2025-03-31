@@ -837,51 +837,11 @@ const AuctionDetail = () => {
         </svg>
         İhalelere Geri Dön
       </BackButton>
-      
-      <AuctionHeader>
-        <AuctionStatus status={status}>
-          {getStatusIcon(status)}
-          {getStatusText(status)}
-        </AuctionStatus>
-        <AuctionTitle>{auction.title || 'Arsa'}</AuctionTitle>
-        <AuctionLocation>
-          <LocationIcon />
-          {auction.location || 'Konum bilgisi yok'}
-        </AuctionLocation>
-        
-        <AuctionMeta>
-          {status === 'active' && auctionEndTime && (
-            <TimerWrapper>
-              <TimerLabel>Kalan Süre:</TimerLabel>
-              <CountdownTimer 
-                endTime={auctionEndTime} 
-                onComplete={handleTimerComplete}
-                showSeconds={true}
-                alwaysVisible={true}
-                auctionId={id}
-              />
-            </TimerWrapper>
-          )}
-          
-          <MetaItem>
-            <MetaLabel>Başlangıç Fiyatı</MetaLabel>
-            <MetaValue>{formatPrice(auction.start_price || auction.startPrice)}</MetaValue>
-          </MetaItem>
-          
-          <MetaItem>
-            <MetaLabel>Mevcut Fiyat</MetaLabel>
-            <MetaValue style={{color: 'var(--color-primary)'}}>{formatPrice(currentPrice)}</MetaValue>
-          </MetaItem>
-          
-          <MetaItem>
-            <MetaLabel>Artış Miktarı</MetaLabel>
-            <MetaValue>{formatPrice(auction.min_increment || auction.minIncrement)}</MetaValue>
-          </MetaItem>
-        </AuctionMeta>
-      </AuctionHeader>
-      
+
       <AuctionContainer>
+        {/* Left Column - Images and Information */}
         <Column>
+          {/* Images */}
           {auction.images && auction.images.length > 0 && (
             <Card>
               <CardContent style={{ padding: 0 }}>
@@ -909,93 +869,216 @@ const AuctionDetail = () => {
               </CardContent>
             </Card>
           )}
-          
+
+          {/* Auction Main Info */}
           <Card>
             <CardHeader>
-              <CardTitle>
-                <PropertyIcon />
-                Arsa Bilgileri
-              </CardTitle>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <AuctionStatus status={status} style={{ display: 'inline-flex' }}>
+                  {getStatusIcon(status)}
+                  {getStatusText(status)}
+                </AuctionStatus>
+                
+                {status === 'active' && auctionEndTime && (
+                  <TimerWrapper style={{ margin: 0 }}>
+                    <TimerLabel>Kalan Süre:</TimerLabel>
+                    <CountdownTimer 
+                      endTime={auctionEndTime} 
+                      onComplete={handleTimerComplete}
+                      showSeconds={true}
+                      alwaysVisible={true}
+                      auctionId={id}
+                    />
+                  </TimerWrapper>
+                )}
+              </div>
             </CardHeader>
+            
             <CardContent>
-              <PropertyGrid>
-                <PropertyItem>
-                  <PropertyLabel>Yüz Ölçümü</PropertyLabel>
-                  <PropertyValue>
-                    {auction.area_size 
-                      ? `${auction.area_size} ${auction.area_unit || 'm²'}` 
-                      : '—'}
-                  </PropertyValue>
-                </PropertyItem>
-                <PropertyItem>
-                  <PropertyLabel>Konum</PropertyLabel>
-                  <PropertyValue>{auction.location || '—'}</PropertyValue>
-                </PropertyItem>
-                <PropertyItem>
-                  <PropertyLabel>İlan Tarihi</PropertyLabel>
-                  <PropertyValue>
-                    {auction.created_at 
-                      ? formatDate(auction.created_at) 
-                      : '—'}
-                  </PropertyValue>
-                </PropertyItem>
-                <PropertyItem>
-                  <PropertyLabel>Başlangıç Tarihi</PropertyLabel>
-                  <PropertyValue>
-                    {formatDate(auction.start_time || auction.startTime)}
-                  </PropertyValue>
-                </PropertyItem>
-                <PropertyItem>
-                  <PropertyLabel>Bitiş Tarihi</PropertyLabel>
-                  <PropertyValue>
-                    {formatDate(auction.end_time || auction.endTime)}
-                  </PropertyValue>
-                </PropertyItem>
-                {auction.parcel_number && (
-                  <PropertyItem>
-                    <PropertyLabel>Parsel Numarası</PropertyLabel>
-                    <PropertyValue>{auction.parcel_number}</PropertyValue>
+              <AuctionTitle style={{ fontSize: '1.75rem', margin: '0 0 0.75rem 0' }}>
+                {auction.title || 'Arsa'}
+              </AuctionTitle>
+              
+              <AuctionLocation style={{ marginBottom: '1.25rem', fontSize: '1rem' }}>
+                <LocationIcon />
+                {auction.location || 'Konum bilgisi yok'}
+              </AuctionLocation>
+              
+              {/* Price Information - Highlighted Box */}
+              <div style={{ 
+                backgroundColor: 'rgba(var(--color-primary-rgb), 0.05)',
+                border: '1px solid rgba(var(--color-primary-rgb), 0.1)',
+                borderRadius: 'var(--border-radius-md)',
+                padding: '1.25rem',
+                marginBottom: '1.5rem'
+              }}>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: '1rem'
+                }}>
+                  <MetaItem>
+                    <MetaLabel>Başlangıç Fiyatı</MetaLabel>
+                    <MetaValue>{formatPrice(auction.start_price || auction.startPrice)}</MetaValue>
+                  </MetaItem>
+                  
+                  <MetaItem>
+                    <MetaLabel>Minimum Artış</MetaLabel>
+                    <MetaValue>{formatPrice(auction.min_increment || auction.minIncrement)}</MetaValue>
+                  </MetaItem>
+                  
+                  <MetaItem>
+                    <MetaLabel>Güncel Fiyat</MetaLabel>
+                    <MetaValue style={{color: 'var(--color-primary)', fontWeight: '700'}}>
+                      {formatPrice(currentPrice)}
+                    </MetaValue>
+                  </MetaItem>
+                </div>
+              </div>
+              
+              {/* Tab-like navigation for property sections */}
+              <div style={{
+                display: 'flex',
+                borderBottom: '1px solid var(--color-border)',
+                marginBottom: '1.5rem'
+              }}>
+                <div style={{
+                  padding: '0.75rem 1.25rem',
+                  borderBottom: '2px solid var(--color-primary)',
+                  fontWeight: '600',
+                  fontSize: '1rem'
+                }}>
+                  İlan Bilgileri
+                </div>
+              </div>
+              
+              {/* Property Details in 2 columns with icons */}
+              <PropertyGrid style={{ marginBottom: '1.5rem' }}>
+                {auction.area_size && (
+                  <PropertyItem style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-primary)', flexShrink: 0 }}>
+                      <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+                      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                      <line x1="12" y1="22.08" x2="12" y2="12" />
+                    </svg>
+                    <div>
+                      <PropertyLabel>Yüz Ölçümü</PropertyLabel>
+                      <PropertyValue>{auction.area_size} {auction.area_unit || 'm²'}</PropertyValue>
+                    </div>
                   </PropertyItem>
                 )}
+                
+                <PropertyItem style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-primary)', flexShrink: 0 }}>
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                  <div>
+                    <PropertyLabel>İlan Tarihi</PropertyLabel>
+                    <PropertyValue>{auction.created_at ? formatDate(auction.created_at) : '—'}</PropertyValue>
+                  </div>
+                </PropertyItem>
+                
+                <PropertyItem style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-primary)', flexShrink: 0 }}>
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  <div>
+                    <PropertyLabel>Başlangıç Tarihi</PropertyLabel>
+                    <PropertyValue>{formatDate(auction.start_time || auction.startTime)}</PropertyValue>
+                  </div>
+                </PropertyItem>
+                
+                <PropertyItem style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-primary)', flexShrink: 0 }}>
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  <div>
+                    <PropertyLabel>Bitiş Tarihi</PropertyLabel>
+                    <PropertyValue>{formatDate(auction.end_time || auction.endTime)}</PropertyValue>
+                  </div>
+                </PropertyItem>
+                
+                {auction.parcel_number && (
+                  <PropertyItem style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-primary)', flexShrink: 0 }}>
+                      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+                      <line x1="8" y1="2" x2="8" y2="18" />
+                      <line x1="16" y1="6" x2="16" y2="22" />
+                    </svg>
+                    <div>
+                      <PropertyLabel>Parsel Numarası</PropertyLabel>
+                      <PropertyValue>{auction.parcel_number}</PropertyValue>
+                    </div>
+                  </PropertyItem>
+                )}
+                
                 {auction.zoning_status && (
-                  <PropertyItem>
-                    <PropertyLabel>İmar Durumu</PropertyLabel>
-                    <PropertyValue>{auction.zoning_status}</PropertyValue>
+                  <PropertyItem style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-primary)', flexShrink: 0 }}>
+                      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                      <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
+                    <div>
+                      <PropertyLabel>İmar Durumu</PropertyLabel>
+                      <PropertyValue>{auction.zoning_status}</PropertyValue>
+                    </div>
                   </PropertyItem>
                 )}
               </PropertyGrid>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                <InfoIcon />
-                Detaylı Bilgiler
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Description>
-                {auction.description || 'Bu arsa için ayrıntılı açıklama bulunmamaktadır.'}
-              </Description>
+              
+              {/* Description with icon */}
+              {auction.description && (
+                <>
+                  <div style={{ 
+                    borderTop: '1px solid var(--color-border)', 
+                    paddingTop: '1.5rem',
+                    marginTop: '1rem'
+                  }}>
+                    <h3 style={{ 
+                      fontSize: '1rem', 
+                      marginBottom: '1rem', 
+                      fontWeight: '600',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-primary)' }}>
+                        <line x1="21" y1="10" x2="3" y2="10" />
+                        <line x1="21" y1="6" x2="3" y2="6" />
+                        <line x1="21" y1="14" x2="3" y2="14" />
+                        <line x1="21" y1="18" x2="3" y2="18" />
+                      </svg>
+                      Açıklama
+                    </h3>
+                    <Description style={{ lineHeight: '1.6', color: 'var(--color-text)' }}>
+                      {auction.description}
+                    </Description>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </Column>
         
+        {/* Right Column - Bidding and History */}
         <Column>
+          {/* Bidding Box */}
           {canBid && (
             <BidContainer>
               <CurrentPrice>
-                <PriceLabel>Mevcut Fiyat</PriceLabel>
+                <PriceLabel>Mevcut Teklif</PriceLabel>
                 <PriceAmount>{formatPrice(currentPrice)}</PriceAmount>
                 {highestBidder && (
                   <div style={{ fontSize: '0.875rem', marginTop: '0.5rem', color: 'var(--color-text-secondary)' }}>
                     En Yüksek Teklif: {highestBidder}
                   </div>
                 )}
-                <MinimumIncrement>
-                  Minimum Artış: {formatPrice(auction.min_increment || auction.minIncrement)}
-                </MinimumIncrement>
               </CurrentPrice>
               
               <BidForm onSubmit={handleSubmitBid}>
@@ -1021,11 +1104,12 @@ const AuctionDetail = () => {
             </BidContainer>
           )}
 
+          {/* Bids History */}
           <Card>
             <CardHeader>
               <CardTitle>
                 <BidsIcon />
-                Teklifler
+                Teklifler Geçmişi
               </CardTitle>
             </CardHeader>
             <CardContent style={{ padding: 0 }}>
@@ -1065,6 +1149,7 @@ const AuctionDetail = () => {
             </CardContent>
           </Card>
           
+          {/* Auction Result - Only shown for ended auctions */}
           {status === 'ended' && (
             <Card>
               <CardHeader>
