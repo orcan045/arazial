@@ -2,7 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import GlobalStyles from './styles/GlobalStyles';
 import { useState, useEffect } from 'react';
-import appState from './services/appState';
+import appState, { forceAuthRefresh } from './services/appState';
+import { supabase } from './services/supabase';
 
 // Layout Components
 import Layout from './components/layout/Layout';
@@ -191,6 +192,61 @@ const AuthLayout = ({ children }) => {
 };
 
 const App = () => {
+  // Handle the Supabase email confirmation auth state
+  const [handlingRedirect, setHandlingRedirect] = useState(true);
+  
+  useEffect(() => {
+    // Failsafe: Set a maximum timeout for handling redirects
+    const failSafeTimer = setTimeout(() => {
+      console.log("[App] Failsafe triggered - force ending redirect handling");
+      setHandlingRedirect(false);
+    }, 10000); // 10 seconds max
+    
+    // Check for access_token in the URL to detect returning from email confirmation
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      console.log("[App] Detected auth redirect, handling session");
+      
+      // Handle the session from the URL
+      supabase.auth.getSession()
+        .then(({ data }) => {
+          clearTimeout(failSafeTimer); // Clear the failsafe timer on success
+          
+          if (data?.session) {
+            console.log("[App] Successfully retrieved session from URL");
+            // Force auth refresh to ensure state is updated
+            forceAuthRefresh()
+              .then(() => {
+                console.log("[App] Auth state refreshed after redirect");
+                // Remove the hash from the URL to avoid issues on refresh
+                window.history.replaceState(null, document.title, window.location.pathname);
+              })
+              .catch(error => {
+                console.error("[App] Error refreshing auth after redirect:", error);
+              })
+              .finally(() => {
+                setHandlingRedirect(false);
+              });
+          } else {
+            console.log("[App] No session found in URL");
+            setHandlingRedirect(false);
+          }
+        })
+        .catch(error => {
+          clearTimeout(failSafeTimer); // Clear the failsafe timer on error
+          console.error("[App] Error handling auth redirect:", error);
+          setHandlingRedirect(false);
+        });
+    } else {
+      // No redirect detected, continue normally
+      clearTimeout(failSafeTimer); // Clear the failsafe timer
+      setHandlingRedirect(false);
+    }
+    
+    return () => {
+      clearTimeout(failSafeTimer); // Cleanup on unmount
+    };
+  }, []);
+
   // Initialize and clean up appState
   useEffect(() => {
     // Ensure appState is initialized first
@@ -217,6 +273,38 @@ const App = () => {
       appState.cleanup();
     };
   }, []);
+  
+  // Show a loading spinner if we're handling an email confirmation redirect
+  if (handlingRedirect) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        flexDirection: 'column',
+        gap: '16px',
+        background: 'var(--color-background)'
+      }}>
+        <div style={{ 
+          width: '50px', 
+          height: '50px', 
+          border: '5px solid var(--color-background)', 
+          borderTop: '5px solid var(--color-primary)', 
+          borderRadius: '50%', 
+          animation: 'spin 1s linear infinite' 
+        }}></div>
+        <p>E-posta doğrulaması işleniyor...</p>
+        
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
   
   return (
     <Router>

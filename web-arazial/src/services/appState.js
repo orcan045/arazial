@@ -176,57 +176,74 @@ class AppStateManager {
       this.pendingRefresh = true;
       console.log('[AppState] Refreshing auth state');
       
-      // Fetch session with timeout protection
-      const sessionPromise = supabase.auth.getSession();
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Auth refresh timed out')), 5000);
-      });
-      
       try {
-        // Race between fetch and timeout
-        const { data: { session }, error } = await Promise.race([
-          sessionPromise,
-          timeoutPromise
-        ]);
+        // Direct approach with error handling
+        const { data, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('[AppState] Error refreshing session:', error);
-          // Reset auth state on fatal errors
+          console.error('[AppState] Error getting session:', error.message);
+          // Clear auth state on session errors
           this.auth.user = null;
           this.auth.session = null;
           this.auth.profile = null;
           this.auth.isAdmin = false;
           this.isAuthed = false;
-        } else if (session?.user) {
-          console.log('[AppState] Session refreshed');
-          this.auth.user = session.user;
-          this.auth.session = session;
+        } else if (data?.session) {
+          // We have a valid session
+          this.auth.user = data.session.user;
+          this.auth.session = data.session;
           this.isAuthed = true;
           
-          // Fetch user profile
-          await this.fetchUserProfile(session.user.id);
+          try {
+            // Fetch user profile
+            await this.fetchUserProfile(data.session.user.id);
+          } catch (profileError) {
+            console.error('[AppState] Error fetching profile:', profileError);
+            // Set default profile
+            this.auth.profile = { role: 'user' };
+            this.auth.isAdmin = false;
+          }
         } else {
-          console.log('[AppState] No active session found');
+          // No valid session found
+          console.log('[AppState] No active session');
           this.auth.user = null;
           this.auth.session = null;
           this.auth.profile = null;
           this.auth.isAdmin = false;
           this.isAuthed = false;
         }
-      } catch (error) {
-        console.error('[AppState] Exception refreshing auth:', error);
-        // Don't reset auth state on network errors to prevent flickering
-      } finally {
-        this.auth.initialized = true;
-        this.lastRefreshTime = Date.now();
-        this.pendingRefresh = false;
         
-        // Notify subscribers
+        // Always mark as initialized regardless of outcome
+        this.auth.initialized = true;
+        
+        // Update refresh timestamp
+        this.lastRefreshTime = Date.now();
+        
+        // Always notify listeners about state changes
+        this.notifyListeners('auth');
+        this.notifyListeners('refresh');
+        
+        console.log('[AppState] Auth refresh complete');
+      } catch (error) {
+        // Handle unexpected errors
+        console.error('[AppState] Critical error in auth refresh:', error);
+        
+        // Reset auth state on fatal errors
+        this.auth.user = null;
+        this.auth.session = null;
+        this.auth.profile = null;
+        this.auth.isAdmin = false;
+        this.isAuthed = false;
+        
+        // Still mark as initialized to avoid UI hanging
+        this.auth.initialized = true;
+        
+        // Notify listeners even on error
         this.notifyListeners('auth');
         this.notifyListeners('refresh');
       }
-    } catch (error) {
-      console.error('[AppState] Fatal error in refreshAuth:', error);
+    } finally {
+      // Always clear pending flag
       this.pendingRefresh = false;
     }
   }
@@ -507,3 +524,36 @@ const appState = new AppStateManager();
 
 // Export the singleton
 export default appState;
+
+// Immediately refresh auth state after login/logout
+export const forceAuthRefresh = async () => {
+  console.log("[appState] Forcing auth refresh");
+  await appState.refreshAuth();
+  appState.notifyListeners('auth');
+};
+
+// Emergency reset function to clear all auth-related local storage
+// This can be called when authentication is stuck or corrupted
+export const resetAllAuthStorage = () => {
+  console.log('[appState] Emergency auth storage reset');
+  try {
+    // Clear all Supabase-related items from localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      // Look for Supabase keys
+      if (key && (
+        key.includes('supabase') || 
+        key.includes('sb-') || 
+        key.includes('auth') ||
+        key.includes('token')
+      )) {
+        console.log(`[appState] Removing localStorage item: ${key}`);
+        localStorage.removeItem(key);
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error('[appState] Error clearing auth storage:', error);
+    return false;
+  }
+};

@@ -145,8 +145,9 @@ const SignupPage = () => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [userData, setUserData] = useState(null);
   
-  const { signUp, error } = useAuth();
+  const { signUp, signIn, error } = useAuth();
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -184,13 +185,32 @@ const SignupPage = () => {
     setIsLoading(true);
     
     try {
-      await signUp(email, password);
-      setSuccess(true);
+      const { data, error: signUpError } = await signUp(email, password);
       
-      // Navigate to login after 3 seconds
-      setTimeout(() => {
-        navigate('/login');
-      }, 3000);
+      if (signUpError) throw signUpError;
+      
+      setSuccess(true);
+      setUserData(data);
+      
+      // Check if auto-confirmation is enabled (user is available immediately)
+      if (data?.user && data.user.confirmed_at) {
+        try {
+          // Attempt to sign in - Auth context will handle the refresh
+          await signIn(email, password);
+          // Navigate to home page immediately
+          navigate('/');
+        } catch (signInError) {
+          console.error('Auto-login error:', signInError);
+          // If auto-login fails, redirect to login page after delay
+          setTimeout(() => {
+            navigate('/login');
+          }, 3000);
+        }
+      } else {
+        // For email confirmation flow, show a message and don't auto-redirect
+        // User needs to check their email first
+        console.log("Email confirmation required, waiting for user to check email");
+      }
     } catch (error) {
       console.error('Signup error:', error);
     } finally {
@@ -220,8 +240,15 @@ const SignupPage = () => {
       {error && <ErrorMessage>{error}</ErrorMessage>}
       {success && (
         <SuccessMessage>
-          Kayıt işlemi başarılı! E-posta adresinize onay bağlantısı gönderildi.
-          Giriş sayfasına yönlendiriliyorsunuz...
+          {userData?.user && userData.user.confirmed_at ? (
+            'Kayıt işlemi başarılı! Otomatik olarak giriş yapılıyor ve ana sayfaya yönlendiriliyorsunuz...'
+          ) : (
+            <>
+              Kayıt işlemi başarılı! E-posta adresinize gönderilen doğrulama bağlantısına tıklayarak hesabınızı aktifleştirin.
+              <br /><br />
+              <strong>Önemli:</strong> E-posta onayından sonra otomatik olarak giriş yapabileceksiniz.
+            </>
+          )}
         </SuccessMessage>
       )}
       

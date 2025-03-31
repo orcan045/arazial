@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
-import Button from '../ui/Button';
+import Button from '../../components/ui/Button';
+import { resetAllAuthStorage } from '../../services/appState';
 
 const NavbarContainer = styled.nav`
   background-color: ${props => props.$isScrolled ? 'rgba(255, 255, 255, 0.95)' : 'var(--color-surface)'};
@@ -345,12 +346,44 @@ const PremiumBadge = styled.span`
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 `;
 
+// Add styled components for disabled menu items
+const DisabledUserMenuItem = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  opacity: 0.6;
+  cursor: not-allowed;
+  
+  svg {
+    margin-right: 0.75rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--color-text-secondary);
+  }
+`;
+
+const DisabledMobileNavLink = styled.div`
+  padding: 1.25rem 2rem;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1.125rem;
+  border-bottom: 1px solid var(--color-surface-secondary);
+  opacity: 0.6;
+  cursor: not-allowed;
+`;
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const { user, signOut, isAdmin } = useAuth();
+  const [showResetButton, setShowResetButton] = useState(false);
+  const { user, signOut, isAdmin, loading, reloadUserProfile } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -373,9 +406,82 @@ const Navbar = () => {
     setIsUserMenuOpen(false);
   }, [location]);
   
-  const handleSignOut = () => {
-    signOut();
+  useEffect(() => {
+    // This effect will run whenever the user state changes
+    console.log("Auth state in Navbar changed:", user ? "logged in" : "logged out");
+    // Reset UI state when auth changes
     setIsUserMenuOpen(false);
+    setIsOpen(false);
+  }, [user]);
+  
+  // Add a timeout effect to avoid UI getting stuck in loading state
+  useEffect(() => {
+    // If loading takes too long, we'll assume there's a problem and force reset
+    let loadingTimeout;
+    let resetButtonTimeout;
+    
+    if (loading) {
+      loadingTimeout = setTimeout(() => {
+        console.log("Navbar loading timeout reached - force resetting UI state");
+        // Force UI into a consistent state rather than showing perpetual loading
+        setIsUserMenuOpen(false);
+        setIsOpen(false);
+      }, 8000); // 8 seconds max loading time
+      
+      // Show reset button after 5 seconds of loading
+      resetButtonTimeout = setTimeout(() => {
+        setShowResetButton(true);
+      }, 5000);
+    } else {
+      setShowResetButton(false);
+    }
+    
+    return () => {
+      if (loadingTimeout) clearTimeout(loadingTimeout);
+      if (resetButtonTimeout) clearTimeout(resetButtonTimeout);
+    };
+  }, [loading]);
+  
+  // Handler to reset the session
+  const handleResetSession = async () => {
+    console.log("User initiated session reset");
+    try {
+      // First try to force sign out 
+      try {
+        await signOut();
+      } catch (error) {
+        console.error("Error during forced sign out:", error);
+      }
+      
+      // Force reset all auth storage
+      resetAllAuthStorage();
+      
+      // Force reload user profile
+      await reloadUserProfile();
+      
+      // Redirect to home page
+      navigate('/');
+      
+      // If still loading after a moment, suggest page refresh
+      setTimeout(() => {
+        if (loading) {
+          alert("Oturum sıfırlanamadı. Sayfayı yenilemek için tamam'a basın.");
+          window.location.reload();
+        }
+      }, 3000); 
+    } catch (error) {
+      console.error("Session reset failed:", error);
+      alert("Oturum sıfırlanamadı. Sayfayı yenilemek için tamam'a basın.");
+      window.location.reload();
+    } finally {
+      setShowResetButton(false);
+    }
+  };
+  
+  const handleSignOut = async () => {
+    await signOut();
+    setIsUserMenuOpen(false);
+    navigate('/');
   };
   
   const toggleUserMenu = () => {
@@ -424,11 +530,43 @@ const Navbar = () => {
         </NavMenu>
         
         <NavButtonsContainer>
-          {!user ? (
+          {loading ? (
+            <div style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              <div style={{ 
+                width: '30px', 
+                height: '30px', 
+                borderRadius: '50%', 
+                border: '2px solid var(--color-surface-secondary)',
+                borderTopColor: 'var(--color-primary)',
+                animation: 'navbarSpin 1s linear infinite'
+              }} />
+              
+              {showResetButton && (
+                <button 
+                  onClick={handleResetSession}
+                  style={{
+                    background: 'var(--color-surface-secondary)',
+                    border: 'none',
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: 'var(--border-radius-md)',
+                    cursor: 'pointer',
+                    fontSize: '0.75rem',
+                    color: 'var(--color-text)'
+                  }}
+                >
+                  Oturumu Sıfırla
+                </button>
+              )}
+            </div>
+          ) : !user ? (
             <>
               <Button 
                 as={Link} 
-                to="/auth/login" 
+                to="/login" 
                 variant="secondary" 
                 size="small"
                 minWidth="100px"
@@ -437,7 +575,7 @@ const Navbar = () => {
               </Button>
               <Button 
                 as={Link} 
-                to="/auth/register" 
+                to="/signup" 
                 variant="primary" 
                 size="small"
                 minWidth="100px"
@@ -464,19 +602,19 @@ const Navbar = () => {
               </UserMenuButton>
               
               <UserMenu $isOpen={isUserMenuOpen}>
-                <UserMenuItem to="/user/profile">
+                <DisabledUserMenuItem>
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   Profilim
-                </UserMenuItem>
-                <UserMenuItem to="/user/settings">
+                </DisabledUserMenuItem>
+                <DisabledUserMenuItem>
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   Ayarlar
-                </UserMenuItem>
+                </DisabledUserMenuItem>
                 <UserMenuItem to="/dashboard">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -536,23 +674,58 @@ const Navbar = () => {
           İletişim
         </MobileNavLink>
         
-        {!user ? (
+        {loading ? (
+          <div style={{ 
+            padding: '1.25rem 2rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '1rem'
+          }}>
+            <div style={{ 
+              width: '30px', 
+              height: '30px', 
+              borderRadius: '50%', 
+              border: '2px solid var(--color-surface-secondary)',
+              borderTopColor: 'var(--color-primary)',
+              animation: 'navbarSpin 1s linear infinite'
+            }} />
+            
+            {showResetButton && (
+              <button 
+                onClick={handleResetSession}
+                style={{
+                  background: 'var(--color-surface-secondary)',
+                  border: 'none',
+                  padding: '0.75rem 1rem',
+                  borderRadius: 'var(--border-radius-md)',
+                  cursor: 'pointer',
+                  width: '100%',
+                  maxWidth: '200px',
+                  color: 'var(--color-text)'
+                }}
+              >
+                Oturumu Sıfırla
+              </button>
+            )}
+          </div>
+        ) : !user ? (
           <>
-            <MobileNavLink to="/auth/login">
+            <MobileNavLink to="/login">
               Giriş Yap
             </MobileNavLink>
-            <MobileNavLink to="/auth/register">
+            <MobileNavLink to="/signup">
               Kayıt Ol
             </MobileNavLink>
           </>
         ) : (
           <>
-            <MobileNavLink to="/user/profile">
+            <DisabledMobileNavLink>
               Profilim
-            </MobileNavLink>
-            <MobileNavLink to="/user/settings">
+            </DisabledMobileNavLink>
+            <DisabledMobileNavLink>
               Ayarlar
-            </MobileNavLink>
+            </DisabledMobileNavLink>
             <MobileNavLink to="/dashboard">
               Panelim
             </MobileNavLink>
@@ -573,4 +746,17 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;
+// Add keyframes for spinner animation
+const GlobalStyle = styled.div`
+  @keyframes navbarSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+export default () => (
+  <>
+    <GlobalStyle />
+    <Navbar />
+  </>
+);

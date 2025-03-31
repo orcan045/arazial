@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
-import appState from '../services/appState';
+import appState, { forceAuthRefresh } from '../services/appState';
 
 // Create auth context
 const AuthContext = createContext();
@@ -18,6 +18,20 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Loading timeout - prevents perpetual loading states
+  useEffect(() => {
+    // If loading persists too long, force reset it
+    const loadingTimeout = setTimeout(() => {
+      if (loading) {
+        console.error('Auth context loading timeout reached, forcing reset');
+        setLoading(false);
+        setError('Authentication timeout. Please refresh the page.');
+      }
+    }, 15000); // 15 seconds max
+    
+    return () => clearTimeout(loadingTimeout);
+  }, [loading]);
   
   // Subscribe to auth changes from centralized appState
   useEffect(() => {
@@ -69,6 +83,9 @@ export function AuthProvider({ children }) {
       
       if (error) throw error;
       
+      // Force immediate auth state refresh
+      await forceAuthRefresh();
+      
       return data;
     } catch (error) {
       console.error('Sign in error:', error);
@@ -92,7 +109,7 @@ export function AuthProvider({ children }) {
       
       if (error) throw error;
       
-      return data;
+      return { data };
     } catch (error) {
       console.error('Sign up error:', error);
       setError(error.message);
@@ -102,18 +119,42 @@ export function AuthProvider({ children }) {
     }
   };
   
-  // Sign out function
+  // Sign out function with better error handling
   const signOut = async () => {
     setError(null);
     
     try {
       setLoading(true);
+      
+      // First, clear local state to ensure UI updates immediately
+      setUser(null);
+      setProfile(null);
+      setIsAdmin(false);
+      
+      // Then try to sign out from Supabase
       const { error } = await supabase.auth.signOut();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Sign out Supabase error:', error);
+        // We still want to force auth refresh even on error
+      }
+      
+      // Always force refresh auth state, even if there was an error
+      await forceAuthRefresh();
+      
+      return { success: true };
     } catch (error) {
       console.error('Sign out error:', error);
       setError(error.message);
+      
+      // Try force refresh even on error
+      try {
+        await forceAuthRefresh();
+      } catch (refreshError) {
+        console.error('Error refreshing after sign out error:', refreshError);
+      }
+      
+      throw error;
     } finally {
       setLoading(false);
     }

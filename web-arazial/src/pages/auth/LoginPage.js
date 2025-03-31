@@ -131,7 +131,7 @@ const LoginPage = () => {
     
     try {
       await signIn(email, password);
-      navigate('/dashboard');
+      navigate('/');
     } catch (error) {
       console.error('Login error:', error);
     } finally {
