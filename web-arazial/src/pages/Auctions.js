@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { fetchAuctions } from '../services/auctionService';
+import { fetchAuctions, fetchNegotiations } from '../services/auctionService';
 import { supabase } from '../services/supabase';
 import appState from '../services/appState';
 import CountdownTimer from '../components/CountdownTimer';
@@ -204,43 +204,31 @@ const TabsContainer = styled.div`
   }
 `;
 
-const Tab = styled.button`
-  padding: 1rem 1.5rem;
+const SubTabsContainer = styled(TabsContainer)`
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+`;
+
+const TabButton = styled.button`
+  padding: 1rem 2rem;
   font-size: 1rem;
   font-weight: 600;
+  color: ${props => props.$isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)'};
   background: none;
   border: none;
-  color: ${props => props.active ? 'var(--color-primary)' : 'var(--color-text-secondary)'};
-  border-bottom: 3px solid ${props => props.active ? 'var(--color-primary)' : 'transparent'};
+  border-bottom: 2px solid ${props => props.$isActive ? 'var(--color-primary)' : 'transparent'};
   cursor: pointer;
-  transition: all 0.25s ease;
-  white-space: nowrap;
-  position: relative;
+  transition: all 0.2s ease;
   
   &:hover {
     color: var(--color-primary);
   }
-  
-  &:focus {
-    outline: none;
-  }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -3px;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background-color: var(--color-primary);
-    transform: scaleX(${props => props.active ? 1 : 0});
-    transform-origin: left;
-    transition: transform 0.3s ease;
-  }
-  
-  &:hover::after {
-    transform: scaleX(1);
-  }
+`;
+
+const SubTabButton = styled(TabButton)`
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
 `;
 
 const TabCount = styled.span`
@@ -250,8 +238,8 @@ const TabCount = styled.span`
   min-width: 24px;
   height: 24px;
   border-radius: 12px;
-  background-color: ${props => props.active ? 'var(--color-primary)' : 'rgba(0, 0, 0, 0.05)'};
-  color: ${props => props.active ? 'white' : 'var(--color-text-secondary)'};
+  background-color: ${props => props.$isActive ? 'var(--color-primary)' : 'rgba(0, 0, 0, 0.05)'};
+  color: ${props => props.$isActive ? 'white' : 'var(--color-text-secondary)'};
   font-size: 0.75rem;
   font-weight: 600;
   margin-left: 0.5rem;
@@ -1215,13 +1203,15 @@ const CityOption = styled.div`
 
 const Auctions = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('active');
-  const [auctions, setAuctions] = useState({
-    active: [],
-    upcoming: [],
-    past: []
+  const [listingType, setListingType] = useState('auction'); // 'auction' or 'offer'
+  const [auctionStatus, setAuctionStatus] = useState('active'); // 'active', 'upcoming', or 'ended'
+  const [listings, setListings] = useState([]);
+  const [filteredListings, setFilteredListings] = useState([]);
+  const [statusCounts, setStatusCounts] = useState({
+    active: 0,
+    upcoming: 0,
+    ended: 0
   });
-  const [filteredAuctions, setFilteredAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
@@ -1267,145 +1257,108 @@ const Auctions = () => {
   };
   
   // Function to load auctions
-  const loadAuctions = async (forceRefresh = false) => {
+  const loadListings = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      
-      // First get all auctions, passing the forceRefresh parameter
-      const { data, error } = await fetchAuctions(forceRefresh);
-      
-      if (error) throw error;
-      
-      // Add debug logging to see all auctions and their details
-      console.log('All auctions from database:', data);
-      
-      // Get the highest bid for each auction
-      const auctionsWithHighestBids = await Promise.all(
-        data.map(async (auction) => {
-          try {
-            // Fetch the highest bid for this auction
-            const { data: bids } = await supabase
-              .from('bids')
-              .select('amount')
-              .eq('auction_id', auction.id)
-              .order('amount', { ascending: false })
-              .limit(1);
-            
-            // If there's a highest bid, use it as the current price
-            if (bids && bids.length > 0) {
-              auction.highest_bid = bids[0].amount;
-            }
-            
-            // Add property type if it doesn't exist
-            if (!auction.property_type) {
-              auction.property_type = "Arsa";
-            }
-            
-          } catch (err) {
-            console.error(`Error fetching bids for auction ${auction.id}:`, err);
-          }
-          return auction;
-        })
-      );
-      
-      // Modify the filtering logic to ensure auctions appear in only one tab
-      // with a clear priority: active > upcoming > past
-      const now = new Date();
-      
-      // 1. First, filter active auctions - status is 'active' OR current time is within window
-      const active = auctionsWithHighestBids.filter(auction => {
-        const startTime = new Date(auction.start_time || auction.startTime);
-        const endTime = new Date(auction.end_time || auction.endTime);
-        const status = auction.status;
-        
-        // Either explicitly marked as active
-        if (status === 'active') return true;
-        
-        // OR current time is within auction window AND not marked as upcoming/ended
-        return status !== 'upcoming' && status !== 'ended' && 
-               now >= startTime && now <= endTime;
-      });
-      
-      // 2. Then upcoming auctions - those NOT in active that are either:
-      // - have status 'upcoming' OR 
-      // - start time is in the future
-      const activeIds = new Set(active.map(a => a.id));
-      const upcoming = auctionsWithHighestBids.filter(auction => {
-        // Skip if already in active tab
-        if (activeIds.has(auction.id)) return false;
-        
-        const startTime = new Date(auction.start_time || auction.startTime);
-        const status = auction.status;
-        
-        // Either explicitly marked as upcoming
-        if (status === 'upcoming') return true;
-        
-        // OR start time is in the future AND not marked as ended
-        return status !== 'ended' && now < startTime;
-      });
-      
-      // 3. Finally, past auctions - anything not in active or upcoming that:
-      // - has status 'ended' OR
-      // - current time is after end time
-      const upcomingIds = new Set(upcoming.map(a => a.id));
-      const past = auctionsWithHighestBids.filter(auction => {
-        // Skip if already in active or upcoming tabs
-        if (activeIds.has(auction.id) || upcomingIds.has(auction.id)) return false;
-        
-        const endTime = new Date(auction.end_time || auction.endTime);
-        const status = auction.status;
-        
-        // Either explicitly marked as ended
-        if (status === 'ended') return true;
-        
-        // OR current time is after end time
-        return now > endTime;
-      });
-      
-      const newAuctions = {
-        active,
-        upcoming,
-        past
-      };
-      
-      setAuctions(newAuctions);
-      applyFiltersAndSort(newAuctions[activeTab]);
       setError(null);
+
+      const { data, error } = listingType === 'auction' 
+        ? await fetchAuctions(forceRefresh)
+        : await fetchNegotiations(forceRefresh);
+
+      if (error) throw error;
+
+      if (listingType === 'auction') {
+        // Calculate counts for each status
+        const now = new Date();
+        const counts = {
+          active: 0,
+          upcoming: 0,
+          ended: 0
+        };
+
+        data.forEach(auction => {
+          const startTime = new Date(auction.start_time || auction.startTime);
+          const endTime = new Date(auction.end_time || auction.endTime);
+          
+          if (now >= startTime && now <= endTime) {
+            counts.active++;
+          } else if (now < startTime) {
+            counts.upcoming++;
+          } else {
+            counts.ended++;
+          }
+        });
+
+        setStatusCounts(counts);
+      }
+
+      setListings(data || []);
+      // For offer type, don't apply status filtering
+      if (listingType === 'auction') {
+        applyFiltersAndSort(data || []);
+      } else {
+        setFilteredListings(data || []);
+      }
     } catch (error) {
-      console.error('Error fetching auctions:', error);
-      setError('Açık arttırma verileri yüklenemedi. Lütfen daha sonra tekrar deneyin.');
+      console.error('Error loading listings:', error);
+      setError('Veriler yüklenirken bir hata oluştu. Lütfen sayfayı yenileyin.');
     } finally {
       setLoading(false);
     }
   };
   
+  // Function to filter auctions by status
+  const filterAuctionsByStatus = (auctions, status) => {
+    const now = new Date();
+    
+    return auctions.filter(auction => {
+      const startTime = new Date(auction.start_time || auction.startTime);
+      const endTime = new Date(auction.end_time || auction.endTime);
+      
+      switch (status) {
+        case 'active':
+          return now >= startTime && now <= endTime;
+        case 'upcoming':
+          return now < startTime;
+        case 'ended':
+          return now > endTime;
+        default:
+          return true;
+      }
+    });
+  };
+  
   // Function to apply filters and sorting
-  const applyFiltersAndSort = (auctionsList) => {
-    if (!auctionsList) return;
+  const applyFiltersAndSort = (listingsList) => {
+    if (!listingsList) return;
     
     setIsFiltering(true);
     
-    // Use setTimeout to ensure the filtering spinner shows up
     setTimeout(() => {
-      // First apply filters
-      let filtered = [...auctionsList];
+      // First filter by status if it's an auction
+      let filtered = [...listingsList];
       
+      if (listingType === 'auction') {
+        filtered = filterAuctionsByStatus(filtered, auctionStatus);
+      }
+
       // Filter by location text search
       if (filters.location) {
         const searchTerm = filters.location.toLowerCase();
-        filtered = filtered.filter(auction => 
-          auction.location && auction.location.toLowerCase().includes(searchTerm)
+        filtered = filtered.filter(listing => 
+          listing.location && listing.location.toLowerCase().includes(searchTerm)
         );
       }
       
       // Filter by cities - match any of the selected cities
       if (filters.cities && filters.cities.length > 0) {
-        filtered = filtered.filter(auction => {
-          if (!auction.location) return false;
+        filtered = filtered.filter(listing => {
+          if (!listing.location) return false;
           
           // Check if any of the selected cities match
           return filters.cities.some(city => 
-            auction.location.toLowerCase().includes(city.toLowerCase())
+            listing.location.toLowerCase().includes(city.toLowerCase())
           );
         });
       }
@@ -1413,8 +1366,8 @@ const Auctions = () => {
       // Filter by minimum price
       if (filters.minPrice) {
         const minPrice = parseFloat(filters.minPrice);
-        filtered = filtered.filter(auction => {
-          const price = auction.highest_bid || auction.final_price || auction.finalPrice || auction.start_price || auction.startPrice;
+        filtered = filtered.filter(listing => {
+          const price = listing.highest_bid || listing.final_price || listing.finalPrice || listing.start_price || listing.startPrice;
           return price >= minPrice;
         });
       }
@@ -1422,8 +1375,8 @@ const Auctions = () => {
       // Filter by maximum price
       if (filters.maxPrice) {
         const maxPrice = parseFloat(filters.maxPrice);
-        filtered = filtered.filter(auction => {
-          const price = auction.highest_bid || auction.final_price || auction.finalPrice || auction.start_price || auction.startPrice;
+        filtered = filtered.filter(listing => {
+          const price = listing.highest_bid || listing.final_price || listing.finalPrice || listing.start_price || listing.startPrice;
           return price <= maxPrice;
         });
       }
@@ -1461,11 +1414,11 @@ const Auctions = () => {
           // Default to newest
           filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       }
-      
-      setFilteredAuctions(filtered);
-      setCurrentPage(1); // Reset to first page when filters change
+
+      setFilteredListings(filtered);
+      setCurrentPage(1);
       setIsFiltering(false);
-    }, 400); // Small delay to show loading state for better UX
+    }, 400);
   };
   
   // Functions to handle city selection
@@ -1513,7 +1466,7 @@ const Auctions = () => {
   
   // Function to apply filters
   const applyFilters = () => {
-    applyFiltersAndSort(auctions[activeTab]);
+    applyFiltersAndSort(listings);
     setMobileFiltersOpen(false);
   };
   
@@ -1532,54 +1485,60 @@ const Auctions = () => {
     
     // Apply the cleared filters
     setTimeout(() => {
-      applyFiltersAndSort(auctions[activeTab]);
+      applyFiltersAndSort(listings);
     }, 0);
   };
   
   // Get paginated auctions
-  const getPaginatedAuctions = () => {
+  const getPaginatedListings = () => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return filteredAuctions.slice(startIndex, endIndex);
+    return filteredListings.slice(startIndex, endIndex);
   };
   
   // Get total pages
   const getTotalPages = () => {
-    return Math.ceil(filteredAuctions.length / itemsPerPage);
+    return Math.ceil(filteredListings.length / itemsPerPage);
   };
   
   // Add event listeners for page visibility changes
   useEffect(() => {
     // Initial data load
-    loadAuctions();
+    loadListings();
     
     // Subscribe to refresh events from the central system
     const unsubscribe = appState.onRefresh(() => {
       console.log("[Auctions] Received refresh notification");
-      loadAuctions();
+      loadListings();
     });
     
     // Clean up subscription when component unmounts
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [listingType]);
   
   // Effect to update filtered auctions when active tab or filters change
   useEffect(() => {
-    if (auctions[activeTab]) {
-      applyFiltersAndSort(auctions[activeTab]);
+    if (listings) {
+      // Only apply status filtering for auction type
+      if (listingType === 'auction') {
+        applyFiltersAndSort(listings);
+      } else {
+        // For offer type, just apply regular filters without status filtering
+        setFilteredListings(listings);
+      }
     }
-  }, [activeTab, sortOption]);
+  }, [sortOption, auctionStatus]); // Add auctionStatus back to dependencies
   
-  // Effect to update items per page when view mode changes
+  // Effect to reload listings when listing type changes
   useEffect(() => {
-    setCurrentPage(1); // Reset to first page when view mode changes
-  }, [viewMode]);
+    loadListings(true); // Force refresh when switching types
+  }, [listingType]);
   
   // Handle tab switch
   const handleTabSwitch = (tab) => {
-    setActiveTab(tab);
+    setListingType(tab);
   };
   
   const formatPrice = (price) => {
@@ -1692,17 +1651,17 @@ const Auctions = () => {
           <AuctionDetails>
             <AuctionPrice>
               {formatPrice(
-                activeTab === 'upcoming' 
+                listingType === 'upcoming' 
                   ? (auction.start_price || auction.startPrice)
                   : (auction.highest_bid || auction.final_price || auction.finalPrice || auction.start_price || auction.startPrice)
               )}
             </AuctionPrice>
-            <AuctionStatus status={activeTab}>
-              {getStatusIcon(activeTab)}
-              {getStatusText(activeTab)}
+            <AuctionStatus status={listingType}>
+              {getStatusIcon(listingType)}
+              {getStatusText(listingType)}
             </AuctionStatus>
           </AuctionDetails>
-          {activeTab === 'active' && (auction.end_time || auction.endTime) && (
+          {listingType === 'active' && (auction.end_time || auction.endTime) && (
             <CountdownWrapper>
               <CountdownTimer 
                 endTime={auction.end_time || auction.endTime || auction.end_date} 
@@ -1764,17 +1723,17 @@ const Auctions = () => {
           <ListItemPriceAndStatus>
             <AuctionPrice>
               {formatPrice(
-                activeTab === 'upcoming' 
+                listingType === 'upcoming' 
                   ? (auction.start_price || auction.startPrice)
                   : (auction.highest_bid || auction.final_price || auction.finalPrice || auction.start_price || auction.startPrice)
               )}
             </AuctionPrice>
-            <AuctionStatus status={activeTab}>
-              {getStatusIcon(activeTab)}
-              {getStatusText(activeTab)}
+            <AuctionStatus status={listingType}>
+              {getStatusIcon(listingType)}
+              {getStatusText(listingType)}
             </AuctionStatus>
           </ListItemPriceAndStatus>
-          {activeTab === 'active' && (auction.end_time || auction.endTime) && (
+          {listingType === 'active' && (auction.end_time || auction.endTime) && (
             <CountdownTimer 
               endTime={auction.end_time || auction.endTime || auction.end_date} 
               compact={true}
@@ -1808,7 +1767,7 @@ const Auctions = () => {
           </EmptyStateIcon>
           <EmptyStateTitle>Hata Oluştu</EmptyStateTitle>
           <EmptyStateMessage>{error}</EmptyStateMessage>
-          <RefreshButton onClick={() => loadAuctions(true)}>
+          <RefreshButton onClick={() => loadListings(true)}>
             <RefreshIcon />
             Yenile
           </RefreshButton>
@@ -1826,9 +1785,9 @@ const Auctions = () => {
       );
     }
     
-    const paginatedAuctions = getPaginatedAuctions();
+    const paginatedAuctions = getPaginatedListings();
     
-    if (filteredAuctions.length === 0) {
+    if (filteredListings.length === 0) {
       return (
         <EmptyState>
           <EmptyStateIcon>
@@ -1839,9 +1798,9 @@ const Auctions = () => {
           <EmptyStateTitle>
             {Object.values(filters).some(value => value && value !== 'all') 
               ? 'Arama Kriterlerine Uygun İhale Bulunamadı'
-              : activeTab === 'active' 
+              : listingType === 'active' 
                 ? 'Aktif İhale Bulunamadı' 
-                : activeTab === 'upcoming' 
+                : listingType === 'upcoming' 
                   ? 'Yaklaşan İhale Bulunamadı' 
                   : 'Geçmiş İhale Bulunamadı'
             }
@@ -1849,9 +1808,9 @@ const Auctions = () => {
           <EmptyStateMessage>
             {Object.values(filters).some(value => value && value !== 'all')
               ? 'Lütfen farklı filtreleme kriterleri ile tekrar deneyin veya tüm filtreleri temizleyin.'
-              : activeTab === 'active' 
+              : listingType === 'active' 
                 ? 'Şu anda aktif bir ihale bulunmamaktadır. Lütfen daha sonra tekrar kontrol edin.' 
-                : activeTab === 'upcoming' 
+                : listingType === 'upcoming' 
                   ? 'Şu anda planlanmış yaklaşan ihale bulunmamaktadır.' 
                   : 'Geçmiş ihaleler bulunamadı.'
             }
@@ -2146,52 +2105,74 @@ const Auctions = () => {
   return (
     <PageContainer>
       <PageHeader>
-          <div>
-            <PageTitle>Arsa İhaleleri</PageTitle>
-            <PageDescription>
-              Türkiye genelinde mevcut arsa ihalelerini görüntüleyin ve tekliflerinizi verin.
-            </PageDescription>
-        </div>
+        <PageTitle>Arazi İlanları</PageTitle>
+        <PageDescription>
+          {listingType === 'auction' 
+            ? 'Açık arttırma ile satışa sunulan arazileri inceleyin ve teklifinizi verin.'
+            : 'Pazarlık usulü ile satışa sunulan arazileri inceleyin ve iletişime geçin.'}
+        </PageDescription>
       </PageHeader>
-      
-      <TabsContainer>
-        <Tab 
-          active={activeTab === 'active'} 
-          onClick={() => handleTabSwitch('active')}
-        >
-          Aktif İhaleler
-          {auctions.active.length > 0 && (
-            <TabCount active={activeTab === 'active'}>{auctions.active.length}</TabCount>
-          )}
-        </Tab>
-        <Tab 
-          active={activeTab === 'upcoming'} 
-          onClick={() => handleTabSwitch('upcoming')}
-        >
-          Yaklaşan İhaleler
-          {auctions.upcoming.length > 0 && (
-            <TabCount active={activeTab === 'upcoming'}>{auctions.upcoming.length}</TabCount>
-          )}
-        </Tab>
-        <Tab 
-          active={activeTab === 'past'} 
-          onClick={() => handleTabSwitch('past')}
-        >
-          Sonlanan İhaleler
-          {auctions.past.length > 0 && (
-            <TabCount active={activeTab === 'past'}>{auctions.past.length}</TabCount>
-          )}
-        </Tab>
-      </TabsContainer>
-      
+
       <FiltersAndContentWrapper>
-        {/* Desktop Filter Panel */}
-        <DesktopFilterContainer>
-          {renderFilterPanel()}
-        </DesktopFilterContainer>
+        {renderFilterPanel()}
         
         <MainContentArea>
           <ContentHeader>
+            <div>
+              <TabsContainer>
+                <TabButton
+                  $isActive={listingType === 'auction'}
+                  onClick={() => setListingType('auction')}
+                >
+                  Açık Arttırmalar
+                </TabButton>
+                <TabButton
+                  $isActive={listingType === 'offer'}
+                  onClick={() => setListingType('offer')}
+                >
+                  Pazarlığa Başla
+                </TabButton>
+              </TabsContainer>
+
+              {listingType === 'auction' && (
+                <SubTabsContainer>
+                  <SubTabButton
+                    $isActive={auctionStatus === 'active'}
+                    onClick={() => setAuctionStatus('active')}
+                  >
+                    Aktif İhaleler
+                    {statusCounts.active > 0 && (
+                      <TabCount $isActive={auctionStatus === 'active'}>
+                        {statusCounts.active}
+                      </TabCount>
+                    )}
+                  </SubTabButton>
+                  <SubTabButton
+                    $isActive={auctionStatus === 'upcoming'}
+                    onClick={() => setAuctionStatus('upcoming')}
+                  >
+                    Yaklaşan İhaleler
+                    {statusCounts.upcoming > 0 && (
+                      <TabCount $isActive={auctionStatus === 'upcoming'}>
+                        {statusCounts.upcoming}
+                      </TabCount>
+                    )}
+                  </SubTabButton>
+                  <SubTabButton
+                    $isActive={auctionStatus === 'ended'}
+                    onClick={() => setAuctionStatus('ended')}
+                  >
+                    Sonlanan İhaleler
+                    {statusCounts.ended > 0 && (
+                      <TabCount $isActive={auctionStatus === 'ended'}>
+                        {statusCounts.ended}
+                      </TabCount>
+                    )}
+                  </SubTabButton>
+                </SubTabsContainer>
+              )}
+            </div>
+
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <MobileFilterButton onClick={() => setMobileFiltersOpen(true)}>
                 <FilterIcon />
@@ -2204,48 +2185,12 @@ const Auctions = () => {
               </MobileFilterButton>
               
               <ResultsCount>
-                {filteredAuctions.length} sonuç bulundu
+                {filteredListings.length} sonuç bulundu
               </ResultsCount>
             </div>
-            
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <SortContainer>
-                <SortLabel>Sırala:</SortLabel>
-                <SortSelect 
-                  value={sortOption}
-                  onChange={e => setSortOption(e.target.value)}
-                >
-                  <option value="newest">En Yeni</option>
-                  <option value="oldest">En Eski</option>
-                  <option value="price_high_low">Fiyat (Yüksek-Düşük)</option>
-                  <option value="price_low_high">Fiyat (Düşük-Yüksek)</option>
-                  <option value="end_date">Bitiş Tarihine Göre</option>
-                </SortSelect>
-              </SortContainer>
-              
-              <ViewToggle>
-                <ViewToggleButton 
-                  active={viewMode === 'grid'} 
-                  onClick={() => setViewMode('grid')}
-                >
-                  <GridViewIcon />
-                </ViewToggleButton>
-                <ViewToggleButton 
-                  active={viewMode === 'list'} 
-                  onClick={() => setViewMode('list')}
-                >
-                  <ListViewIcon />
-                </ViewToggleButton>
-              </ViewToggle>
-              
-              <RefreshButton onClick={() => loadAuctions(true)}>
-                <RefreshIcon />
-                Yenile
-              </RefreshButton>
-            </div>
           </ContentHeader>
-      
-      {renderAuctions()}
+
+          {renderAuctions()}
         </MainContentArea>
       </FiltersAndContentWrapper>
       

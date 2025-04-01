@@ -9,7 +9,6 @@ import { supabase } from './services/supabase';
 import Layout from './components/layout/Layout';
 
 // Pages
-import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
@@ -314,15 +313,6 @@ const App = () => {
           {/* Public Routes */}
           <Route 
             path="/" 
-            element={
-              <Layout>
-                <LandingPage />
-              </Layout>
-            } 
-          />
-          
-          <Route 
-            path="/auctions" 
             element={
               <Layout>
                 <Auctions />

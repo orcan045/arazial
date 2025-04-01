@@ -175,10 +175,14 @@ class AppStateManager {
       
       this.pendingRefresh = true;
       console.log('[AppState] Refreshing auth state');
+      let sessionError = null; // Keep track of session error
       
       try {
-        // Direct approach with error handling
         const { data, error } = await supabase.auth.getSession();
+        
+        // Mark as initialized *immediately* after getSession completes
+        this.auth.initialized = true; 
+        sessionError = error; // Store error, if any
         
         if (error) {
           console.error('[AppState] Error getting session:', error.message);
@@ -195,13 +199,14 @@ class AppStateManager {
           this.isAuthed = true;
           
           try {
-            // Fetch user profile
+            // Fetch user profile (fetchUserProfile handles its own errors/defaults)
             await this.fetchUserProfile(data.session.user.id);
           } catch (profileError) {
-            console.error('[AppState] Error fetching profile:', profileError);
-            // Set default profile
-            this.auth.profile = { role: 'user' };
-            this.auth.isAdmin = false;
+            // This catch might be redundant if fetchUserProfile handles all internally
+            console.error('[AppState] Error fetching profile during refresh:', profileError);
+            // Ensure profile/admin are reset if fetch fails critically here
+            this.auth.profile = this.auth.profile || { role: 'user' }; // Keep potentially defaulted profile
+            this.auth.isAdmin = this.auth.isAdmin || false; 
           }
         } else {
           // No valid session found
@@ -213,38 +218,34 @@ class AppStateManager {
           this.isAuthed = false;
         }
         
-        // Always mark as initialized regardless of outcome
-        this.auth.initialized = true;
-        
-        // Update refresh timestamp
-        this.lastRefreshTime = Date.now();
-        
-        // Always notify listeners about state changes
-        this.notifyListeners('auth');
-        this.notifyListeners('refresh');
-        
-        console.log('[AppState] Auth refresh complete');
-      } catch (error) {
-        // Handle unexpected errors
-        console.error('[AppState] Critical error in auth refresh:', error);
-        
-        // Reset auth state on fatal errors
+      } catch (criticalError) { // Catch critical errors during getSession/profile fetch
+        console.error('[AppState] Critical error during auth refresh process:', criticalError);
+        // Ensure initialized is true even on critical failure
+        this.auth.initialized = true; 
+        // Reset auth state
         this.auth.user = null;
         this.auth.session = null;
         this.auth.profile = null;
         this.auth.isAdmin = false;
         this.isAuthed = false;
-        
-        // Still mark as initialized to avoid UI hanging
-        this.auth.initialized = true;
-        
-        // Notify listeners even on error
-        this.notifyListeners('auth');
-        this.notifyListeners('refresh');
+        sessionError = criticalError; // Store the error
       }
-    } finally {
+      
+      // Update refresh timestamp regardless of outcome
+      this.lastRefreshTime = Date.now();
+      
+      // Notify listeners *after* all state updates are done
+      this.notifyListeners('auth');
+      this.notifyListeners('refresh'); // Notify refresh listeners too
+      
+      console.log('[AppState] Auth refresh complete. Session error:', sessionError ? sessionError.message : 'None');
+      
+    } finally { // Outer finally
       // Always clear pending flag
       this.pendingRefresh = false;
+      // Ensure loading state reflects final status (initialized=true, pending=false)
+      // Notify again in case state changed between previous notify and finally
+      this.notifyListeners('auth'); 
     }
   }
   

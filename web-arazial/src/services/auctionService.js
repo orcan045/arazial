@@ -3,6 +3,7 @@ import appState from './appState';
 
 // Cache constants
 const CACHE_KEY = 'auctions_cache';
+const NEGOTIATIONS_CACHE_KEY = 'negotiations_cache';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const BACKGROUND_REFRESH_INTERVAL = 30 * 1000; // 30 seconds
 
@@ -60,14 +61,14 @@ export const setupBackgroundRefresh = () => {
 /**
  * Safely read from local storage with error handling
  */
-function safeGetFromCache() {
+function safeGetFromCache(cacheKey) {
   try {
-    const cachedData = localStorage.getItem(CACHE_KEY);
+    const cachedData = localStorage.getItem(cacheKey);
     if (cachedData) {
       return JSON.parse(cachedData);
     }
   } catch (error) {
-    console.warn('[AuctionService] Error reading from cache:', error);
+    console.warn(`[AuctionService] Error reading from cache: ${cacheKey}:`, error);
   }
   return null;
 }
@@ -75,33 +76,34 @@ function safeGetFromCache() {
 /**
  * Safely write to local storage with error handling
  */
-function safeSetToCache(data) {
+function safeSetToCache(cacheKey, data) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({
+    localStorage.setItem(cacheKey, JSON.stringify({
       data,
       timestamp: Date.now()
     }));
   } catch (error) {
-    console.warn('[AuctionService] Error writing to cache:', error);
+    console.warn(`[AuctionService] Error writing to cache: ${cacheKey}:`, error);
   }
 }
 
 /**
- * Fetch all auctions with improved error handling and caching
+ * Fetch all auctions or negotiations with improved error handling and caching
  * @param {boolean} forceRefresh - Whether to force a refresh from the database
  * @param {boolean} updateLastRefresh - Whether to update the last refresh time
+ * @param {string} type - Type of listings to fetch ('auction' or 'negotiation')
  * @returns {Promise<{data: Array, error: Error}>}
  */
-export const fetchAuctions = async (forceRefresh = false, updateLastRefresh = true) => {
+export const fetchListings = async (type = 'auction', forceRefresh = false, updateLastRefresh = true) => {
   try {
-    // Use a local cache with a timestamp to prevent excessive refetching
+    const cacheKey = type === 'auction' ? CACHE_KEY : NEGOTIATIONS_CACHE_KEY;
     const now = Date.now();
     
     // Check if we have cached data and it's fresh enough
     if (!forceRefresh) {
-      const cachedData = safeGetFromCache();
+      const cachedData = safeGetFromCache(cacheKey);
       if (cachedData?.data && cachedData?.timestamp && (now - cachedData.timestamp < CACHE_DURATION)) {
-        console.log('[AuctionService] Using cached auction data');
+        console.log(`[ListingService] Using cached ${type} data`);
         return { data: cachedData.data, error: null };
       }
     }
@@ -112,34 +114,36 @@ export const fetchAuctions = async (forceRefresh = false, updateLastRefresh = tr
         const { data, error } = await supabase
           .from('auctions')
           .select('*')
+          .eq('listing_type', type)
           .order('created_at');
         
         if (error) throw error;
         
-        // Process the auctions for consistent field names
-        const processedAuctions = data.map(auction => {
+        // Process the listings for consistent field names
+        const processedListings = data.map(listing => {
           return {
-            ...auction,
+            ...listing,
             // Ensure consistent naming
-            startPrice: auction.start_price || auction.startPrice,
-            minIncrement: auction.min_increment || auction.minIncrement,
-            startTime: auction.start_time || auction.startTime,
-            endTime: auction.end_time || auction.endTime,
-            finalPrice: auction.final_price || auction.finalPrice,
+            startPrice: listing.start_price || listing.startPrice,
+            minIncrement: listing.min_increment || listing.minIncrement,
+            offerIncrement: listing.offer_increment || listing.offerIncrement,
+            startTime: listing.start_time || listing.startTime,
+            endTime: listing.end_time || listing.endTime,
+            finalPrice: listing.final_price || listing.finalPrice,
             // Ensure images is always an array
-            images: Array.isArray(auction.images) ? auction.images : []
+            images: Array.isArray(listing.images) ? listing.images : []
           };
         });
         
         // Cache the results
-        safeSetToCache(processedAuctions);
+        safeSetToCache(cacheKey, processedListings);
         
         if (updateLastRefresh) {
           lastRefreshTime = now;
         }
         
-        console.log('[AuctionService] Fetched fresh auctions:', processedAuctions.length);
-        resolve({ data: processedAuctions, error: null });
+        console.log(`[ListingService] Fetched fresh ${type}s:`, processedListings.length);
+        resolve({ data: processedListings, error: null });
       } catch (error) {
         reject(error);
       }
@@ -153,17 +157,27 @@ export const fetchAuctions = async (forceRefresh = false, updateLastRefresh = tr
     // Race between the fetch and the timeout
     return await Promise.race([fetchPromise, timeoutPromise]);
   } catch (error) {
-    console.error('[AuctionService] Error fetching auctions:', error);
+    console.error(`[ListingService] Error fetching ${type}s:`, error);
     
     // Try to return cached data even if it's stale, rather than nothing
-    const cachedData = safeGetFromCache();
+    const cachedData = safeGetFromCache(type === 'auction' ? CACHE_KEY : NEGOTIATIONS_CACHE_KEY);
     if (cachedData?.data) {
-      console.log('[AuctionService] Returning stale cached data due to fetch error');
+      console.log(`[ListingService] Returning stale cached data due to fetch error`);
       return { data: cachedData.data, error: null };
     }
     
     return { data: null, error };
   }
+};
+
+// Update the existing fetchAuctions to use the new function
+export const fetchAuctions = async (forceRefresh = false, updateLastRefresh = true) => {
+  return fetchListings('auction', forceRefresh, updateLastRefresh);
+};
+
+// Add a new function for negotiations
+export const fetchNegotiations = async (forceRefresh = false, updateLastRefresh = true) => {
+  return fetchListings('offer', forceRefresh, updateLastRefresh);
 };
 
 /**
@@ -243,7 +257,7 @@ export const getFilteredAuctions = async () => {
 export const getAuctionById = async (auctionId) => {
   try {
     // First check if we have cached data
-    const cachedData = safeGetFromCache();
+    const cachedData = safeGetFromCache(CACHE_KEY);
     if (cachedData?.data && Array.isArray(cachedData.data) && 
         (Date.now() - cachedData.timestamp < CACHE_DURATION)) {
       const cachedAuction = cachedData.data.find(auction => auction.id === auctionId);
