@@ -44,13 +44,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       return;
     }
     
-    if (_tabController.index == 0) {
-      // For active auctions, we want fresh data more often
-      _loadAuctions(forceRefresh: true);
-    } else {
-      // For upcoming and past, we can use cached data if available
-      _loadAuctions(forceRefresh: false);
-    }
+    // Refresh data when switching tabs
+    _loadAuctions(forceRefresh: true);
   }
   
   @override
@@ -243,23 +238,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Tab(text: 'Aktif'),
+                    const Flexible(child: Tab(text: 'Aktif')),
                     provider.Consumer<AuctionProvider>(
                       builder: (context, provider, _) {
                         if (provider.activeAuctions.isEmpty) return const SizedBox.shrink();
                         
                         return Container(
-                          margin: const EdgeInsets.only(left: 6),
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                          margin: const EdgeInsets.only(left: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                           decoration: BoxDecoration(
                             color: theme.colorScheme.primary,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             provider.activeAuctions.length.toString(),
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 12,
+                              fontSize: 10,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -268,38 +263,56 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ),
                   ],
                 ),
-                // Upcoming tab with counter badge
+                // Açık Arttırma tab 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Tab(text: 'Yaklaşan'),
-                    provider.Consumer<AuctionProvider>(
-                      builder: (context, provider, _) {
-                        if (provider.upcomingAuctions.isEmpty) return const SizedBox.shrink();
-                        
-                        return Container(
-                          margin: const EdgeInsets.only(left: 6),
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.tertiary,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            provider.upcomingAuctions.length.toString(),
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                    const Flexible(
+                      child: Tab(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.gavel, size: 12),
+                            SizedBox(width: 2),
+                            Flexible(
+                              child: Text(
+                                'Açık Arttırma',
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
                             ),
-                          ),
-                        );
-                      },
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                // Past auctions tab
-                const Tab(text: 'Geçmiş'),
+                // Pazarlık tab
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Flexible(
+                      child: Tab(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.handshake_outlined, size: 12),
+                            SizedBox(width: 2),
+                            Flexible(
+                              child: Text(
+                                'Pazarlık',
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -483,8 +496,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         controller: _tabController,
                         children: [
                           _buildAuctionsList(auctionProvider.activeAuctions, 'active'),
-                          _buildAuctionsList(auctionProvider.upcomingAuctions, 'upcoming'),
-                          _buildAuctionsList(auctionProvider.pastAuctions, 'past'),
+                          _buildAuctionsList(auctionProvider.auctions.where((a) => a.isAuctionType).toList(), 'auction'),
+                          _buildAuctionsList(auctionProvider.auctions.where((a) => a.isOfferType).toList(), 'offer'),
                         ],
                       ),
                     ),
@@ -596,24 +609,24 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               // Different icons for different tab types
               Icon(
                 type == 'active' 
-                  ? Icons.gavel_rounded
-                  : type == 'upcoming' 
-                    ? Icons.event_available_rounded
-                    : Icons.history_rounded,
+                  ? Icons.local_fire_department_rounded
+                  : type == 'auction' 
+                    ? Icons.gavel_rounded
+                    : Icons.handshake_outlined,
                 size: 56,
                 color: type == 'active' 
                   ? theme.colorScheme.primary.withOpacity(0.3)
-                  : type == 'upcoming'
-                    ? theme.colorScheme.tertiary.withOpacity(0.3)
-                    : theme.colorScheme.onBackground.withOpacity(0.2),
+                  : type == 'auction'
+                    ? theme.colorScheme.secondary.withOpacity(0.3)
+                    : Colors.deepPurple.withOpacity(0.3),
               ),
               const SizedBox(height: 16),
               Text(
                 type == 'active' 
-                  ? 'Aktif İhale Bulunamadı'
-                  : type == 'upcoming'
-                    ? 'Yaklaşan İhale Bulunamadı'
-                    : 'Geçmiş İhale Bulunamadı',
+                  ? 'Aktif İlan Bulunamadı'
+                  : type == 'auction'
+                    ? 'Açık Arttırma Bulunamadı'
+                    : 'Pazarlık İlanı Bulunamadı',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -623,10 +636,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               const SizedBox(height: 12),
               Text(
                 type == 'active' 
-                  ? 'Şu anda aktif bir ihale bulunmamaktadır.'
-                  : type == 'upcoming'
-                    ? 'Yaklaşan ihale takvimi henüz açıklanmamıştır.'
-                    : 'Geçmiş ihale kaydı bulunamadı.',
+                  ? 'Şu anda aktif bir ilan bulunmamaktadır.'
+                  : type == 'auction'
+                    ? 'Açık arttırma tipi ilan bulunamadı.'
+                    : 'Pazarlıklı ilan bulunamadı.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.5),
                 ),
@@ -678,11 +691,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   
   Widget _buildAuctionItem(BuildContext ctx, int i) {
     final auctionProvider = provider.Provider.of<AuctionProvider>(context, listen: false);
-    final auctionsList = _tabController.index == 0 
-        ? auctionProvider.activeAuctions
-        : _tabController.index == 1
-            ? auctionProvider.upcomingAuctions
-            : auctionProvider.pastAuctions;
+    final List<Auction> auctionsList;
+    
+    switch (_tabController.index) {
+      case 0: // Aktif
+        auctionsList = auctionProvider.activeAuctions;
+        break;
+      case 1: // Açık Arttırma
+        auctionsList = auctionProvider.auctions.where((a) => a.isAuctionType).toList();
+        break;
+      case 2: // Pazarlık
+        auctionsList = auctionProvider.auctions.where((a) => a.isOfferType).toList();
+        break;
+      default:
+        auctionsList = auctionProvider.activeAuctions;
+    }
     
     if (i >= auctionsList.length) return const SizedBox.shrink();
     

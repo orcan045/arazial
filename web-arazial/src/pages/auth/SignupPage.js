@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import { useAuth } from '../../context/AuthContext';
+import PhoneSignup from '../../components/auth/PhoneSignup';
 
 const AuthContainer = styled.div`
   max-width: 400px;
@@ -137,7 +138,30 @@ const ErrorText = styled.div`
   font-size: 0.75rem;
 `;
 
+const TabContainer = styled.div`
+  display: flex;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+`;
+
+const Tab = styled.button`
+  flex: 1;
+  padding: 0.75rem 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid ${props => props.active ? 'var(--color-primary)' : 'transparent'};
+  color: ${props => props.active ? 'var(--color-primary)' : 'var(--color-text-secondary)'};
+  font-weight: ${props => props.active ? '600' : '400'};
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    color: var(--color-primary);
+  }
+`;
+
 const SignupPage = () => {
+  const [activeTab, setActiveTab] = useState('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -238,7 +262,25 @@ const SignupPage = () => {
       </AuthHeader>
       
       {error && <ErrorMessage>{error}</ErrorMessage>}
-      {success && (
+      
+      {!success && (
+        <TabContainer>
+          <Tab 
+            active={activeTab === 'email'} 
+            onClick={() => setActiveTab('email')}
+          >
+            E-posta ile
+          </Tab>
+          <Tab 
+            active={activeTab === 'phone'} 
+            onClick={() => setActiveTab('phone')}
+          >
+            Telefon ile
+          </Tab>
+        </TabContainer>
+      )}
+      
+      {success && activeTab === 'email' && (
         <SuccessMessage>
           {userData?.user && userData.user.confirmed_at ? (
             'Kayıt işlemi başarılı! Otomatik olarak giriş yapılıyor ve ana sayfaya yönlendiriliyorsunuz...'
@@ -252,7 +294,7 @@ const SignupPage = () => {
         </SuccessMessage>
       )}
       
-      {!success && (
+      {!success && activeTab === 'email' && (
         <AuthForm onSubmit={handleSubmit}>
           <Input
             id="email"
@@ -299,6 +341,10 @@ const SignupPage = () => {
             {isLoading ? 'Kayıt Yapılıyor...' : 'Kayıt Ol'}
           </Button>
         </AuthForm>
+      )}
+      
+      {activeTab === 'phone' && (
+        <PhoneSignup />
       )}
       
       <FormFooter>

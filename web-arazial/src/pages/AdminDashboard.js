@@ -8,7 +8,11 @@ import Button from '../components/ui/Button';
 const PageContainer = styled.div`
   max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
+  
+  @media (min-width: 768px) {
+    padding: 2rem;
+  }
 `;
 
 const PageHeader = styled.div`
@@ -45,9 +49,17 @@ const DashboardGrid = styled.div`
 const Sidebar = styled.div`
   background-color: white;
   border-radius: var(--border-radius-lg);
-  padding: 1.5rem;
+  padding: 1rem;
   box-shadow: var(--shadow-sm);
   height: fit-content;
+  
+  @media (min-width: 768px) {
+    padding: 1.5rem;
+  }
+  
+  @media (max-width: 1023px) {
+    margin-bottom: 2rem;
+  }
 `;
 
 const SidebarButton = styled.button`
@@ -79,8 +91,13 @@ const SidebarButton = styled.button`
 const ContentArea = styled.div`
   background-color: white;
   border-radius: var(--border-radius-lg);
-  padding: 2rem;
+  padding: 1rem;
   box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+  
+  @media (min-width: 768px) {
+    padding: 2rem;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -89,13 +106,27 @@ const SectionTitle = styled.h2`
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--color-border);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  
+  @media (min-width: 768px) {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+`;
+
+const TableContainer = styled.div`
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 `;
 
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
+  min-width: 650px;
 `;
 
 const TableHead = styled.thead`
@@ -120,12 +151,21 @@ const TableHeader = styled.th`
 const TableCell = styled.td`
   padding: 1rem;
   font-size: 0.875rem;
+  
+  &:last-child {
+    @media (max-width: 767px) {
+      display: flex;
+      flex-wrap: wrap;
+    }
+  }
 `;
 
 const ActionButton = styled(Button)`
   margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
   padding: 0.375rem 0.75rem;
   font-size: 0.75rem;
+  white-space: nowrap;
   
   &:last-child {
     margin-right: 0;
@@ -165,6 +205,10 @@ const StatusBadge = styled.span`
 `;
 
 const FormGroup = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+const FormRow = styled.div`
   margin-bottom: 1.5rem;
 `;
 
@@ -213,16 +257,6 @@ const Select = styled.select`
   &:focus {
     outline: none;
     border-color: var(--color-primary);
-  }
-`;
-
-const FormRow = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-  
-  @media (min-width: 768px) {
-    grid-template-columns: 1fr 1fr;
   }
 `;
 
@@ -298,61 +332,50 @@ const StatCard = ({ title, value, icon }) => {
 };
 
 const ImageUploadContainer = styled.div`
-  margin-bottom: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
   
-  .preview-area {
+  @media (max-width: 767px) {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+`;
+
+const ImagePreview = styled.div`
+  position: relative;
+  width: 100%;
+  height: 150px;
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+  background-color: var(--color-background);
+  
+  @media (max-width: 767px) {
+    height: 120px;
+  }
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  button {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background-color: rgba(255, 255, 255, 0.8);
+    border: none;
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-  }
-  
-  .image-preview {
-    position: relative;
-    width: 100px;
-    height: 100px;
-    border-radius: var(--border-radius-md);
-    overflow: hidden;
-    
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    
-    .remove-btn {
-      position: absolute;
-      top: 0.25rem;
-      right: 0.25rem;
-      background: rgba(0, 0, 0, 0.5);
-      color: white;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 0.875rem;
-    }
-  }
-  
-  input[type="file"] {
-    display: none;
-  }
-  
-  .upload-btn {
-    display: inline-flex;
     align-items: center;
-    padding: 0.5rem 1rem;
-    background-color: var(--color-background);
-    border: 1px dashed var(--color-border);
-    border-radius: var(--border-radius-md);
+    justify-content: center;
     cursor: pointer;
-    font-size: 0.875rem;
     
-    svg {
-      margin-right: 0.5rem;
+    &:hover {
+      background-color: white;
     }
   }
 `;
@@ -469,6 +492,41 @@ const turkishCities = [
   'Nevşehir', 'Niğde', 'Ordu', 'Osmaniye', 'Rize', 'Sakarya', 'Samsun', 'Siirt', 'Sinop', 'Sivas',
   'Şanlıurfa', 'Şırnak', 'Tekirdağ', 'Tokat', 'Trabzon', 'Tunceli', 'Uşak', 'Van', 'Yalova', 'Yozgat', 'Zonguldak'
 ];
+
+// This is a styled component to handle the dashboard grid item layout
+const GridContainer = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  
+  @media (min-width: 1024px) {
+    grid-template-columns: ${props => props.columns || '1fr'};
+  }
+`;
+
+const StatCardGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+`;
+
+const CardContainer = styled.div`
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-md);
+  padding: 1.5rem;
+`;
+
+const FormGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  
+  @media (min-width: 768px) {
+    grid-template-columns: 1fr 1fr;
+  }
+`;
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -1637,12 +1695,7 @@ function AdminDashboard() {
               <div>Yükleniyor...</div>
             ) : (
               <>
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
-                  gap: '1.5rem',
-                  marginBottom: '2rem'
-                }}>
+                <StatCardGrid>
                   <StatCard 
                     title="Toplam İhale"
                     value={auctions.length}
@@ -1687,109 +1740,102 @@ function AdminDashboard() {
                       </svg>
                     }
                   />
-                </div>
+                </StatCardGrid>
                 
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: '2fr 1fr', 
-                  gap: '1.5rem',
-                  marginBottom: '2rem'
-                }}>
-                  <div style={{ 
-                    backgroundColor: 'var(--color-background)',
-                    borderRadius: 'var(--border-radius-md)',
-                    padding: '1.5rem'
-                  }}>
+                <GridContainer columns="2fr 1fr">
+                  <CardContainer>
                     <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>Son İhaleler</h3>
                     
                     {auctions.length > 0 ? (
-                      <Table>
-                        <TableHead>
-                          <TableRow>
-                            <TableHeader style={{ width: '60px' }}></TableHeader>
-                            <TableHeader>Başlık</TableHeader>
-                            <TableHeader>Başlangıç Fiyatı</TableHeader>
-                            <TableHeader>Başlangıç Tarihi</TableHeader>
-                            <TableHeader>Bitiş Tarihi</TableHeader>
-                            <TableHeader>Durum</TableHeader>
-                            <TableHeader>İşlemler</TableHeader>
-                          </TableRow>
-                        </TableHead>
-                        <tbody>
-                          {auctions.map(auction => (
-                            <TableRow key={auction.id}>
-                              <TableCell>
-                                {auction.images && auction.images.length > 0 ? (
-                                  <div style={{ 
-                                    width: '50px', 
-                                    height: '50px', 
-                                    borderRadius: 'var(--border-radius-sm)',
-                                    overflow: 'hidden' 
-                                  }}>
-                                    <img 
-                                      src={auction.images[0]} 
-                                      alt={auction.title} 
-                                      style={{ 
-                                        width: '100%', 
-                                        height: '100%', 
-                                        objectFit: 'cover'
-                                      }} 
-                                    />
-                                  </div>
-                                ) : (
-                                  <div style={{ 
-                                    width: '50px', 
-                                    height: '50px', 
-                                    backgroundColor: 'var(--color-background)',
-                                    borderRadius: 'var(--border-radius-sm)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                  }}>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                                      <circle cx="8.5" cy="8.5" r="1.5" />
-                                      <polyline points="21 15 16 10 5 21" />
-                                    </svg>
-                                  </div>
-                                )}
-                              </TableCell>
-                              <TableCell>{auction.title}</TableCell>
-                              <TableCell>{auction.starting_price?.toLocaleString('tr-TR')} TL</TableCell>
-                              <TableCell>{formatDate(auction.start_date)}</TableCell>
-                              <TableCell>{formatDate(auction.end_date)}</TableCell>
-                              <TableCell>
-                                <StatusBadge status={auction.status}>
-                                  {getStatusText(auction.status)}
-                                </StatusBadge>
-                              </TableCell>
-                              <TableCell>
-                                <ActionButton 
-                                  variant="primary" 
-                                  size="small"
-                                  onClick={() => handleViewAuctionDetails(auction.id)}
-                                >
-                                  Detaylar
-                                </ActionButton>
-                                <ActionButton 
-                                  variant="secondary" 
-                                  size="small"
-                                  onClick={() => navigate(`/auctions/${auction.id}`)}
-                                >
-                                  Görüntüle
-                                </ActionButton>
-                                <ActionButton 
-                                  variant="danger" 
-                                  size="small"
-                                  onClick={() => handleDeleteAuction(auction.id)}
-                                >
-                                  Sil
-                                </ActionButton>
-                              </TableCell>
+                      <TableContainer>
+                        <Table>
+                          <TableHead>
+                            <TableRow>
+                              <TableHeader style={{ width: '60px' }}></TableHeader>
+                              <TableHeader>Başlık</TableHeader>
+                              <TableHeader>Başlangıç Fiyatı</TableHeader>
+                              <TableHeader>Başlangıç Tarihi</TableHeader>
+                              <TableHeader>Bitiş Tarihi</TableHeader>
+                              <TableHeader>Durum</TableHeader>
+                              <TableHeader>İşlemler</TableHeader>
                             </TableRow>
-                          ))}
-                        </tbody>
-                      </Table>
+                          </TableHead>
+                          <tbody>
+                            {auctions.map(auction => (
+                              <TableRow key={auction.id}>
+                                <TableCell>
+                                  {auction.images && auction.images.length > 0 ? (
+                                    <div style={{ 
+                                      width: '50px', 
+                                      height: '50px', 
+                                      borderRadius: 'var(--border-radius-sm)',
+                                      overflow: 'hidden' 
+                                    }}>
+                                      <img 
+                                        src={auction.images[0]} 
+                                        alt={auction.title} 
+                                        style={{ 
+                                          width: '100%', 
+                                          height: '100%', 
+                                          objectFit: 'cover'
+                                        }} 
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div style={{ 
+                                      width: '50px', 
+                                      height: '50px', 
+                                      backgroundColor: 'var(--color-background)',
+                                      borderRadius: 'var(--border-radius-sm)',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center'
+                                    }}>
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                        <circle cx="8.5" cy="8.5" r="1.5" />
+                                        <polyline points="21 15 16 10 5 21" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                </TableCell>
+                                <TableCell>{auction.title}</TableCell>
+                                <TableCell>{auction.starting_price?.toLocaleString('tr-TR')} TL</TableCell>
+                                <TableCell>{formatDate(auction.start_date)}</TableCell>
+                                <TableCell>{formatDate(auction.end_date)}</TableCell>
+                                <TableCell>
+                                  <StatusBadge status={auction.status}>
+                                    {getStatusText(auction.status)}
+                                  </StatusBadge>
+                                </TableCell>
+                                <TableCell>
+                                  <ActionButton 
+                                    variant="primary" 
+                                    size="small"
+                                    onClick={() => handleViewAuctionDetails(auction.id)}
+                                  >
+                                    Detaylar
+                                  </ActionButton>
+                                  <ActionButton 
+                                    variant="secondary" 
+                                    size="small"
+                                    onClick={() => navigate(`/auctions/${auction.id}`)}
+                                  >
+                                    Görüntüle
+                                  </ActionButton>
+                                  <ActionButton 
+                                    variant="danger" 
+                                    size="small"
+                                    onClick={() => handleDeleteAuction(auction.id)}
+                                  >
+                                    Sil
+                                  </ActionButton>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </tbody>
+                        </Table>
+                      </TableContainer>
                     ) : (
                       <p>Henüz oluşturulmuş ihale bulunmamaktadır.</p>
                     )}
@@ -1803,13 +1849,9 @@ function AdminDashboard() {
                         Tüm İhaleleri Görüntüle
                       </Button>
                     </div>
-                  </div>
+                  </CardContainer>
                   
-                  <div style={{ 
-                    backgroundColor: 'var(--color-background)',
-                    borderRadius: 'var(--border-radius-md)',
-                    padding: '1.5rem'
-                  }}>
+                  <CardContainer>
                     <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>İhale Durumu</h3>
                     
                     <div style={{ margin: '1.5rem 0' }}>
@@ -1858,60 +1900,58 @@ function AdminDashboard() {
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  </CardContainer>
+                </GridContainer>
                 
-                <div style={{ 
-                  backgroundColor: 'var(--color-background)',
-                  borderRadius: 'var(--border-radius-md)',
-                  padding: '1.5rem'
-                }}>
+                <CardContainer>
                   <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>Son Kullanıcılar</h3>
                   
                   {users.length > 0 ? (
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableHeader>Ad Soyad</TableHeader>
-                          <TableHeader>E-posta</TableHeader>
-                          <TableHeader>Telefon</TableHeader>
-                          <TableHeader>Rol</TableHeader>
-                          <TableHeader>Kayıt Tarihi</TableHeader>
-                          <TableHeader>İşlemler</TableHeader>
-                        </TableRow>
-                      </TableHead>
-                      <tbody>
-                        {users.map(user => (
-                          <TableRow key={user.id}>
-                            <TableCell>{user.full_name || '-'}</TableCell>
-                            <TableCell>{user.email}</TableCell>
-                            <TableCell>{user.phone || '-'}</TableCell>
-                            <TableCell>
-                              <StatusBadge status={user.role === 'admin' ? 'active' : 'completed'}>
-                                {user.role === 'admin' ? 'Yönetici' : 'Kullanıcı'}
-                              </StatusBadge>
-                            </TableCell>
-                            <TableCell>{formatDate(user.created_at)}</TableCell>
-                            <TableCell>
-                              <ActionButton 
-                                variant="primary" 
-                                size="small"
-                                onClick={() => handleViewUserDetails(user.id)}
-                              >
-                                Detaylar
-                              </ActionButton>
-                              <ActionButton 
-                                variant={user.role === 'admin' ? 'secondary' : 'primary'} 
-                                size="small"
-                                onClick={() => handleUpdateUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
-                              >
-                                {user.role === 'admin' ? 'Kullanıcı Yap' : 'Yönetici Yap'}
-                              </ActionButton>
-                            </TableCell>
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableHeader>Ad Soyad</TableHeader>
+                            <TableHeader>E-posta</TableHeader>
+                            <TableHeader>Telefon</TableHeader>
+                            <TableHeader>Rol</TableHeader>
+                            <TableHeader>Kayıt Tarihi</TableHeader>
+                            <TableHeader>İşlemler</TableHeader>
                           </TableRow>
-                        ))}
-                      </tbody>
-                    </Table>
+                        </TableHead>
+                        <tbody>
+                          {users.map(user => (
+                            <TableRow key={user.id}>
+                              <TableCell>{user.full_name || '-'}</TableCell>
+                              <TableCell>{user.email}</TableCell>
+                              <TableCell>{user.phone || '-'}</TableCell>
+                              <TableCell>
+                                <StatusBadge status={user.role === 'admin' ? 'active' : 'completed'}>
+                                  {user.role === 'admin' ? 'Yönetici' : 'Kullanıcı'}
+                                </StatusBadge>
+                              </TableCell>
+                              <TableCell>{formatDate(user.created_at)}</TableCell>
+                              <TableCell>
+                                <ActionButton 
+                                  variant="primary" 
+                                  size="small"
+                                  onClick={() => handleViewUserDetails(user.id)}
+                                >
+                                  Detaylar
+                                </ActionButton>
+                                <ActionButton 
+                                  variant={user.role === 'admin' ? 'secondary' : 'primary'} 
+                                  size="small"
+                                  onClick={() => handleUpdateUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
+                                >
+                                  {user.role === 'admin' ? 'Kullanıcı Yap' : 'Yönetici Yap'}
+                                </ActionButton>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </TableContainer>
                   ) : (
                     <p>Henüz kayıtlı kullanıcı bulunmamaktadır.</p>
                   )}
@@ -1925,7 +1965,7 @@ function AdminDashboard() {
                       Tüm Kullanıcıları Görüntüle
                     </Button>
                   </div>
-                </div>
+                </CardContainer>
               </>
             )}
           </>
@@ -1947,93 +1987,95 @@ function AdminDashboard() {
                   placeholder="İhale ara..." 
                 />
                 
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableHeader style={{ width: '60px' }}></TableHeader>
-                      <TableHeader>Başlık</TableHeader>
-                      <TableHeader>Başlangıç Fiyatı</TableHeader>
-                      <TableHeader>Başlangıç Tarihi</TableHeader>
-                      <TableHeader>Bitiş Tarihi</TableHeader>
-                      <TableHeader>Durum</TableHeader>
-                      <TableHeader>İşlemler</TableHeader>
-                    </TableRow>
-                  </TableHead>
-                  <tbody>
-                    {auctions.map(auction => (
-                      <TableRow key={auction.id}>
-                        <TableCell>
-                          {auction.images && auction.images.length > 0 ? (
-                            <div style={{ 
-                              width: '50px', 
-                              height: '50px', 
-                              borderRadius: 'var(--border-radius-sm)',
-                              overflow: 'hidden' 
-                            }}>
-                              <img 
-                                src={auction.images[0]} 
-                                alt={auction.title} 
-                                style={{ 
-                                  width: '100%', 
-                                  height: '100%', 
-                                  objectFit: 'cover'
-                                }} 
-                              />
-                            </div>
-                          ) : (
-                            <div style={{ 
-                              width: '50px', 
-                              height: '50px', 
-                              backgroundColor: 'var(--color-background)',
-                              borderRadius: 'var(--border-radius-sm)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}>
-                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                                <circle cx="8.5" cy="8.5" r="1.5" />
-                                <polyline points="21 15 16 10 5 21" />
-                              </svg>
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>{auction.title}</TableCell>
-                        <TableCell>{auction.starting_price?.toLocaleString('tr-TR')} TL</TableCell>
-                        <TableCell>{formatDate(auction.start_date)}</TableCell>
-                        <TableCell>{formatDate(auction.end_date)}</TableCell>
-                        <TableCell>
-                          <StatusBadge status={auction.status}>
-                            {getStatusText(auction.status)}
-                          </StatusBadge>
-                        </TableCell>
-                        <TableCell>
-                          <ActionButton 
-                            variant="primary" 
-                            size="small"
-                            onClick={() => handleViewAuctionDetails(auction.id)}
-                          >
-                            Detaylar
-                          </ActionButton>
-                          <ActionButton 
-                            variant="secondary" 
-                            size="small"
-                            onClick={() => navigate(`/auctions/${auction.id}`)}
-                          >
-                            Görüntüle
-                          </ActionButton>
-                          <ActionButton 
-                            variant="danger" 
-                            size="small"
-                            onClick={() => handleDeleteAuction(auction.id)}
-                          >
-                            Sil
-                          </ActionButton>
-                        </TableCell>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeader style={{ width: '60px' }}></TableHeader>
+                        <TableHeader>Başlık</TableHeader>
+                        <TableHeader>Başlangıç Fiyatı</TableHeader>
+                        <TableHeader>Başlangıç Tarihi</TableHeader>
+                        <TableHeader>Bitiş Tarihi</TableHeader>
+                        <TableHeader>Durum</TableHeader>
+                        <TableHeader>İşlemler</TableHeader>
                       </TableRow>
-                    ))}
-                  </tbody>
-                </Table>
+                    </TableHead>
+                    <tbody>
+                      {auctions.map(auction => (
+                        <TableRow key={auction.id}>
+                          <TableCell>
+                            {auction.images && auction.images.length > 0 ? (
+                              <div style={{ 
+                                width: '50px', 
+                                height: '50px', 
+                                borderRadius: 'var(--border-radius-sm)',
+                                overflow: 'hidden' 
+                              }}>
+                                <img 
+                                  src={auction.images[0]} 
+                                  alt={auction.title} 
+                                  style={{ 
+                                    width: '100%', 
+                                    height: '100%', 
+                                    objectFit: 'cover'
+                                  }} 
+                                />
+                              </div>
+                            ) : (
+                              <div style={{ 
+                                width: '50px', 
+                                height: '50px', 
+                                backgroundColor: 'var(--color-background)',
+                                borderRadius: 'var(--border-radius-sm)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                  <circle cx="8.5" cy="8.5" r="1.5" />
+                                  <polyline points="21 15 16 10 5 21" />
+                                </svg>
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>{auction.title}</TableCell>
+                          <TableCell>{auction.starting_price?.toLocaleString('tr-TR')} TL</TableCell>
+                          <TableCell>{formatDate(auction.start_date)}</TableCell>
+                          <TableCell>{formatDate(auction.end_date)}</TableCell>
+                          <TableCell>
+                            <StatusBadge status={auction.status}>
+                              {getStatusText(auction.status)}
+                            </StatusBadge>
+                          </TableCell>
+                          <TableCell>
+                            <ActionButton 
+                              variant="primary" 
+                              size="small"
+                              onClick={() => handleViewAuctionDetails(auction.id)}
+                            >
+                              Detaylar
+                            </ActionButton>
+                            <ActionButton 
+                              variant="secondary" 
+                              size="small"
+                              onClick={() => navigate(`/auctions/${auction.id}`)}
+                            >
+                              Görüntüle
+                            </ActionButton>
+                            <ActionButton 
+                              variant="danger" 
+                              size="small"
+                              onClick={() => handleDeleteAuction(auction.id)}
+                            >
+                              Sil
+                            </ActionButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </tbody>
+                  </Table>
+                </TableContainer>
               </>
             ) : (
               <EmptyState>
@@ -2053,40 +2095,37 @@ function AdminDashboard() {
           <>
             <SectionTitle>
               Yeni İhale Oluştur
-              <Button 
-                variant="secondary" 
-                onClick={() => handleSectionChange('auctions')}
-              >
-                İhalelere Dön
-              </Button>
+              <Button variant="secondary" onClick={() => handleSectionChange('auctions')}>İhalelere Dön</Button>
             </SectionTitle>
             
             <form onSubmit={handleCreateAuction}>
-              <FormGroup>
-                <Label htmlFor="listingType">İlan Tipi</Label>
-                <Select 
-                  id="listingType" 
-                  name="listingType"
-                  value={auctionForm.listingType}
-                  onChange={handleAuctionFormChange}
-                  required
-                >
-                  <option value="auction">Açık Arttırma</option>
-                  <option value="offer">Pazarlığa Başla</option>
-                </Select>
-              </FormGroup>
-
-              <FormGroup>
-                <Label htmlFor="title">İlan Başlığı</Label>
-                <Input 
-                  type="text" 
-                  id="title" 
-                  name="title"
-                  value={auctionForm.title}
-                  onChange={handleAuctionFormChange}
-                  required
-                />
-              </FormGroup>
+              <FormGrid>
+                <FormGroup>
+                  <Label htmlFor="title">İhale Başlığı</Label>
+                  <Input 
+                    type="text" 
+                    id="title" 
+                    name="title"
+                    value={auctionForm.title}
+                    onChange={handleAuctionFormChange}
+                    required
+                  />
+                </FormGroup>
+                
+                <FormGroup>
+                  <Label htmlFor="listingType">İlan Tipi</Label>
+                  <Select 
+                    id="listingType" 
+                    name="listingType"
+                    value={auctionForm.listingType}
+                    onChange={handleAuctionFormChange}
+                  >
+                    <option value="auction">İhale (Açık Artırma)</option>
+                    <option value="fixed">Sabit Fiyat</option>
+                    <option value="offer">Teklif Usulü</option>
+                  </Select>
+                </FormGroup>
+              </FormGrid>
               
               <FormGroup>
                 <Label htmlFor="description">İlan Açıklaması</Label>
@@ -2282,86 +2321,88 @@ function AdminDashboard() {
                   placeholder="Kullanıcı ara..." 
                 />
                 
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableHeader style={{ width: '60px' }}></TableHeader>
-                      <TableHeader>Ad Soyad</TableHeader>
-                      <TableHeader>E-posta</TableHeader>
-                      <TableHeader>Telefon</TableHeader>
-                      <TableHeader>Rol</TableHeader>
-                      <TableHeader>Kayıt Tarihi</TableHeader>
-                      <TableHeader>İşlemler</TableHeader>
-                    </TableRow>
-                  </TableHead>
-                  <tbody>
-                    {users.map(user => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          {user.images && user.images.length > 0 ? (
-                            <div style={{ 
-                              width: '50px', 
-                              height: '50px', 
-                              borderRadius: 'var(--border-radius-sm)',
-                              overflow: 'hidden' 
-                            }}>
-                              <img 
-                                src={user.images[0]} 
-                                alt={user.full_name} 
-                                style={{ 
-                                  width: '100%', 
-                                  height: '100%', 
-                                  objectFit: 'cover'
-                                }} 
-                              />
-                            </div>
-                          ) : (
-                            <div style={{ 
-                              width: '50px', 
-                              height: '50px', 
-                              backgroundColor: 'var(--color-background)',
-                              borderRadius: 'var(--border-radius-sm)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}>
-                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                                <circle cx="8.5" cy="8.5" r="1.5" />
-                                <polyline points="21 15 16 10 5 21" />
-                              </svg>
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell>{user.full_name || '-'}</TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.phone || '-'}</TableCell>
-                        <TableCell>
-                          <StatusBadge status={user.role === 'admin' ? 'active' : 'completed'}>
-                            {user.role === 'admin' ? 'Yönetici' : 'Kullanıcı'}
-                          </StatusBadge>
-                        </TableCell>
-                        <TableCell>{formatDate(user.created_at)}</TableCell>
-                        <TableCell>
-                          <ActionButton 
-                            variant="primary" 
-                            size="small"
-                            onClick={() => handleViewUserDetails(user.id)}
-                          >
-                            Detaylar
-                          </ActionButton>
-                          <ActionButton 
-                            variant={user.role === 'admin' ? 'secondary' : 'primary'} 
-                            size="small"
-                            onClick={() => handleUpdateUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
-                          >
-                            {user.role === 'admin' ? 'Kullanıcı Yap' : 'Yönetici Yap'}
-                          </ActionButton>
-                        </TableCell>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeader style={{ width: '60px' }}></TableHeader>
+                        <TableHeader>Ad Soyad</TableHeader>
+                        <TableHeader>E-posta</TableHeader>
+                        <TableHeader>Telefon</TableHeader>
+                        <TableHeader>Rol</TableHeader>
+                        <TableHeader>Kayıt Tarihi</TableHeader>
+                        <TableHeader>İşlemler</TableHeader>
                       </TableRow>
-                    ))}
-                  </tbody>
-                </Table>
+                    </TableHead>
+                    <tbody>
+                      {users.map(user => (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            {user.images && user.images.length > 0 ? (
+                              <div style={{ 
+                                width: '50px', 
+                                height: '50px', 
+                                borderRadius: 'var(--border-radius-sm)',
+                                overflow: 'hidden' 
+                              }}>
+                                <img 
+                                  src={user.images[0]} 
+                                  alt={user.full_name} 
+                                  style={{ 
+                                    width: '100%', 
+                                    height: '100%', 
+                                    objectFit: 'cover'
+                                  }} 
+                                />
+                              </div>
+                            ) : (
+                              <div style={{ 
+                                width: '50px', 
+                                height: '50px', 
+                                backgroundColor: 'var(--color-background)',
+                                borderRadius: 'var(--border-radius-sm)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                  <circle cx="8.5" cy="8.5" r="1.5" />
+                                  <polyline points="21 15 16 10 5 21" />
+                                </svg>
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>{user.full_name || '-'}</TableCell>
+                          <TableCell>{user.email}</TableCell>
+                          <TableCell>{user.phone || '-'}</TableCell>
+                          <TableCell>
+                            <StatusBadge status={user.role === 'admin' ? 'active' : 'completed'}>
+                              {user.role === 'admin' ? 'Yönetici' : 'Kullanıcı'}
+                            </StatusBadge>
+                          </TableCell>
+                          <TableCell>{formatDate(user.created_at)}</TableCell>
+                          <TableCell>
+                            <ActionButton 
+                              variant="primary" 
+                              size="small"
+                              onClick={() => handleViewUserDetails(user.id)}
+                            >
+                              Detaylar
+                            </ActionButton>
+                            <ActionButton 
+                              variant={user.role === 'admin' ? 'secondary' : 'primary'} 
+                              size="small"
+                              onClick={() => handleUpdateUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
+                            >
+                              {user.role === 'admin' ? 'Kullanıcı Yap' : 'Yönetici Yap'}
+                            </ActionButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </tbody>
+                  </Table>
+                </TableContainer>
               </>
             ) : (
               <EmptyState>
@@ -2547,30 +2588,32 @@ function AdminDashboard() {
                   </div>
                   
                   {userBids.length > 0 ? (
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableHeader>İhale</TableHeader>
-                          <TableHeader>Teklif Tutarı</TableHeader>
-                          <TableHeader>Teklif Tarihi</TableHeader>
-                          <TableHeader>Durum</TableHeader>
-                        </TableRow>
-                      </TableHead>
-                      <tbody>
-                        {userBids.map(bid => (
-                          <TableRow key={bid.id}>
-                            <TableCell>{bid.auctions?.title || '-'}</TableCell>
-                            <TableCell>{bid.amount?.toLocaleString('tr-TR')} TL</TableCell>
-                            <TableCell>{formatDate(bid.created_at)}</TableCell>
-                            <TableCell>
-                              <StatusBadge status={bid.is_winning ? 'active' : 'completed'}>
-                                {bid.is_winning ? 'Kazanan Teklif' : 'Normal Teklif'}
-                              </StatusBadge>
-                            </TableCell>
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableHeader>İhale</TableHeader>
+                            <TableHeader>Teklif Tutarı</TableHeader>
+                            <TableHeader>Teklif Tarihi</TableHeader>
+                            <TableHeader>Durum</TableHeader>
                           </TableRow>
-                        ))}
-                      </tbody>
-                    </Table>
+                        </TableHead>
+                        <tbody>
+                          {userBids.map(bid => (
+                            <TableRow key={bid.id}>
+                              <TableCell>{bid.auctions?.title || '-'}</TableCell>
+                              <TableCell>{bid.amount?.toLocaleString('tr-TR')} TL</TableCell>
+                              <TableCell>{formatDate(bid.created_at)}</TableCell>
+                              <TableCell>
+                                <StatusBadge status={bid.is_winning ? 'active' : 'completed'}>
+                                  {bid.is_winning ? 'Kazanan Teklif' : 'Normal Teklif'}
+                                </StatusBadge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </TableContainer>
                   ) : (
                     <p>Kullanıcının henüz teklifi bulunmamaktadır.</p>
                   )}
@@ -2583,32 +2626,34 @@ function AdminDashboard() {
                   </div>
                   
                   {userPayments.length > 0 ? (
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableHeader>İhale</TableHeader>
-                          <TableHeader>Tutar</TableHeader>
-                          <TableHeader>Açıklama</TableHeader>
-                          <TableHeader>Ödeme Tarihi</TableHeader>
-                          <TableHeader>Durum</TableHeader>
-                        </TableRow>
-                      </TableHead>
-                      <tbody>
-                        {userPayments.map(payment => (
-                          <TableRow key={payment.id}>
-                            <TableCell>{payment.auctions?.title || '-'}</TableCell>
-                            <TableCell>{payment.amount?.toLocaleString('tr-TR')} TL</TableCell>
-                            <TableCell>{payment.description || '-'}</TableCell>
-                            <TableCell>{formatDate(payment.created_at)}</TableCell>
-                            <TableCell>
-                              <StatusBadge status={payment.status === 'completed' ? 'active' : 'upcoming'}>
-                                {payment.status === 'completed' ? 'Tamamlandı' : 'Beklemede'}
-                              </StatusBadge>
-                            </TableCell>
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableHeader>İhale</TableHeader>
+                            <TableHeader>Tutar</TableHeader>
+                            <TableHeader>Açıklama</TableHeader>
+                            <TableHeader>Ödeme Tarihi</TableHeader>
+                            <TableHeader>Durum</TableHeader>
                           </TableRow>
-                        ))}
-                      </tbody>
-                    </Table>
+                        </TableHead>
+                        <tbody>
+                          {userPayments.map(payment => (
+                            <TableRow key={payment.id}>
+                              <TableCell>{payment.auctions?.title || '-'}</TableCell>
+                              <TableCell>{payment.amount?.toLocaleString('tr-TR')} TL</TableCell>
+                              <TableCell>{payment.description || '-'}</TableCell>
+                              <TableCell>{formatDate(payment.created_at)}</TableCell>
+                              <TableCell>
+                                <StatusBadge status={payment.status === 'completed' ? 'active' : 'upcoming'}>
+                                  {payment.status === 'completed' ? 'Tamamlandı' : 'Beklemede'}
+                                </StatusBadge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </TableContainer>
                   ) : (
                     <p>Kullanıcının henüz ödeme kaydı bulunmamaktadır.</p>
                   )}
@@ -2741,32 +2786,34 @@ function AdminDashboard() {
                   </div>
                   
                   {bids.length > 0 ? (
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableHeader>Kullanıcı</TableHeader>
-                          <TableHeader>E-posta</TableHeader>
-                          <TableHeader>Teklif Tutarı</TableHeader>
-                          <TableHeader>Teklif Tarihi</TableHeader>
-                          <TableHeader>Durum</TableHeader>
-                        </TableRow>
-                      </TableHead>
-                      <tbody>
-                        {bids.map(bid => (
-                          <TableRow key={bid.id}>
-                            <TableCell>{bid.profiles?.full_name || 'İsimsiz'}</TableCell>
-                            <TableCell>{bid.profiles?.email || '-'}</TableCell>
-                            <TableCell>{bid.amount?.toLocaleString('tr-TR')} TL</TableCell>
-                            <TableCell>{formatDate(bid.created_at)}</TableCell>
-                            <TableCell>
-                              <StatusBadge status={bid.is_winning ? 'active' : 'completed'}>
-                                {bid.is_winning ? 'Kazanan Teklif' : 'Normal Teklif'}
-                              </StatusBadge>
-                            </TableCell>
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableHeader>Kullanıcı</TableHeader>
+                            <TableHeader>E-posta</TableHeader>
+                            <TableHeader>Teklif Tutarı</TableHeader>
+                            <TableHeader>Teklif Tarihi</TableHeader>
+                            <TableHeader>Durum</TableHeader>
                           </TableRow>
-                        ))}
-                      </tbody>
-                    </Table>
+                        </TableHead>
+                        <tbody>
+                          {bids.map(bid => (
+                            <TableRow key={bid.id}>
+                              <TableCell>{bid.profiles?.full_name || 'İsimsiz'}</TableCell>
+                              <TableCell>{bid.profiles?.email || '-'}</TableCell>
+                              <TableCell>{bid.amount?.toLocaleString('tr-TR')} TL</TableCell>
+                              <TableCell>{formatDate(bid.created_at)}</TableCell>
+                              <TableCell>
+                                <StatusBadge status={bid.is_winning ? 'active' : 'completed'}>
+                                  {bid.is_winning ? 'Kazanan Teklif' : 'Normal Teklif'}
+                                </StatusBadge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </TableContainer>
                   ) : (
                     <p>Henüz teklif veren bulunmamaktadır.</p>
                   )}
@@ -2786,39 +2833,41 @@ function AdminDashboard() {
                   </div>
                   
                   {payments.length > 0 ? (
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableHeader>Kullanıcı</TableHeader>
-                          <TableHeader>E-posta</TableHeader>
-                          <TableHeader>Tutar</TableHeader>
-                          <TableHeader>Açıklama</TableHeader>
-                          <TableHeader>Ödeme Tarihi</TableHeader>
-                          <TableHeader>Durum</TableHeader>
-                        </TableRow>
-                      </TableHead>
-                      <tbody>
-                        {payments.map(payment => (
-                          <TableRow key={payment.id}>
-                            <TableCell>{payment.profiles?.full_name || 'İsimsiz'}</TableCell>
-                            <TableCell>{payment.profiles?.email || '-'}</TableCell>
-                            <TableCell>{payment.amount?.toLocaleString('tr-TR')} TL</TableCell>
-                            <TableCell>{payment.description || '-'}</TableCell>
-                            <TableCell>{formatDate(payment.created_at)}</TableCell>
-                            <TableCell>
-                              <StatusBadge status={
-                                payment.status === 'completed' ? 'active' : 
-                                payment.status === 'canceled' ? 'completed' : 
-                                'upcoming'
-                              }>
-                                {payment.status === 'completed' ? 'Tamamlandı' : 
-                                 payment.status === 'pending' ? 'Beklemede' : 'İptal Edildi'}
-                              </StatusBadge>
-                            </TableCell>
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableHeader>Kullanıcı</TableHeader>
+                            <TableHeader>E-posta</TableHeader>
+                            <TableHeader>Tutar</TableHeader>
+                            <TableHeader>Açıklama</TableHeader>
+                            <TableHeader>Ödeme Tarihi</TableHeader>
+                            <TableHeader>Durum</TableHeader>
                           </TableRow>
-                        ))}
-                      </tbody>
-                    </Table>
+                        </TableHead>
+                        <tbody>
+                          {payments.map(payment => (
+                            <TableRow key={payment.id}>
+                              <TableCell>{payment.profiles?.full_name || 'İsimsiz'}</TableCell>
+                              <TableCell>{payment.profiles?.email || '-'}</TableCell>
+                              <TableCell>{payment.amount?.toLocaleString('tr-TR')} TL</TableCell>
+                              <TableCell>{payment.description || '-'}</TableCell>
+                              <TableCell>{formatDate(payment.created_at)}</TableCell>
+                              <TableCell>
+                                <StatusBadge status={
+                                  payment.status === 'completed' ? 'active' : 
+                                  payment.status === 'canceled' ? 'completed' : 
+                                  'upcoming'
+                                }>
+                                  {payment.status === 'completed' ? 'Tamamlandı' : 
+                                   payment.status === 'pending' ? 'Beklemede' : 'İptal Edildi'}
+                                </StatusBadge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </TableContainer>
                   ) : (
                     <p>Henüz ödeme kaydı bulunmamaktadır.</p>
                   )}
@@ -2832,7 +2881,7 @@ function AdminDashboard() {
                         </div>
                         {/* ... (Keep Existing Bids Table Logic) ... */}
                          {bids.length > 0 ? (
-                            <Table>
+                            <TableContainer>
                                 {/* ... bids table headers ... */} 
                                 <tbody>
                                 {bids.map(bid => (
@@ -2841,7 +2890,7 @@ function AdminDashboard() {
                                     </TableRow>
                                 ))}
                                 </tbody>
-                            </Table>
+                            </TableContainer>
                         ) : (
                             <p>Henüz teklif veren bulunmamaktadır.</p>
                         )}
@@ -2854,55 +2903,57 @@ function AdminDashboard() {
                             <h3 style={{ fontSize: '1.125rem' }}>Gelen Teklifler (Pazarlık)</h3>
                         </div>
                         {selectedAuctionOffers.length > 0 ? (
-                            <Table>
-                                <TableHead>
-                                    <TableRow>
-                                        <TableHeader>Kullanıcı</TableHeader>
-                                        <TableHeader>Teklif Tutarı</TableHeader>
-                                        <TableHeader>Teklif Tarihi</TableHeader>
-                                        <TableHeader>Durum</TableHeader>
-                                        <TableHeader>İşlemler</TableHeader>
-                                    </TableRow>
-                                </TableHead>
-                                <tbody>
-                                    {selectedAuctionOffers.map(offer => (
-                                        <TableRow key={offer.id}>
-                                            <TableCell>{offer.profiles?.full_name || 'İsimsiz'} ({offer.profiles?.email || '-'})</TableCell>
-                                            <TableCell>{formatPrice(offer.amount)}</TableCell>
-                                            <TableCell>{formatDate(offer.created_at)}</TableCell>
-                                            <TableCell>
-                                                <StatusBadge status={offer.status}> 
-                                                    {offer.status === 'pending' ? 'Beklemede' : 
-                                                     offer.status === 'accepted' ? 'Kabul Edildi' : 'Reddedildi'}
-                                                </StatusBadge>
-                                            </TableCell>
-                                            <TableCell>
-                                                {offer.status === 'pending' && (
-                                                    <>
-                                                        <ActionButton 
-                                                            variant="success" 
-                                                            size="small"
-                                                            onClick={() => handleAcceptOffer(offer.id)}
-                                                            disabled={loading} // Disable buttons during action
-                                                        >
-                                                            Kabul Et
-                                                        </ActionButton>
-                                                        <ActionButton 
-                                                            variant="danger" 
-                                                            size="small"
-                                                            onClick={() => handleRejectOffer(offer.id)}
-                                                            disabled={loading}
-                                                        >
-                                                            Reddet
-                                                        </ActionButton>
-                                                    </>
-                                                )}
-                                                {offer.status !== 'pending' && '-'} 
-                                            </TableCell>
+                            <TableContainer>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableHeader>Kullanıcı</TableHeader>
+                                            <TableHeader>Teklif Tutarı</TableHeader>
+                                            <TableHeader>Teklif Tarihi</TableHeader>
+                                            <TableHeader>Durum</TableHeader>
+                                            <TableHeader>İşlemler</TableHeader>
                                         </TableRow>
-                                    ))}
-                                </tbody>
-                            </Table>
+                                    </TableHead>
+                                    <tbody>
+                                        {selectedAuctionOffers.map(offer => (
+                                            <TableRow key={offer.id}>
+                                                <TableCell>{offer.profiles?.full_name || 'İsimsiz'} ({offer.profiles?.email || '-'})</TableCell>
+                                                <TableCell>{formatPrice(offer.amount)}</TableCell>
+                                                <TableCell>{formatDate(offer.created_at)}</TableCell>
+                                                <TableCell>
+                                                    <StatusBadge status={offer.status}> 
+                                                        {offer.status === 'pending' ? 'Beklemede' : 
+                                                         offer.status === 'accepted' ? 'Kabul Edildi' : 'Reddedildi'}
+                                                    </StatusBadge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {offer.status === 'pending' && (
+                                                        <>
+                                                            <ActionButton 
+                                                                variant="success" 
+                                                                size="small"
+                                                                onClick={() => handleAcceptOffer(offer.id)}
+                                                                disabled={loading} // Disable buttons during action
+                                                            >
+                                                                Kabul Et
+                                                            </ActionButton>
+                                                            <ActionButton 
+                                                                variant="danger" 
+                                                                size="small"
+                                                                onClick={() => handleRejectOffer(offer.id)}
+                                                                disabled={loading}
+                                                            >
+                                                                Reddet
+                                                            </ActionButton>
+                                                        </>
+                                                    )}
+                                                    {offer.status !== 'pending' && '-'} 
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </tbody>
+                                </Table>
+                            </TableContainer>
                         ) : (
                             <p>Bu ilan için henüz teklif gelmemiştir.</p>
                         )}
@@ -3218,68 +3269,70 @@ function AdminDashboard() {
                   />
                 </div>
                 
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableHeader>İhale</TableHeader>
-                      <TableHeader>Kullanıcı</TableHeader>
-                      <TableHeader>Tutar</TableHeader>
-                      <TableHeader>Ödeme Tarihi</TableHeader>
-                      <TableHeader>Durum</TableHeader>
-                      <TableHeader>İşlemler</TableHeader>
-                    </TableRow>
-                  </TableHead>
-                  <tbody>
-                    {payments.map(payment => (
-                      <TableRow key={payment.id}>
-                        <TableCell>{payment.auctions?.title || payment.auction_name || '-'}</TableCell>
-                        <TableCell>{
-                          (payment.profiles?.full_name && payment.profiles?.email) 
-                            ? `${payment.profiles.full_name} (${payment.profiles.email})`
-                            : payment.profiles?.full_name || payment.profiles?.email || payment.user_name || '-'
-                        }</TableCell>
-                        <TableCell>{payment.amount?.toLocaleString('tr-TR')} TL</TableCell>
-                        <TableCell>{formatDate(payment.created_at)}</TableCell>
-                        <TableCell>
-                          <StatusBadge status={
-                            payment.status === 'completed' ? 'active' : 
-                            payment.status === 'canceled' ? 'completed' : 
-                            'upcoming'
-                          }>
-                            {payment.status === 'completed' ? 'Tamamlandı' : 
-                             payment.status === 'pending' ? 'Beklemede' : 'İptal Edildi'}
-                          </StatusBadge>
-                        </TableCell>
-                        <TableCell>
-                          <ActionButton 
-                            variant="primary" 
-                            size="small"
-                            onClick={() => handleUpdatePaymentStatus(payment.id, 'completed')}
-                            disabled={payment.status === 'completed'}
-                          >
-                            Tamamla
-                          </ActionButton>
-                          <ActionButton 
-                            variant="secondary" 
-                            size="small"
-                            onClick={() => handleUpdatePaymentStatus(payment.id, 'pending')}
-                            disabled={payment.status === 'pending'}
-                          >
-                            Beklet
-                          </ActionButton>
-                          <ActionButton 
-                            variant="danger" 
-                            size="small"
-                            onClick={() => handleUpdatePaymentStatus(payment.id, 'canceled')}
-                            disabled={payment.status === 'canceled'}
-                          >
-                            İptal
-                          </ActionButton>
-                        </TableCell>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeader>İhale</TableHeader>
+                        <TableHeader>Kullanıcı</TableHeader>
+                        <TableHeader>Tutar</TableHeader>
+                        <TableHeader>Ödeme Tarihi</TableHeader>
+                        <TableHeader>Durum</TableHeader>
+                        <TableHeader>İşlemler</TableHeader>
                       </TableRow>
-                    ))}
-                  </tbody>
-                </Table>
+                    </TableHead>
+                    <tbody>
+                      {payments.map(payment => (
+                        <TableRow key={payment.id}>
+                          <TableCell>{payment.auctions?.title || payment.auction_name || '-'}</TableCell>
+                          <TableCell>{
+                            (payment.profiles?.full_name && payment.profiles?.email) 
+                              ? `${payment.profiles.full_name} (${payment.profiles.email})`
+                              : payment.profiles?.full_name || payment.profiles?.email || payment.user_name || '-'
+                          }</TableCell>
+                          <TableCell>{payment.amount?.toLocaleString('tr-TR')} TL</TableCell>
+                          <TableCell>{formatDate(payment.created_at)}</TableCell>
+                          <TableCell>
+                            <StatusBadge status={
+                              payment.status === 'completed' ? 'active' : 
+                              payment.status === 'canceled' ? 'completed' : 
+                              'upcoming'
+                            }>
+                              {payment.status === 'completed' ? 'Tamamlandı' : 
+                               payment.status === 'pending' ? 'Beklemede' : 'İptal Edildi'}
+                            </StatusBadge>
+                          </TableCell>
+                          <TableCell>
+                            <ActionButton 
+                              variant="primary" 
+                              size="small"
+                              onClick={() => handleUpdatePaymentStatus(payment.id, 'completed')}
+                              disabled={payment.status === 'completed'}
+                            >
+                              Tamamla
+                            </ActionButton>
+                            <ActionButton 
+                              variant="secondary" 
+                              size="small"
+                              onClick={() => handleUpdatePaymentStatus(payment.id, 'pending')}
+                              disabled={payment.status === 'pending'}
+                            >
+                              Beklet
+                            </ActionButton>
+                            <ActionButton 
+                              variant="danger" 
+                              size="small"
+                              onClick={() => handleUpdatePaymentStatus(payment.id, 'canceled')}
+                              disabled={payment.status === 'canceled'}
+                            >
+                              İptal
+                            </ActionButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </tbody>
+                  </Table>
+                </TableContainer>
               </>
             ) : (
               <EmptyState>
@@ -3365,59 +3418,64 @@ function AdminDashboard() {
             Genel Bakış
           </SidebarButton>
           
-          <SidebarButton 
-            active={activeSection === 'auctions' || activeSection === 'create-auction' || activeSection === 'auction-details' || activeSection === 'edit-auction'} 
-            onClick={() => handleSectionChange('auctions')}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-            İhaleler
-          </SidebarButton>
-          
-          <SidebarButton 
-            active={activeSection === 'users' || activeSection === 'create-user' || activeSection === 'user-details'} 
-            onClick={() => handleSectionChange('users')}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-            Kullanıcılar
-          </SidebarButton>
-          
-          <SidebarButton 
-            active={activeSection === 'payments' || activeSection === 'add-payment'} 
-            onClick={() => handleSectionChange('payments')}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="5" width="20" height="14" rx="2" />
-              <line x1="2" y1="10" x2="22" y2="10" />
-            </svg>
-            Ödemeler
-          </SidebarButton>
-          
-          <SidebarButton 
-            active={activeSection === 'settings'} 
-            onClick={() => handleSectionChange('settings')}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-            Ayarlar
-          </SidebarButton>
-          
-          <SidebarButton onClick={() => navigate('/dashboard')}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-              <polyline points="10 17 15 12 10 7" />
-              <line x1="15" y1="12" x2="3" y2="12" />
-            </svg>
-            Kullanıcı Paneline Dön
-          </SidebarButton>
+          {/* Fix for mobile display - make the menu collapse if screen is small */}
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
+            <SidebarButton 
+              active={activeSection === 'auctions' || activeSection === 'create-auction' || activeSection === 'auction-details' || activeSection === 'edit-auction'} 
+              onClick={() => handleSectionChange('auctions')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              İhaleler
+            </SidebarButton>
+            
+            <SidebarButton 
+              active={activeSection === 'users' || activeSection === 'create-user' || activeSection === 'user-details'} 
+              onClick={() => handleSectionChange('users')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              Kullanıcılar
+            </SidebarButton>
+            
+            <SidebarButton 
+              active={activeSection === 'payments' || activeSection === 'create-payment'} 
+              onClick={() => handleSectionChange('payments')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+                <line x1="1" y1="10" x2="23" y2="10" />
+              </svg>
+              Ödemeler
+            </SidebarButton>
+            
+            <SidebarButton 
+              active={activeSection === 'settings'} 
+              onClick={() => handleSectionChange('settings')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              Ayarlar
+            </SidebarButton>
+            
+            <SidebarButton onClick={() => navigate('/dashboard')}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+              </svg>
+              Kullanıcı Paneline Dön
+            </SidebarButton>
+          </div>
         </Sidebar>
         
         <ContentArea>

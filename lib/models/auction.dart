@@ -1,4 +1,28 @@
 import 'package:flutter/foundation.dart';
+import 'dart:convert';
+
+// Enum for listing types
+enum ListingType {
+  auction,
+  offer
+}
+
+// Extension to convert string to enum and vice versa
+extension ListingTypeExtension on ListingType {
+  String get value {
+    switch (this) {
+      case ListingType.auction:
+        return 'auction';
+      case ListingType.offer:
+        return 'offer';
+    }
+  }
+  
+  static ListingType fromString(String? value) {
+    if (value == 'offer') return ListingType.offer;
+    return ListingType.auction;
+  }
+}
 
 class Auction {
   final String id;
@@ -17,6 +41,8 @@ class Auction {
   final String? location;
   final double? areaSize;
   final String? areaUnit;
+  final ListingType listingType;
+  final double? offerIncrement;
 
   Auction({
     required this.id,
@@ -35,6 +61,8 @@ class Auction {
     this.location,
     this.areaSize,
     this.areaUnit,
+    this.listingType = ListingType.auction,
+    this.offerIncrement,
   });
 
   // Check if auction is currently active
@@ -61,6 +89,10 @@ class Auction {
 
   // Get minimum next bid amount
   double get minimumNextBid => currentPrice + minIncrement;
+  
+  // Get minimum next offer amount for offer listings
+  double get minimumNextOffer => 
+    currentPrice + (offerIncrement ?? 0);
 
   // Check if auction has ended
   bool get hasEnded {
@@ -84,120 +116,94 @@ class Auction {
     return status != 'ended' && now.isBefore(startTime);
   }
 
+  // Factory constructor to create Auction from JSON data
   factory Auction.fromJson(Map<String, dynamic> json) {
-    try {
-      // Debug output
-      debugPrint('Parsing auction JSON: ${json['id']}');
-      
-      if (json['id'] == null) {
-        debugPrint('WARNING: Auction is missing id field: $json');
-        throw Exception('Auction missing required id field');
-      }
-      
-      // Handle various pricing fields
-      double startPrice = 0;
-      if (json['start_price'] != null) {
-        startPrice = (json['start_price'] as num).toDouble();
-      } else if (json['starting_price'] != null) {
-        startPrice = (json['starting_price'] as num).toDouble();
-      }
-      
-      // Handle minimum increment
-      double minIncrement = 0;
-      if (json['min_increment'] != null) {
-        minIncrement = (json['min_increment'] as num).toDouble();
-      }
-      
-      // Handle dates with fallbacks
-      DateTime startTime;
-      if (json['start_time'] != null) {
-        startTime = DateTime.parse(json['start_time'] as String);
-      } else if (json['start_date'] != null) {
-        startTime = DateTime.parse(json['start_date'] as String);
-      } else {
-        startTime = DateTime.now();
-      }
-      
-      DateTime endTime;
-      if (json['end_time'] != null) {
-        endTime = DateTime.parse(json['end_time'] as String);
-      } else if (json['end_date'] != null) {
-        endTime = DateTime.parse(json['end_date'] as String);
-      } else {
-        endTime = DateTime.now().add(const Duration(days: 1));
-      }
-      
-      // Handle status with fallback
-      String status = json['status'] as String? ?? 'unknown';
-      
-      // Handle timestamps with fallbacks
-      DateTime createdAt;
-      if (json['created_at'] != null) {
-        createdAt = DateTime.parse(json['created_at'] as String);
-      } else {
-        createdAt = DateTime.now();
-      }
-      
-      DateTime updatedAt;
-      if (json['updated_at'] != null) {
-        updatedAt = DateTime.parse(json['updated_at'] as String);
-      } else {
-        updatedAt = DateTime.now();
-      }
-      
-      // Handle final price
-      double? finalPrice;
-      if (json['final_price'] != null) {
-        finalPrice = (json['final_price'] as num).toDouble();
-      }
-      
-      // Handle images
-      List<String> images = [];
-      if (json['images'] != null) {
-        try {
-          if (json['images'] is List) {
-            images = (json['images'] as List).map((img) => img.toString()).toList();
+    print('Parsing auction JSON: ${json['id']}');
+    
+    // Process images
+    List<String> imagesList = [];
+    if (json['images'] != null) {
+      try {
+        if (json['images'] is List) {
+          imagesList = List<String>.from(json['images']);
+        } else if (json['images'] is String) {
+          // Try to parse as JSON if it's a string
+          try {
+            final decoded = jsonDecode(json['images']);
+            if (decoded is List) {
+              imagesList = List<String>.from(decoded);
+            }
+          } catch (e) {
+            print('Error parsing images JSON: $e');
           }
-        } catch (e) {
-          debugPrint('Error parsing images for auction ${json['id']}: $e');
         }
+      } catch (e) {
+        print('Error processing images: $e');
       }
-      
-      // Handle title, description, location
-      String? title = json['title'] as String?;
-      String? description = json['description'] as String?;
-      String? location = json['location'] as String?;
-      
-      // Handle area size and unit
-      double? areaSize;
-      if (json['area_size'] != null) {
-        areaSize = (json['area_size'] as num).toDouble();
-      }
-      String? areaUnit = json['area_unit'] as String?;
-      
-      return Auction(
-        id: json['id'] as String,
-        startPrice: startPrice,
-        minIncrement: minIncrement,
-        startTime: startTime,
-        endTime: endTime,
-        status: status,
-        winnerId: json['winner_id'] as String?,
-        finalPrice: finalPrice,
-        createdAt: createdAt,
-        updatedAt: updatedAt,
-        images: images,
-        title: title,
-        description: description,
-        location: location,
-        areaSize: areaSize,
-        areaUnit: areaUnit,
-      );
-    } catch (e) {
-      debugPrint('Error parsing auction: $e');
-      debugPrint('Problematic JSON: $json');
-      rethrow;
     }
+    
+    // Parse timestamps
+    DateTime startTime, endTime, createdAt, updatedAt;
+    
+    try {
+      startTime = DateTime.parse(json['start_time']);
+      endTime = DateTime.parse(json['end_time']);
+      createdAt = DateTime.parse(json['created_at']);
+      updatedAt = DateTime.parse(json['updated_at']);
+    } catch (e) {
+      print('Error parsing dates: $e');
+      // Fallback to current time if parsing fails
+      final now = DateTime.now();
+      startTime = now;
+      endTime = now.add(const Duration(days: 7));
+      createdAt = now;
+      updatedAt = now;
+    }
+    
+    // Parse listing type
+    final listingTypeStr = json['listing_type'] as String?;
+    final listingType = ListingTypeExtension.fromString(listingTypeStr);
+    
+    return Auction(
+      id: json['id'],
+      startPrice: json['start_price'] != null 
+        ? (json['start_price'] is int 
+            ? json['start_price'].toDouble() 
+            : json['start_price'])
+        : 0.0,
+      minIncrement: json['min_increment'] != null 
+        ? (json['min_increment'] is int 
+            ? json['min_increment'].toDouble() 
+            : json['min_increment'])
+        : 0.0,
+      startTime: startTime,
+      endTime: endTime,
+      status: json['status'] ?? 'pending',
+      winnerId: json['winner_id'],
+      finalPrice: json['final_price'] != null 
+        ? (json['final_price'] is int 
+            ? json['final_price'].toDouble() 
+            : json['final_price'])
+        : null,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+      images: imagesList,
+      title: json['title'],
+      description: json['description'],
+      location: json['location'],
+      areaSize: json['area_sqm'] != null 
+        ? (json['area_sqm'] is int 
+            ? json['area_sqm'].toDouble() 
+            : json['area_sqm'])
+        : null,
+      areaUnit: json['area_unit'],
+      listingType: listingType,
+      offerIncrement: json['offer_increment'] != null 
+        ? (json['offer_increment'] is int 
+            ? json['offer_increment'].toDouble() 
+            : json['offer_increment'])
+        : null,
+    );
   }
 
   Map<String, dynamic> toJson() {
@@ -218,10 +224,12 @@ class Auction {
       'location': location,
       'area_size': areaSize,
       'area_unit': areaUnit,
+      'listing_type': listingType.value,
+      'offer_increment': offerIncrement,
     };
   }
 
-  // Create a copy of this auction with the given fields replaced
+  // Create a copy of the auction with updated values
   Auction copyWith({
     String? id,
     double? startPrice,
@@ -239,6 +247,8 @@ class Auction {
     String? location,
     double? areaSize,
     String? areaUnit,
+    ListingType? listingType,
+    double? offerIncrement,
   }) {
     return Auction(
       id: id ?? this.id,
@@ -257,6 +267,25 @@ class Auction {
       location: location ?? this.location,
       areaSize: areaSize ?? this.areaSize,
       areaUnit: areaUnit ?? this.areaUnit,
+      listingType: listingType ?? this.listingType,
+      offerIncrement: offerIncrement ?? this.offerIncrement,
     );
   }
+
+  /// Returns the listing type for display in UI
+  String get listingTypeDisplay {
+    switch (listingType) {
+      case ListingType.offer:
+        return 'Pazarlık';
+      case ListingType.auction:
+      default:
+        return 'İhale';
+    }
+  }
+  
+  /// Returns true if this is an offer-type listing
+  bool get isOfferType => listingType == ListingType.offer;
+  
+  /// Returns true if this is a standard auction-type listing
+  bool get isAuctionType => listingType == ListingType.auction;
 } 

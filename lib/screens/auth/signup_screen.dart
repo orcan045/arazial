@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as provider;
 import 'package:land_auction_app/services/auth_service.dart';
+import 'package:land_auction_app/screens/auth/phone_signup_screen.dart';
+import 'package:land_auction_app/theme/app_theme.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -264,6 +266,59 @@ class _SignupScreenState extends State<SignupScreen> {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
+              ),
+              
+              const SizedBox(height: 32),
+              
+              // Divider with or text
+              Row(
+                children: [
+                  Expanded(child: Divider(color: Colors.grey[300])),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'VEYA',
+                      style: TextStyle(
+                        color: AppTheme.textSecondaryColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: Colors.grey[300])),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Phone signup button
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PhoneSignupScreen(),
+                    ),
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                  foregroundColor: AppTheme.primaryColor,
+                  side: BorderSide(color: AppTheme.primaryColor),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                icon: const Icon(Icons.phone_android),
+                label: const Text(
+                  'Telefon Numarası ile Kayıt Ol',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               
               const SizedBox(height: 24),

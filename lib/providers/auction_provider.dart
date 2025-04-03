@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:land_auction_app/models/auction.dart';
 import 'package:land_auction_app/models/bid.dart';
+import 'package:land_auction_app/models/offer.dart';
 import 'package:land_auction_app/models/app_lifecycle_event.dart';
 import 'package:land_auction_app/services/auth_service.dart';
 import 'package:land_auction_app/services/auction_service.dart';
@@ -759,5 +760,212 @@ class AuctionProvider with ChangeNotifier {
       debugPrint('Error completing auction: $e');
       return false;
     }
+  }
+
+  // Offers related methods
+  
+  // Fetch offers for a specific auction
+  Future<List<Offer>> getAuctionOffers(String auctionId) async {
+    try {
+      final response = await _supabase
+          .from('offers')
+          .select()
+          .eq('auction_id', auctionId)
+          .order('created_at', ascending: false);
+      
+      return (response as List).map((data) => Offer.fromJson(data)).toList();
+    } catch (e) {
+      debugPrint('Error fetching offers: $e');
+      return [];
+    }
+  }
+  
+  // Fetch user's offers for a specific auction
+  Future<List<Offer>> getUserOffersForAuction(String auctionId, String userId) async {
+    try {
+      final response = await _supabase
+          .from('offers')
+          .select()
+          .eq('auction_id', auctionId)
+          .eq('user_id', userId)
+          .order('created_at', ascending: false);
+      
+      return (response as List).map((data) => Offer.fromJson(data)).toList();
+    } catch (e) {
+      debugPrint('Error fetching user offers: $e');
+      return [];
+    }
+  }
+  
+  // Submit an offer for a negotiable listing
+  Future<Map<String, dynamic>> submitOffer(String auctionId, double amount) async {
+    try {
+      // First check if user is authenticated
+      final user = _supabase.auth.currentUser;
+      if (user == null) {
+        return {
+          'success': false,
+          'error': 'Teklif vermek için giriş yapmalısınız.'
+        };
+      }
+      
+      // Get the auction to verify it's an offer-type listing
+      final auction = getAuctionById(auctionId);
+      if (auction == null) {
+        return {
+          'success': false,
+          'error': 'İlan bulunamadı.'
+        };
+      }
+      
+      if (auction.listingType != ListingType.offer) {
+        return {
+          'success': false,
+          'error': 'Bu ilan pazarlık tipinde değil.'
+        };
+      }
+      
+      // Check if the user already has a pending or accepted offer
+      final existingOffers = await getUserOffersForAuction(auctionId, user.id);
+      final activeOffer = existingOffers.where(
+        (o) => o.status == OfferStatus.pending || o.status == OfferStatus.accepted
+      ).toList();
+      
+      if (activeOffer.isNotEmpty) {
+        return {
+          'success': false,
+          'error': 'Zaten aktif bir teklifiniz bulunmaktadır.'
+        };
+      }
+      
+      // Create the offer
+      final response = await _supabase
+          .from('offers')
+          .insert({
+            'auction_id': auctionId,
+            'user_id': user.id,
+            'amount': amount,
+            'status': OfferStatus.pending.value,
+          })
+          .select()
+          .single();
+          
+      return {
+        'success': true,
+        'offer': Offer.fromJson(response)
+      };
+    } catch (e) {
+      debugPrint('Error submitting offer: $e');
+      return {
+        'success': false,
+        'error': e.toString()
+      };
+    }
+  }
+  
+  // Withdraw an offer
+  Future<Map<String, dynamic>> withdrawOffer(String offerId) async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) {
+        return {
+          'success': false,
+          'error': 'Bu işlemi gerçekleştirmek için giriş yapmalısınız.'
+        };
+      }
+      
+      final response = await _supabase
+          .from('offers')
+          .update({
+            'status': OfferStatus.withdrawn.value,
+            'updated_at': DateTime.now().toIso8601String()
+          })
+          .eq('id', offerId)
+          .eq('user_id', user.id)
+          .select()
+          .single();
+          
+      return {
+        'success': true,
+        'offer': Offer.fromJson(response)
+      };
+    } catch (e) {
+      debugPrint('Error withdrawing offer: $e');
+      return {
+        'success': false,
+        'error': e.toString()
+      };
+    }
+  }
+  
+  // Create a stream of offers for an auction
+  Stream<List<Offer>> streamAuctionOffers(String auctionId) {
+    final controller = StreamController<List<Offer>>();
+    
+    // Initial fetch
+    getAuctionOffers(auctionId).then((offers) {
+      if (!controller.isClosed) {
+        controller.add(offers);
+      }
+    });
+    
+    // Set up subscription
+    final subscription = _supabase
+        .from('offers')
+        .stream(primaryKey: ['id'])
+        .eq('auction_id', auctionId)
+        .listen((data) {
+          final offers = data.map((item) => Offer.fromJson(item)).toList();
+          if (!controller.isClosed) {
+            controller.add(offers);
+          }
+        });
+    
+    // Clean up when stream is cancelled
+    controller.onCancel = () {
+      subscription.cancel();
+      controller.close();
+    };
+    
+    return controller.stream;
+  }
+  
+  // Stream only the user's offers for an auction
+  Stream<List<Offer>> streamUserOffersForAuction(String auctionId) {
+    final controller = StreamController<List<Offer>>();
+    final user = _supabase.auth.currentUser;
+    
+    if (user == null) {
+      controller.add([]);
+      controller.close();
+      return controller.stream;
+    }
+    
+    // Initial fetch
+    getUserOffersForAuction(auctionId, user.id).then((offers) {
+      if (!controller.isClosed) {
+        controller.add(offers);
+      }
+    });
+    
+    // Instead of using real-time subscription with multiple filters,
+    // set up a timer to poll for updates every few seconds
+    final timer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (controller.isClosed) return;
+      
+      getUserOffersForAuction(auctionId, user.id).then((offers) {
+        if (!controller.isClosed) {
+          controller.add(offers);
+        }
+      });
+    });
+    
+    // Clean up when stream is cancelled
+    controller.onCancel = () {
+      timer.cancel();
+      controller.close();
+    };
+    
+    return controller.stream;
   }
 } 

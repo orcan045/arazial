@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as provider;
 import 'package:land_auction_app/services/auth_service.dart';
 import 'package:land_auction_app/screens/auth/signup_screen.dart';
+import 'package:land_auction_app/screens/auth/phone_signup_screen.dart';
 import 'package:land_auction_app/screens/auth/forgot_password_screen.dart';
 import 'package:land_auction_app/screens/home_screen.dart';
 import 'package:land_auction_app/theme/app_theme.dart';
@@ -232,34 +233,80 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
               ),
               
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
               
-              // Sign up link
+              // Sign up section with divider
+              Row(
+                children: [
+                  Expanded(child: Divider(color: Colors.grey[300])),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'Hesabınız yok mu?',
+                      style: TextStyle(
+                        color: AppTheme.textSecondaryColor,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: Colors.grey[300])),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Sign up options
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Hesabınız yok mu?',
-                    style: TextStyle(
-                      color: AppTheme.textSecondaryColor,
-                      fontSize: 14,
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SignupScreen(),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primaryColor,
+                        side: BorderSide(color: AppTheme.primaryColor),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                      ),
+                      icon: const Icon(Icons.email_outlined, size: 18),
+                      label: const Text(
+                        'E-posta ile',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SignupScreen(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PhoneSignupScreen(),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primaryColor,
+                        side: BorderSide(color: AppTheme.primaryColor),
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                      ),
+                      icon: const Icon(Icons.phone_android, size: 18),
+                      label: const Text(
+                        'Telefon ile',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                         ),
-                      );
-                    },
-                    child: Text(
-                      'Kayıt Olun',
-                      style: TextStyle(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
                       ),
                     ),
                   ),

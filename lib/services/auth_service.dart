@@ -79,6 +79,62 @@ class AuthService {
     }
   }
   
+  // Phone authentication methods
+  
+  // Send OTP to provided phone number
+  Future<Map<String, dynamic>> sendOTP(String phoneNumber) async {
+    try {
+      // Format phone number if needed (ensure it has international format)
+      if (phoneNumber.startsWith('5') && phoneNumber.length == 10) {
+        phoneNumber = '90$phoneNumber'; // Add Turkey country code
+      }
+      
+      // Call the Supabase Edge Function to send OTP
+      final response = await _supabase.functions.invoke('send-otp', 
+        body: {'phoneNumber': phoneNumber},
+      );
+      
+      return response.data;
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  // Verify OTP and create/sign in user
+  Future<AuthResponse> verifyOTP({
+    required String phoneNumber, 
+    required String otp,
+    required String password,
+  }) async {
+    try {
+      // Format phone number if needed
+      if (phoneNumber.startsWith('5') && phoneNumber.length == 10) {
+        phoneNumber = '90$phoneNumber'; // Add Turkey country code
+      }
+      
+      // Call the Supabase Edge Function to verify OTP and create/sign in user
+      final response = await _supabase.functions.invoke('verify-otp',
+        body: {
+          'phoneNumber': phoneNumber,
+          'otp': otp,
+          'password': password,
+        },
+      );
+      
+      // After successful verification, we should have a session
+      // Force refresh the session
+      await refreshSessionManually();
+      
+      // Return a proper AuthResponse with the session
+      return AuthResponse(
+        session: _supabase.auth.currentSession,
+        user: _supabase.auth.currentUser,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<AuthResponse> signUp({
     required String email,
     required String password,

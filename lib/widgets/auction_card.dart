@@ -234,7 +234,7 @@ class AuctionCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Güncel Fiyat',
+                                auction.isOfferType ? 'Başlangıç Fiyatı' : 'Güncel Fiyat',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
@@ -247,9 +247,11 @@ class AuctionCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w800,
-                                  color: auction.isActive 
-                                    ? theme.colorScheme.secondary
-                                    : theme.colorScheme.primary,
+                                  color: auction.isOfferType
+                                    ? Colors.deepPurple
+                                    : auction.isActive 
+                                      ? theme.colorScheme.secondary
+                                      : theme.colorScheme.primary,
                                   letterSpacing: -0.5,
                                 ),
                               ),
@@ -260,18 +262,22 @@ class AuctionCard extends StatelessWidget {
                           ElevatedButton(
                             onPressed: onTap,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary,
+                              backgroundColor: auction.isOfferType 
+                                ? Colors.deepPurple 
+                                : theme.colorScheme.primary,
                               foregroundColor: Colors.white,
                               elevation: 2,
-                              shadowColor: theme.colorScheme.primary.withOpacity(0.3),
+                              shadowColor: auction.isOfferType
+                                ? Colors.deepPurple.withOpacity(0.3)
+                                : theme.colorScheme.primary.withOpacity(0.3),
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            child: const Text(
-                              'Görüntüle',
-                              style: TextStyle(
+                            child: Text(
+                              auction.isOfferType ? 'Teklif Ver' : 'Görüntüle',
+                              style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 0.3,
@@ -335,7 +341,14 @@ class AuctionCard extends StatelessWidget {
     late String text;
     late IconData icon;
     
-    if (auction.isActive) {
+    // Check if this is an offer-type listing first
+    if (auction.isOfferType) {
+      backgroundColor = Colors.deepPurple.withOpacity(0.85);
+      borderColor = Colors.white.withOpacity(0.3);
+      textColor = Colors.white;
+      text = 'Pazarlıklı';
+      icon = Icons.handshake_outlined;
+    } else if (auction.isActive) {
       backgroundColor = theme.colorScheme.primary.withOpacity(0.85);
       borderColor = Colors.white.withOpacity(0.3);
       textColor = Colors.white;
