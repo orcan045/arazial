@@ -1586,21 +1586,21 @@ const AuctionDetail = () => {
                 <>
                   {/* Login prompt */} 
                   {!user && !authLoading && (
-                    <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                    <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: '2rem' }}>
                       Teklif yapmak için <a href="/login">giriş yapmanız</a> gerekmektedir.
                     </p>
                   )}
                   
                   {/* Loading Auth prompt */} 
                   {authLoading && (
-                    <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                    <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: '2rem' }}>
                       Kullanıcı bilgileri yükleniyor...
                     </p>
                   )}
                   
                   {/* Display existing pending/accepted offer */} 
                   {user && !authLoading && userActiveOffer && (
-                    <OfferStatusMessage status={userActiveOffer.status}>
+                    <OfferStatusMessage status={userActiveOffer.status} style={{ marginBottom: '2rem' }}>
                       Mevcut Teklifiniz: {formatPrice(userActiveOffer.amount)} 
                       ({userActiveOffer.status === 'pending' ? 'Beklemede' : 'Kabul Edildi'})
                     </OfferStatusMessage>
@@ -1608,14 +1608,14 @@ const AuctionDetail = () => {
                   
                   {/* Message about rejected offer */} 
                   {user && !authLoading && showRejectedMessage && (
-                    <OfferStatusMessage status="rejected">
+                    <OfferStatusMessage status="rejected" style={{ marginBottom: '1.5rem' }}>
                       Önceki teklifiniz reddedildi. Yeni bir teklif yapabilirsiniz.
                     </OfferStatusMessage>
                   )}
                   
                   {/* Show Offer Form */} 
                   {showOfferForm && (
-                    <form onSubmit={handleSubmitOffer} style={{ marginTop: showRejectedMessage ? '1.5rem' : '0' }}>
+                    <form onSubmit={handleSubmitOffer} style={{ marginTop: showRejectedMessage ? '1.5rem' : '0', marginBottom: '2rem' }}>
                       <PropertyLabel htmlFor="offerAmount">Teklif Miktarınız</PropertyLabel>
                       <OfferInput 
                         type="number"
