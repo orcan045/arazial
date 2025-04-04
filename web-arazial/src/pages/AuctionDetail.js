@@ -160,6 +160,29 @@ const Column = styled.div`
   &:last-child {
     gap: 0;
   }
+  
+  @media (max-width: 768px) {
+    /* On mobile, we want specific ordering */
+    & > .gallery-card {
+      order: 1;
+    }
+    
+    & > ${MobileHeader} {
+      order: 2;
+    }
+    
+    & > ${MobileBidCard} {
+      order: 3;
+    }
+    
+    & > .details-card {
+      order: 4;
+    }
+    
+    & > .description-card {
+      order: 5;
+    }
+  }
 `;
 
 const Card = styled.section`
@@ -168,6 +191,16 @@ const Card = styled.section`
   box-shadow: var(--shadow-md);
   margin-bottom: 1.5rem;
   overflow: hidden;
+  
+  @media (max-width: 768px) {
+    &.gallery-card {
+      border-radius: 0;
+      margin-left: -1rem;
+      margin-right: -1rem;
+      width: calc(100% + 2rem);
+      margin-top: -0.75rem;
+    }
+  }
   
   /* Special styling for the bid card on mobile */
   &.bid-card {
@@ -265,6 +298,11 @@ const Description = styled.div`
 const MainGalleryContainer = styled.div`
   position: relative;
   width: 100%;
+  
+  @media (max-width: 768px) {
+    margin: 0;
+    width: 100%;
+  }
 `;
 
 const MainImage = styled.img`
@@ -277,7 +315,10 @@ const MainImage = styled.img`
   background-color: #f8f9fa;
   
   @media (max-width: 768px) {
-    max-height: 220px;
+    max-height: 260px;
+    border-radius: 0;
+    object-fit: cover;
+    width: 100%;
   }
 `;
 
@@ -286,6 +327,11 @@ const ImageGallery = styled.div`
   gap: 0.5rem;
   padding: 0.5rem;
   overflow-x: auto;
+  
+  @media (max-width: 768px) {
+    padding: 0.5rem 1rem;
+    background-color: white;
+  }
   
   &::-webkit-scrollbar {
     height: 4px;
@@ -1595,7 +1641,8 @@ const AuctionDetail = () => {
       <AuctionContainer>
         {/* --- Left Column (Details) --- */} 
         <Column>
-          <Card>
+          {/* Image Gallery - always visible */}
+          <Card className="gallery-card">
             <MainGalleryContainer>
               <MainImage 
                 src={auction.images[currentImageIndex]} 
@@ -1693,7 +1740,8 @@ const AuctionDetail = () => {
             />
           </MobileBidCard>
 
-          <Card>
+          {/* Property Details Card */}
+          <Card className="details-card">
             <CardHeader><CardTitle><PropertyIcon/> İlan Detayları</CardTitle></CardHeader>
             <CardContent>
               <PropertyGrid>
@@ -1746,7 +1794,8 @@ const AuctionDetail = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          {/* Description Card */}
+          <Card className="description-card">
             <CardHeader><CardTitle><InfoIcon/> İlan Açıklaması</CardTitle></CardHeader>
             <CardContent>
               <Description>{auction.description || 'Açıklama girilmemiş.'}</Description>
