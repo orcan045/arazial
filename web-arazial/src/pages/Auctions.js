@@ -351,12 +351,17 @@ const ViewToggleButton = styled.button`
 
 const AuctionsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.75rem;
-  margin-bottom: 3rem;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-bottom: 2rem;
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
   
   @media (max-width: 768px) {
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    grid-template-columns: 1fr;
     gap: 1.25rem;
   }
 `;
@@ -384,19 +389,21 @@ const AuctionCard = styled.div`
   cursor: pointer;
   position: relative;
   border: 1px solid rgba(0, 0, 0, 0.03);
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 100%;
   
   &:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
     border-color: var(--color-primary-light);
   }
   
   &::after {
     content: '';
     position: absolute;
+    top: 0;
+    left: 0;
     z-index: -1;
     width: 100%;
     height: 100%;
@@ -502,13 +509,17 @@ const ListItemActions = styled.div`
 `;
 
 const AuctionImage = styled.div`
-  height: 200px;
+  height: 180px;
   background-color: var(--color-background);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
+  
+  @media (max-width: 1400px) {
+    height: 160px;
+  }
   
   &::before {
     content: '';
@@ -550,14 +561,14 @@ const PropertyTypeTag = styled.span`
 `;
 
 const AuctionContent = styled.div`
-  padding: 1.5rem;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
 `;
 
 const AuctionTitle = styled.h3`
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 600;
   margin-bottom: 0.75rem;
   color: var(--color-text);
@@ -647,16 +658,20 @@ const CountdownWrapper = styled.div`
 
 const PropertyInfoGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
-  margin: 0.5rem 0 1.25rem;
+  margin: 0.75rem 0;
+  
+  @media (max-width: 1200px) {
+    gap: 0.5rem;
+  }
 `;
 
 const PropertyInfoItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
   color: var(--color-text-secondary);
   
   svg {

@@ -22,8 +22,6 @@ import AdminDashboard from './pages/AdminDashboard';
 import UserSettings from './pages/UserSettings';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
-import Properties from './pages/Properties';
-import PropertyDetail from './pages/PropertyDetail';
 
 // Loading spinner component
 const LoadingSpinner = ({ message, loadingTime, retryAction }) => (
@@ -33,25 +31,39 @@ const LoadingSpinner = ({ message, loadingTime, retryAction }) => (
     alignItems: 'center', 
     height: '100vh',
     flexDirection: 'column',
-    gap: '16px',
+    gap: '12px',
     background: 'var(--color-background)'
   }}>
-    <div style={{ width: '50px', height: '50px', border: '5px solid var(--color-background)', 
-                borderTop: '5px solid var(--color-primary)', borderRadius: '50%', 
-                animation: 'spin 1s linear infinite' }}></div>
-    <p>{message} ({loadingTime}s)</p>
+    <div style={{ 
+      width: '36px', 
+      height: '36px', 
+      border: '4px solid var(--color-background)', 
+      borderTop: '4px solid var(--color-primary)', 
+      borderRadius: '50%', 
+      animation: 'spin 1s linear infinite' 
+    }}></div>
+    
+    <p style={{ 
+      fontSize: '0.875rem', 
+      color: 'var(--color-text-secondary)',
+      margin: 0
+    }}>
+      {message}
+      {loadingTime > 2 && <span> ({loadingTime}s)</span>}
+    </p>
     
     {loadingTime > 5 && (
       <button 
         onClick={retryAction}
         style={{
-          padding: '8px 16px',
+          padding: '6px 12px',
           background: 'var(--color-primary)',
           color: 'white',
           border: 'none',
           borderRadius: '4px',
           cursor: 'pointer',
-          marginTop: '16px'
+          marginTop: '8px',
+          fontSize: '0.8125rem'
         }}
       >
         Yeniden Dene
@@ -72,10 +84,18 @@ const ProtectedRoute = ({ children }) => {
   const { user, loading, reloadUserProfile } = useAuth();
   const [loadingTime, setLoadingTime] = useState(0);
   const [maxLoadingTime, setMaxLoadingTime] = useState(15); // Auto-retry after 15 seconds
+  const [showLoading, setShowLoading] = useState(false);
   
   useEffect(() => {
     let timer;
+    let loadingDelayTimer;
+    
     if (loading) {
+      // Only show loading spinner if loading takes more than 300ms
+      loadingDelayTimer = setTimeout(() => {
+        setShowLoading(true);
+      }, 500);
+      
       timer = setInterval(() => {
         setLoadingTime(prev => {
           // Auto-retry after maxLoadingTime seconds
@@ -89,9 +109,13 @@ const ProtectedRoute = ({ children }) => {
       }, 1000);
     } else {
       setLoadingTime(0);
+      setShowLoading(false);
     }
     
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      clearTimeout(loadingDelayTimer);
+    };
   }, [loading, reloadUserProfile, maxLoadingTime]);
   
   const handleRetry = () => {
@@ -102,7 +126,7 @@ const ProtectedRoute = ({ children }) => {
     setMaxLoadingTime(prev => Math.min(prev + 5, 30));
   };
   
-  if (loading) {
+  if (loading && showLoading) {
     return (
       <LoadingSpinner 
         message="Oturum bilgileri yükleniyor..."
@@ -112,8 +136,13 @@ const ProtectedRoute = ({ children }) => {
     );
   }
   
-  if (!user) {
+  if (!user && !loading) {
     return <Navigate to="/login" />;
+  }
+  
+  // If still loading but not showing spinner yet, render nothing to avoid flicker
+  if (loading) {
+    return null;
   }
   
   return children;
@@ -124,10 +153,18 @@ const AdminRoute = ({ children }) => {
   const { user, isAdmin, loading, reloadUserProfile } = useAuth();
   const [loadingTime, setLoadingTime] = useState(0);
   const [maxLoadingTime, setMaxLoadingTime] = useState(15); // Auto-retry after 15 seconds
+  const [showLoading, setShowLoading] = useState(false);
   
   useEffect(() => {
     let timer;
+    let loadingDelayTimer;
+    
     if (loading) {
+      // Only show loading spinner if loading takes more than 500ms
+      loadingDelayTimer = setTimeout(() => {
+        setShowLoading(true);
+      }, 500);
+      
       timer = setInterval(() => {
         setLoadingTime(prev => {
           // Auto-retry after maxLoadingTime seconds
@@ -141,9 +178,13 @@ const AdminRoute = ({ children }) => {
       }, 1000);
     } else {
       setLoadingTime(0);
+      setShowLoading(false);
     }
     
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      clearTimeout(loadingDelayTimer);
+    };
   }, [loading, reloadUserProfile, maxLoadingTime]);
   
   const handleRetry = () => {
@@ -154,7 +195,7 @@ const AdminRoute = ({ children }) => {
     setMaxLoadingTime(prev => Math.min(prev + 5, 30));
   };
   
-  if (loading) {
+  if (loading && showLoading) {
     return (
       <LoadingSpinner 
         message="Yönetici bilgileri kontrol ediliyor..."
@@ -164,13 +205,18 @@ const AdminRoute = ({ children }) => {
     );
   }
   
-  if (!user) {
+  if (!user && !loading) {
     return <Navigate to="/login" />;
   }
   
-  if (!isAdmin) {
+  if (!isAdmin && !loading) {
     console.log("User is not admin, redirecting to dashboard");
     return <Navigate to="/dashboard" />;
+  }
+  
+  // If still loading but not showing spinner yet, render nothing to avoid flicker
+  if (loading) {
+    return null;
   }
   
   return children;
@@ -354,25 +400,6 @@ const App = () => {
             element={
               <Layout>
                 <TermsOfUse />
-              </Layout>
-            } 
-          />
-          
-          {/* Property Routes */}
-          <Route 
-            path="/properties" 
-            element={
-              <Layout>
-                <Properties />
-              </Layout>
-            } 
-          />
-          
-          <Route 
-            path="/properties/:id" 
-            element={
-              <Layout>
-                <PropertyDetail />
               </Layout>
             } 
           />

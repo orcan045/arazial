@@ -167,6 +167,9 @@ class AppStateManager {
   // Manually refresh authentication state
   async refreshAuth() {
     try {
+      // Set initialized to true immediately to avoid long loading states
+      this.auth.initialized = true;
+      
       // Prevent multiple concurrent refreshes
       if (this.pendingRefresh) {
         console.log('[AppState] Auth refresh already in progress');
@@ -179,9 +182,6 @@ class AppStateManager {
       
       try {
         const { data, error } = await supabase.auth.getSession();
-        
-        // Mark as initialized *immediately* after getSession completes
-        this.auth.initialized = true; 
         sessionError = error; // Store error, if any
         
         if (error) {
@@ -192,7 +192,7 @@ class AppStateManager {
           this.auth.profile = null;
           this.auth.isAdmin = false;
           this.isAuthed = false;
-        } else if (data?.session) {
+        } else if (data.session) {
           // We have a valid session
           this.auth.user = data.session.user;
           this.auth.session = data.session;
@@ -220,8 +220,6 @@ class AppStateManager {
         
       } catch (criticalError) { // Catch critical errors during getSession/profile fetch
         console.error('[AppState] Critical error during auth refresh process:', criticalError);
-        // Ensure initialized is true even on critical failure
-        this.auth.initialized = true; 
         // Reset auth state
         this.auth.user = null;
         this.auth.session = null;
@@ -236,7 +234,7 @@ class AppStateManager {
       
       // Notify listeners *after* all state updates are done
       this.notifyListeners('auth');
-      this.notifyListeners('refresh'); // Notify refresh listeners too
+      this.notifyListeners('refresh');
       
       console.log('[AppState] Auth refresh complete. Session error:', sessionError ? sessionError.message : 'None');
       

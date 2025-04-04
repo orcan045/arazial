@@ -998,6 +998,21 @@ const BidCard = ({
   showOfferForm
 }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [showAuthLoading, setShowAuthLoading] = useState(false);
+  
+  // Add delay before showing auth loading message
+  useEffect(() => {
+    let timer;
+    if (authLoading) {
+      timer = setTimeout(() => {
+        setShowAuthLoading(true);
+      }, 750); // Only show loading message after 750ms
+    } else {
+      setShowAuthLoading(false);
+    }
+    
+    return () => clearTimeout(timer);
+  }, [authLoading]);
   
   useEffect(() => {
     const handleResize = () => {
@@ -1088,6 +1103,11 @@ const BidCard = ({
                     </div>
                     {bidError && <p style={{ color: 'red', fontSize: '0.875rem', marginTop: '0.5rem', marginBottom: '0' }}>{bidError}</p>}
                   </>
+                )}
+                {!user && authLoading && showAuthLoading && (
+                  <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: isMobile ? '0.5rem' : '1rem' }}>
+                    Oturum bilgileri yükleniyor...
+                  </p>
                 )}
               </form>
             )}
@@ -1191,7 +1211,7 @@ const BidCard = ({
             )}
             
             {/* Loading Auth prompt */} 
-            {authLoading && (
+            {authLoading && showAuthLoading && (
               <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: isMobile ? '0.5rem' : '2rem' }}>
                 Kullanıcı bilgileri yükleniyor...
               </p>
