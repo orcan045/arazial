@@ -1649,8 +1649,178 @@ const AuctionDetail = () => {
         </div>
       </DesktopHeader>
       
-      <AuctionContainer>
-        {/* --- Left Column (Details) --- */} 
+      {/* MOBILE LAYOUT - Different structure than desktop */}
+      <div className="mobile-layout" style={{ display: 'none', flexDirection: 'column', width: '100%' }}>
+        {/* 1. IMAGES */}
+        <div className="mobile-gallery" style={{ width: '100%' }}>
+          <MainGalleryContainer>
+            <MainImage 
+              src={auction.images[currentImageIndex]} 
+              alt={auction.title} 
+              onClick={() => openLightbox(currentImageIndex)}
+              style={{ width: '100%', maxWidth: 'none' }}
+            />
+            
+            <GalleryNavButton 
+              direction="left" 
+              onClick={prevImage}
+              disabled={auction.images.length <= 1}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </GalleryNavButton>
+            
+            <GalleryNavButton 
+              direction="right" 
+              onClick={nextImage}
+              disabled={auction.images.length <= 1}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </GalleryNavButton>
+          </MainGalleryContainer>
+          
+          <ImageGallery>
+            {auction.images.map((img, index) => (
+              <ImageThumbnail 
+                key={index} 
+                style={{ backgroundImage: `url(${img})` }} 
+                title={`Resim ${index + 1}`}
+                isActive={index === currentImageIndex}
+                onClick={() => setCurrentImageIndex(index)}
+              />
+            ))}
+          </ImageGallery>
+        </div>
+        
+        {/* 2. TEKLIF YAP */}
+        <div className="mobile-bid-section" style={{ width: '100%' }}>
+          <BidCard 
+            isOfferListing={isOfferListing}
+            currentStatus={currentStatus}
+            user={user}
+            authLoading={authLoading}
+            bidAmount={bidAmount}
+            setBidAmount={setBidAmount}
+            getMinimumBidAmount={getMinimumBidAmount}
+            bidError={bidError}
+            submitLoading={submitLoading}
+            handleSubmitBid={handleSubmitBid}
+            formatPrice={formatPrice}
+            bids={bids}
+            isExpanded={isExpanded}
+            setIsExpanded={setIsExpanded}
+            formatDate={formatDate}
+            userActiveOffer={userActiveOffer}
+            showRejectedMessage={showRejectedMessage}
+            offerAmount={offerAmount}
+            setOfferAmount={setOfferAmount}
+            offerError={offerError}
+            handleSubmitOffer={handleSubmitOffer}
+            showOfferForm={showOfferForm}
+          />
+        </div>
+        
+        {/* 3. TITLE AND DETAILS */}
+        <div className="mobile-header-section" style={{ padding: '0 1rem', marginTop: '1rem' }}>
+          <AuctionTitle>{auction.title}</AuctionTitle>
+          
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <AuctionStatus status={currentStatus}>
+              {getStatusIcon(currentStatus)}
+              {getStatusText(currentStatus)}
+            </AuctionStatus>
+            
+            <AuctionLocation>
+              <LocationIcon /> {auction.location || 'Konum belirtilmemiş'}
+            </AuctionLocation>
+            
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#3b5998" stroke="#3b5998" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+              </button>
+              <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#1DA1F2" stroke="#1DA1F2" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
+              </button>
+              <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#0077b5" stroke="#0077b5" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {/* 4. PROPERTY DETAILS */}
+        <div className="mobile-details-section" style={{ padding: '0 1rem', marginTop: '1rem' }}>
+          <Card className="details-card">
+            <CardHeader><CardTitle><PropertyIcon/> İlan Detayları</CardTitle></CardHeader>
+            <CardContent>
+              <PropertyGrid>
+                <PropertyItem>
+                  <PropertyLabel>Konum</PropertyLabel>
+                  <PropertyValue>{auction.location || '-'}</PropertyValue>
+                </PropertyItem>
+                <PropertyItem>
+                  <PropertyLabel>Emlak Tipi</PropertyLabel>
+                  <PropertyValue>{auction.property_type || '-'}</PropertyValue>
+                </PropertyItem>
+                <PropertyItem>
+                  <PropertyLabel>Alan (m²)</PropertyLabel>
+                  <PropertyValue>{auction.area_sqm ? `${auction.area_sqm} m²` : '-'}</PropertyValue>
+                </PropertyItem>
+                <PropertyItem>
+                  <PropertyLabel>İmar Durumu</PropertyLabel>
+                  <PropertyValue>{auction.zoning_status || '-'}</PropertyValue>
+                </PropertyItem>
+                <PropertyItem>
+                  <PropertyLabel>Ada No</PropertyLabel>
+                  <PropertyValue>{auction.parcel_island || '-'}</PropertyValue>
+                </PropertyItem>
+                <PropertyItem>
+                  <PropertyLabel>Parsel No</PropertyLabel>
+                  <PropertyValue>{auction.parcel_number || '-'}</PropertyValue>
+                </PropertyItem>
+                <PropertyItem>
+                  <PropertyLabel>İlan Sahibi</PropertyLabel>
+                  <PropertyValue>{auction.profiles?.full_name || 'Bilinmiyor'}</PropertyValue>
+                </PropertyItem>
+                <PropertyItem>
+                  <PropertyLabel>İlan Tarihi</PropertyLabel>
+                  <PropertyValue>{formatDate(auction.created_at)}</PropertyValue>
+                </PropertyItem>
+                {/* Show Auction Times only for Auctions */}
+                {!isOfferListing && (
+                  <>
+                  <PropertyItem>
+                    <PropertyLabel>Başlangıç Zamanı</PropertyLabel>
+                    <PropertyValue>{formatDate(auction.start_time)}</PropertyValue>
+                  </PropertyItem>
+                  <PropertyItem>
+                    <PropertyLabel>Bitiş Zamanı</PropertyLabel>
+                    <PropertyValue>{formatDate(auction.end_time)}</PropertyValue>
+                  </PropertyItem>
+                  </>
+                )}
+              </PropertyGrid>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* 5. DESCRIPTION */}
+        <div className="mobile-description-section" style={{ padding: '0 1rem', marginTop: '1rem', marginBottom: '1.5rem' }}>
+          <Card className="description-card">
+            <CardHeader><CardTitle><InfoIcon/> İlan Açıklaması</CardTitle></CardHeader>
+            <CardContent>
+              <Description>{auction.description || 'Açıklama girilmemiş.'}</Description>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      
+      {/* DESKTOP LAYOUT - Original structure */}
+      <AuctionContainer className="desktop-layout">
+        {/* --- Left Column (Details) --- */}
         <Column>
           {/* Image Gallery - always visible */}
           <Card className="gallery-card">
@@ -1694,62 +1864,6 @@ const AuctionDetail = () => {
               ))}
             </ImageGallery>
           </Card>
-          
-          {/* Mobile Bid Card - only visible on mobile, placed right after images */}
-          <MobileBidCard>
-            <BidCard 
-              isOfferListing={isOfferListing}
-              currentStatus={currentStatus}
-              user={user}
-              authLoading={authLoading}
-              bidAmount={bidAmount}
-              setBidAmount={setBidAmount}
-              getMinimumBidAmount={getMinimumBidAmount}
-              bidError={bidError}
-              submitLoading={submitLoading}
-              handleSubmitBid={handleSubmitBid}
-              formatPrice={formatPrice}
-              bids={bids}
-              isExpanded={isExpanded}
-              setIsExpanded={setIsExpanded}
-              formatDate={formatDate}
-              userActiveOffer={userActiveOffer}
-              showRejectedMessage={showRejectedMessage}
-              offerAmount={offerAmount}
-              setOfferAmount={setOfferAmount}
-              offerError={offerError}
-              handleSubmitOffer={handleSubmitOffer}
-              showOfferForm={showOfferForm}
-            />
-          </MobileBidCard>
-
-          {/* Mobile Title and Status - only visible on mobile, now after bid card */}
-          <MobileHeader>
-            <AuctionTitle>{auction.title}</AuctionTitle>
-            
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <AuctionStatus status={currentStatus}>
-                {getStatusIcon(currentStatus)}
-                {getStatusText(currentStatus)}
-              </AuctionStatus>
-              
-              <AuctionLocation>
-                <LocationIcon /> {auction.location || 'Konum belirtilmemiş'}
-              </AuctionLocation>
-              
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#3b5998" stroke="#3b5998" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-                </button>
-                <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#1DA1F2" stroke="#1DA1F2" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
-                </button>
-                <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#0077b5" stroke="#0077b5" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
-                </button>
-              </div>
-            </div>
-          </MobileHeader>
 
           {/* Property Details Card */}
           <Card className="details-card">
@@ -1846,6 +1960,26 @@ const AuctionDetail = () => {
           </DesktopBidCard>
         </Column>
       </AuctionContainer>
+
+      {/* CSS to manage layout visibility */}
+      <style>
+        {`
+          @media (max-width: 767px) {
+            .desktop-layout {
+              display: none !important;
+            }
+            .mobile-layout {
+              display: flex !important;
+            }
+          }
+          
+          @media (min-width: 768px) {
+            .mobile-layout {
+              display: none !important;
+            }
+          }
+        `}
+      </style>
 
       {/* Lightbox */}
       {lightboxOpen && auction?.images?.length > 0 && (
