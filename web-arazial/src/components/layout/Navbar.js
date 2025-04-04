@@ -46,6 +46,11 @@ const NavbarContent = styled.div`
     padding: ${props => props.$isScrolled ? '0.75rem 1.5rem' : '1rem 1.5rem'};
     height: ${props => props.$isScrolled ? '60px' : '70px'};
   }
+  
+  @media (max-width: 480px) {
+    padding: ${props => props.$isScrolled ? '0.75rem 1rem' : '1rem 1rem'};
+    height: ${props => props.$isScrolled ? '56px' : '64px'};
+  }
 `;
 
 const Logo = styled(Link)`
@@ -122,7 +127,18 @@ const NavLink = styled(Link)`
 const NavButtonsContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
+  
+  @media (max-width: 480px) {
+    gap: 0.25rem;
+  }
+  
+  /* Hide buttons on very small screens, show only hamburger menu */
+  @media (max-width: 359px) {
+    > a {
+      display: none;
+    }
+  }
 `;
 
 const MobileMenuButton = styled.button`
@@ -381,6 +397,7 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [showResetButton, setShowResetButton] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const { user, signOut, isAdmin, loading, reloadUserProfile } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -398,6 +415,18 @@ const Navbar = () => {
     
     return () => {
       window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
   
@@ -566,7 +595,12 @@ const Navbar = () => {
                 to="/login" 
                 variant="secondary" 
                 size="small"
-                minWidth="100px"
+                minWidth="auto"
+                style={{ 
+                  padding: windowWidth < 480 ? '0.4rem 0.75rem' : '0.5rem 1.25rem',
+                  fontSize: windowWidth < 480 ? '0.8rem' : '0.875rem',
+                  minHeight: windowWidth < 480 ? '32px' : '36px'
+                }}
               >
                 Giriş Yap
               </Button>
@@ -575,7 +609,12 @@ const Navbar = () => {
                 to="/signup" 
                 variant="primary" 
                 size="small"
-                minWidth="100px"
+                minWidth="auto"
+                style={{ 
+                  padding: windowWidth < 480 ? '0.4rem 0.75rem' : '0.5rem 1.25rem',
+                  fontSize: windowWidth < 480 ? '0.8rem' : '0.875rem',
+                  minHeight: windowWidth < 480 ? '32px' : '36px'
+                }}
               >
                 Kayıt Ol
               </Button>

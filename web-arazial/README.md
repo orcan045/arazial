@@ -33,3 +33,11 @@ The following environment variables are required:
 
 - `REACT_APP_SUPABASE_URL`: Supabase project URL
 - `REACT_APP_SUPABASE_ANON_KEY`: Supabase anonymous API key 
+
+## Recent Updates
+
+### 'Yeni Eklenenler' Tab Implementation
+- Added "Yeni Eklenenler" (Newly Added) as a main tab alongside "Açık Arttırmalar" and "Pazarlığa Başla"
+- The tab shows listings added within the last 7 days
+- Enhanced mobile responsiveness of the tab system
+- Improved styling for better visibility on smaller screens 
