@@ -66,6 +66,7 @@ const AuctionTitle = styled.h1`
   
   @media (max-width: 768px) {
     font-size: 1.125rem;
+    margin-top: 0;
   }
 `;
 
@@ -323,7 +324,7 @@ const MainImage = styled.img`
   background-color: #f8f9fa;
   
   @media (max-width: 768px) {
-    max-height: 260px;
+    max-height: 240px;
     border-radius: 0;
     object-fit: cover;
     width: 100%;
@@ -337,9 +338,10 @@ const ImageGallery = styled.div`
   overflow-x: auto;
   
   @media (max-width: 768px) {
-    padding: 0.25rem 1rem 0.5rem;
+    padding: 0.25rem 1rem 0;
     background-color: white;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: none;
+    margin-bottom: 0;
   }
   
   &::-webkit-scrollbar {
@@ -942,8 +944,8 @@ const DesktopHeader = styled.div`
 `;
 
 const MobileHeader = styled.div`
-  margin-bottom: 1rem;
-  margin-top: 1rem;
+  margin-bottom: 0.75rem;
+  margin-top: 0;
   padding: 0 1rem;
   
   @media (min-width: 768px) {
@@ -1702,7 +1704,7 @@ const AuctionDetail = () => {
       <div className="mobile-layout" style={{ display: 'none', flexDirection: 'column', width: '100%' }}>
         {/* 1. IMAGES */}
         <div className="mobile-gallery" style={{ width: '100%', marginBottom: '0' }}>
-          <MainGalleryContainer>
+          <MainGalleryContainer style={{ marginBottom: '0' }}>
             <MainImage 
               src={auction.images[currentImageIndex]} 
               alt={auction.title} 
