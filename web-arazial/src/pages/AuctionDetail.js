@@ -834,7 +834,8 @@ const OfferInput = styled.input`
   
   @media (max-width: 768px) {
     padding: 0.6rem 0.75rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0;
+    font-size: 0.875rem;
   }
 `;
 
@@ -843,8 +844,10 @@ const OfferButton = styled(Button)`
   margin-top: 0.5rem;
   
   @media (max-width: 768px) {
-    margin-top: 0.25rem;
-    padding: 0.75rem;
+    margin-top: 0;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.875rem;
+    min-height: 38px;
   }
 `;
 
@@ -991,67 +994,96 @@ const BidCard = ({
   handleSubmitOffer,
   showOfferForm
 }) => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+  
   return (
     <div style={{ 
       backgroundColor: 'white', 
-      borderRadius: '8px', 
+      borderRadius: isMobile ? '8px 8px 0 0' : '8px', 
       overflow: 'hidden',
       margin: 0,
       padding: 0
     }}>
-      <div style={{ 
-        padding: '1.25rem', 
-        borderBottom: '1px solid var(--color-border)', 
-        backgroundColor: 'var(--color-background)'
-      }}>
-        <h2 style={{ 
-          fontSize: '1.25rem', 
-          fontWeight: 600, 
-          color: 'var(--color-text)', 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '0.75rem',
-          margin: 0
+      {!isMobile && (
+        <div style={{ 
+          padding: '1.25rem', 
+          borderBottom: '1px solid var(--color-border)', 
+          backgroundColor: 'var(--color-background)'
         }}>
-          {isOfferListing ? (
-            <>
-              <OfferIcon/> Teklif Yap
-            </>
-          ) : (
-            <>
-              <BidsIcon/> Teklifler
-            </>
-          )}
-        </h2>
-      </div>
+          <h2 style={{ 
+            fontSize: '1.25rem', 
+            fontWeight: 600, 
+            color: 'var(--color-text)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.75rem',
+            margin: 0
+          }}>
+            {isOfferListing ? (
+              <>
+                <OfferIcon/> Teklif Yap
+              </>
+            ) : (
+              <>
+                <BidsIcon/> Teklifler
+              </>
+            )}
+          </h2>
+        </div>
+      )}
       
-      <div style={{ padding: '1rem 1rem 0 1rem', display: 'flex', flexDirection: 'column', paddingBottom: 0 }}>
+      <div style={{ 
+        padding: isMobile ? '0.75rem 1rem' : '1rem 1rem 0 1rem', 
+        display: 'flex', 
+        flexDirection: 'column',
+        paddingBottom: 0
+      }}>
         {/* AUCTION BIDDING UI */}
         {!isOfferListing && (
           <>
             {/* Bid Form for Active Auctions */} 
             {currentStatus === 'active' && (
-              <form onSubmit={handleSubmitBid} style={{ marginBottom: '1rem' }}>
+              <form onSubmit={handleSubmitBid} style={{ marginBottom: isMobile ? '0.5rem' : '1rem' }}>
                 {!user && !authLoading && (
-                  <p style={{ textAlign: 'center', marginBottom: '1rem' }}>Teklif vermek için <a href="/login">giriş yapın</a>.</p>
+                  <p style={{ textAlign: 'center', marginBottom: isMobile ? '0.5rem' : '1rem' }}>Teklif vermek için <a href="/login">giriş yapın</a>.</p>
                 )}
                 {user && (
                   <>
-                    <PropertyLabel htmlFor="bidAmount">Teklifiniz (Min: {formatPrice(getMinimumBidAmount())})</PropertyLabel>
-                    <OfferInput 
-                      type="number"
-                      id="bidAmount"
-                      value={bidAmount}
-                      onChange={(e) => setBidAmount(e.target.value)}
-                      placeholder={`Min. ${formatPrice(getMinimumBidAmount())}`}
-                      step="any"
-                      required 
-                      disabled={submitLoading || authLoading}
-                    />
-                    {bidError && <p style={{ color: 'red', fontSize: '0.875rem', marginTop: '-0.5rem', marginBottom: '0.5rem' }}>{bidError}</p>}
-                    <OfferButton type="submit" disabled={submitLoading || authLoading}>
-                      {submitLoading ? <LoadingIcon /> : 'Teklif Ver'}
-                    </OfferButton>
+                    {!isMobile && (
+                      <PropertyLabel htmlFor="bidAmount">Teklifiniz (Min: {formatPrice(getMinimumBidAmount())})</PropertyLabel>
+                    )}
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <OfferInput 
+                        type="number"
+                        id="bidAmount"
+                        value={bidAmount}
+                        onChange={(e) => setBidAmount(e.target.value)}
+                        placeholder={isMobile ? `Min. ${formatPrice(getMinimumBidAmount())}` : `Min. ${formatPrice(getMinimumBidAmount())}`}
+                        step="any"
+                        required 
+                        disabled={submitLoading || authLoading}
+                        style={{ margin: 0, flex: 1 }}
+                      />
+                      <OfferButton 
+                        type="submit" 
+                        disabled={submitLoading || authLoading}
+                        style={{ marginTop: 0, width: 'auto' }}
+                      >
+                        {submitLoading ? <LoadingIcon /> : 'Teklif Ver'}
+                      </OfferButton>
+                    </div>
+                    {bidError && <p style={{ color: 'red', fontSize: '0.875rem', marginTop: '0.5rem', marginBottom: '0' }}>{bidError}</p>}
                   </>
                 )}
               </form>
@@ -1064,79 +1096,83 @@ const BidCard = ({
               </p>
             )}
             
-            {/* Bid History */}
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: '1rem 0 0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
-              Teklif Geçmişi
-            </h3>
-            
-            {bids.length === 0 && (
-              <div style={{ textAlign: 'center', color: 'var(--color-text-secondary)', margin: 0, padding: 0 }}>
-                <NoBidsIcon />
-                <p style={{ margin: 0 }}>Henüz teklif yapılmadı.</p>
-              </div>
-            )}
-            
-            {bids.length > 0 && (
-              <div style={{ margin: 0, padding: 0 }}>
-                {(isExpanded ? bids : bids.slice(0, 3)).map((bid, index, array) => (
-                  <BidItem 
-                    key={bid.id} 
-                    style={index === array.length - 1 && !isExpanded && array.length <= 3 ? { marginBottom: 0 } : {}}
-                  >
-                    <BidAmount>{formatPrice(bid.amount)}</BidAmount>
-                    <BidTime>{formatDate(bid.created_at)}</BidTime>
-                  </BidItem>
-                ))}
+            {/* Bid History - Only show on desktop */}
+            {!isMobile && (
+              <>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: '1rem 0 0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
+                  Teklif Geçmişi
+                </h3>
                 
-                {bids.length > 3 && (
-                  <div style={{
-                    borderTop: '1px solid var(--color-border)',
-                    marginTop: '0.75rem',
-                    paddingTop: '0.75rem',
-                    paddingBottom: '0.5rem',
-                    display: 'flex',
-                    justifyContent: 'center'
-                  }}>
-                    <button
-                      onClick={() => setIsExpanded(prev => !prev)} 
-                      style={{
-                        background: 'rgba(var(--color-primary-rgb), 0.05)',
-                        border: '1px solid rgba(var(--color-primary-rgb), 0.1)',
-                        borderRadius: '0.375rem',
-                        color: 'var(--color-primary)',
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
-                        padding: '0.5rem 1rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'all 0.2s ease',
-                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = 'rgba(var(--color-primary-rgb), 0.1)';
-                        e.currentTarget.style.transform = 'translateY(-1px)';
-                        e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.05)';
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'rgba(var(--color-primary-rgb), 0.05)';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
-                      }}
-                    >
-                      {isExpanded ? 'Daha Az Göster' : `Daha Fazla Göster (${bids.length - 3} teklif daha)`}
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '0.5rem' }}>
-                        {isExpanded ? (
-                          <polyline points="18 15 12 9 6 15" />
-                        ) : (
-                          <polyline points="6 9 12 15 18 9" />
-                        )}
-                      </svg>
-                    </button>
+                {bids.length === 0 && (
+                  <div style={{ textAlign: 'center', color: 'var(--color-text-secondary)', margin: 0, padding: 0 }}>
+                    <NoBidsIcon />
+                    <p style={{ margin: 0 }}>Henüz teklif yapılmadı.</p>
                   </div>
                 )}
-              </div>
+                
+                {bids.length > 0 && (
+                  <div style={{ margin: 0, padding: 0 }}>
+                    {(isExpanded ? bids : bids.slice(0, 3)).map((bid, index, array) => (
+                      <BidItem 
+                        key={bid.id} 
+                        style={index === array.length - 1 && !isExpanded && array.length <= 3 ? { marginBottom: 0 } : {}}
+                      >
+                        <BidAmount>{formatPrice(bid.amount)}</BidAmount>
+                        <BidTime>{formatDate(bid.created_at)}</BidTime>
+                      </BidItem>
+                    ))}
+                    
+                    {bids.length > 3 && (
+                      <div style={{
+                        borderTop: '1px solid var(--color-border)',
+                        marginTop: '0.75rem',
+                        paddingTop: '0.75rem',
+                        paddingBottom: '0.5rem',
+                        display: 'flex',
+                        justifyContent: 'center'
+                      }}>
+                        <button
+                          onClick={() => setIsExpanded(prev => !prev)} 
+                          style={{
+                            background: 'rgba(var(--color-primary-rgb), 0.05)',
+                            border: '1px solid rgba(var(--color-primary-rgb), 0.1)',
+                            borderRadius: '0.375rem',
+                            color: 'var(--color-primary)',
+                            fontSize: '0.875rem',
+                            fontWeight: 500,
+                            padding: '0.5rem 1rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s ease',
+                            boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.background = 'rgba(var(--color-primary-rgb), 0.1)';
+                            e.currentTarget.style.transform = 'translateY(-1px)';
+                            e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.05)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.background = 'rgba(var(--color-primary-rgb), 0.05)';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                            e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
+                          }}
+                        >
+                          {isExpanded ? 'Daha Az Göster' : `Daha Fazla Göster (${bids.length - 3} teklif daha)`}
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '0.5rem' }}>
+                            {isExpanded ? (
+                              <polyline points="18 15 12 9 6 15" />
+                            ) : (
+                              <polyline points="6 9 12 15 18 9" />
+                            )}
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
@@ -1146,21 +1182,21 @@ const BidCard = ({
           <>
             {/* Login prompt */} 
             {!user && !authLoading && (
-              <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: '2rem' }}>
+              <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: isMobile ? '0.5rem' : '2rem' }}>
                 Teklif yapmak için <a href="/login">giriş yapmanız</a> gerekmektedir.
               </p>
             )}
             
             {/* Loading Auth prompt */} 
             {authLoading && (
-              <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: '2rem' }}>
+              <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: isMobile ? '0.5rem' : '2rem' }}>
                 Kullanıcı bilgileri yükleniyor...
               </p>
             )}
             
             {/* Display existing pending/accepted offer */} 
             {user && !authLoading && userActiveOffer && (
-              <OfferStatusMessage status={userActiveOffer.status} style={{ marginBottom: '2rem' }}>
+              <OfferStatusMessage status={userActiveOffer.status} style={{ marginBottom: isMobile ? '0.5rem' : '2rem' }}>
                 Mevcut Teklifiniz: {formatPrice(userActiveOffer.amount)} 
                 ({userActiveOffer.status === 'pending' ? 'Beklemede' : 'Kabul Edildi'})
               </OfferStatusMessage>
@@ -1168,29 +1204,41 @@ const BidCard = ({
             
             {/* Message about rejected offer */} 
             {user && !authLoading && showRejectedMessage && (
-              <OfferStatusMessage status="rejected" style={{ marginBottom: '1.5rem' }}>
+              <OfferStatusMessage status="rejected" style={{ marginBottom: isMobile ? '0.5rem' : '1.5rem' }}>
                 Önceki teklifiniz reddedildi. Yeni bir teklif yapabilirsiniz.
               </OfferStatusMessage>
             )}
             
             {/* Show Offer Form */} 
             {showOfferForm && (
-              <form onSubmit={handleSubmitOffer} style={{ marginTop: showRejectedMessage ? '1.5rem' : '0', marginBottom: '2rem' }}>
-                <PropertyLabel htmlFor="offerAmount">Teklif Miktarınız</PropertyLabel>
-                <OfferInput 
-                  type="number"
-                  id="offerAmount"
-                  value={offerAmount}
-                  onChange={(e) => setOfferAmount(e.target.value)}
-                  placeholder="Teklifinizi Girin (₺)"
-                  step="any"
-                  required 
-                  disabled={submitLoading}
-                />
-                 {offerError && <p style={{ color: 'red', fontSize: '0.875rem', marginTop: '-0.5rem', marginBottom: '1rem' }}>{offerError}</p>}
-                 <OfferButton type="submit" disabled={submitLoading}>
+              <form onSubmit={handleSubmitOffer} style={{ 
+                marginTop: showRejectedMessage ? (isMobile ? '0.5rem' : '1.5rem') : '0', 
+                marginBottom: isMobile ? '0.5rem' : '2rem' 
+              }}>
+                {!isMobile && (
+                  <PropertyLabel htmlFor="offerAmount">Teklif Miktarınız</PropertyLabel>
+                )}
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <OfferInput 
+                    type="number"
+                    id="offerAmount"
+                    value={offerAmount}
+                    onChange={(e) => setOfferAmount(e.target.value)}
+                    placeholder="Teklifinizi Girin (₺)"
+                    step="any"
+                    required 
+                    disabled={submitLoading}
+                    style={{ margin: 0, flex: 1 }}
+                  />
+                  <OfferButton 
+                    type="submit" 
+                    disabled={submitLoading}
+                    style={{ marginTop: 0, width: 'auto' }}
+                  >
                     {submitLoading ? <LoadingIcon /> : 'Teklifi Gönder'}
-                 </OfferButton>
+                  </OfferButton>
+                </div>
+                {offerError && <p style={{ color: 'red', fontSize: '0.875rem', marginTop: '0.5rem', marginBottom: '0' }}>{offerError}</p>}
               </form>
             )}
           </>
@@ -1696,7 +1744,17 @@ const AuctionDetail = () => {
         </div>
         
         {/* 2. TEKLIF YAP */}
-        <div className="mobile-bid-section" style={{ width: '100%' }}>
+        <div className="mobile-bid-section" style={{ 
+          width: '100%', 
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          zIndex: 100,
+          boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1)',
+          backgroundColor: 'white',
+          borderRadius: '8px 8px 0 0',
+          transition: 'all 0.3s ease'
+        }}>
           <BidCard 
             isOfferListing={isOfferListing}
             currentStatus={currentStatus}
@@ -1722,6 +1780,9 @@ const AuctionDetail = () => {
             showOfferForm={showOfferForm}
           />
         </div>
+        
+        {/* Add padding at the bottom to account for fixed bid card */}
+        <div style={{ paddingBottom: '100px' }}></div>
         
         {/* 3. TITLE AND DETAILS */}
         <div className="mobile-header-section" style={{ padding: '0 1rem', marginTop: '1rem' }}>
@@ -1929,7 +1990,7 @@ const AuctionDetail = () => {
           
         </Column>
 
-        {/* --- Right Column (Actions) --- */} 
+        {/* --- Right Column (Actions) --- */}
         <Column style={{ position: 'sticky', top: '2rem', height: 'min-content', marginBottom: 0, padding: 0 }}>
           {/* Action Card (Bids or Offers) - Desktop version */} 
           <DesktopBidCard>
