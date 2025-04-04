@@ -167,11 +167,11 @@ const Column = styled.div`
       order: 1;
     }
     
-    & > ${MobileHeader} {
+    & > ${MobileBidCard} {
       order: 2;
     }
     
-    & > ${MobileBidCard} {
+    & > ${MobileHeader} {
       order: 3;
     }
     
@@ -199,6 +199,8 @@ const Card = styled.section`
       margin-right: -1rem;
       width: calc(100% + 2rem);
       margin-top: -0.75rem;
+      margin-bottom: 0;
+      box-shadow: none;
     }
   }
   
@@ -331,6 +333,7 @@ const ImageGallery = styled.div`
   @media (max-width: 768px) {
     padding: 0.5rem 1rem;
     background-color: white;
+    border-bottom: 1px solid var(--color-border);
   }
   
   &::-webkit-scrollbar {
@@ -930,6 +933,8 @@ const DesktopHeader = styled.div`
 
 const MobileHeader = styled.div`
   margin-bottom: 1rem;
+  margin-top: 1rem;
+  padding: 0 0.5rem;
   
   @media (min-width: 768px) {
     display: none;
@@ -942,6 +947,14 @@ const MobileBidCard = styled.div`
   border-radius: 8px;
   box-shadow: var(--shadow-md);
   overflow: hidden;
+  
+  @media (max-width: 768px) {
+    margin-top: 0;
+    border-radius: 0 0 8px 8px;
+    margin-left: -1rem;
+    margin-right: -1rem;
+    width: calc(100% + 2rem);
+  }
   
   @media (min-width: 1024px) {
     display: none;
@@ -1683,36 +1696,8 @@ const AuctionDetail = () => {
               ))}
             </ImageGallery>
           </Card>
-
-          {/* Mobile Title and Status - only visible on mobile */}
-          <MobileHeader>
-            <AuctionTitle>{auction.title}</AuctionTitle>
-            
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <AuctionStatus status={currentStatus}>
-                {getStatusIcon(currentStatus)}
-                {getStatusText(currentStatus)}
-              </AuctionStatus>
-              
-              <AuctionLocation>
-                <LocationIcon /> {auction.location || 'Konum belirtilmemiş'}
-              </AuctionLocation>
-              
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#3b5998" stroke="#3b5998" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-                </button>
-                <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#1DA1F2" stroke="#1DA1F2" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
-                </button>
-                <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#0077b5" stroke="#0077b5" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
-                </button>
-              </div>
-            </div>
-          </MobileHeader>
           
-          {/* Mobile Bid Card - only visible on mobile */}
+          {/* Mobile Bid Card - only visible on mobile, placed right after images */}
           <MobileBidCard>
             <BidCard 
               isOfferListing={isOfferListing}
@@ -1739,6 +1724,34 @@ const AuctionDetail = () => {
               showOfferForm={showOfferForm}
             />
           </MobileBidCard>
+
+          {/* Mobile Title and Status - only visible on mobile, now after bid card */}
+          <MobileHeader>
+            <AuctionTitle>{auction.title}</AuctionTitle>
+            
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <AuctionStatus status={currentStatus}>
+                {getStatusIcon(currentStatus)}
+                {getStatusText(currentStatus)}
+              </AuctionStatus>
+              
+              <AuctionLocation>
+                <LocationIcon /> {auction.location || 'Konum belirtilmemiş'}
+              </AuctionLocation>
+              
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#3b5998" stroke="#3b5998" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                </button>
+                <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#1DA1F2" stroke="#1DA1F2" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
+                </button>
+                <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#0077b5" stroke="#0077b5" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                </button>
+              </div>
+            </div>
+          </MobileHeader>
 
           {/* Property Details Card */}
           <Card className="details-card">
