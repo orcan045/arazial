@@ -22,6 +22,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import UserSettings from './pages/UserSettings';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
+import Properties from './pages/Properties';
+import PropertyDetail from './pages/PropertyDetail';
 
 // Loading spinner component
 const LoadingSpinner = ({ message, loadingTime, retryAction }) => (
@@ -352,6 +354,25 @@ const App = () => {
             element={
               <Layout>
                 <TermsOfUse />
+              </Layout>
+            } 
+          />
+          
+          {/* Property Routes */}
+          <Route 
+            path="/properties" 
+            element={
+              <Layout>
+                <Properties />
+              </Layout>
+            } 
+          />
+          
+          <Route 
+            path="/properties/:id" 
+            element={
+              <Layout>
+                <PropertyDetail />
               </Layout>
             } 
           />

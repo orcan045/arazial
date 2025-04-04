@@ -547,6 +547,9 @@ const Navbar = () => {
           <NavLink to="/" className={location.pathname === '/' ? 'active' : ''}>
             Ana Sayfa
           </NavLink>
+          <NavLink to="/properties" className={location.pathname.startsWith('/properties') ? 'active' : ''}>
+            Mülkler
+          </NavLink>
           <NavLink to="/about" className={location.pathname === '/about' ? 'active' : ''}>
             Hakkımızda
           </NavLink>
@@ -699,6 +702,9 @@ const Navbar = () => {
         
         <MobileNavLink to="/" className={location.pathname === '/' ? 'active' : ''}>
           Ana Sayfa
+        </MobileNavLink>
+        <MobileNavLink to="/properties" className={location.pathname.startsWith('/properties') ? 'active' : ''}>
+          Mülkler
         </MobileNavLink>
         <MobileNavLink to="/about" className={location.pathname === '/about' ? 'active' : ''}>
           Hakkımızda
