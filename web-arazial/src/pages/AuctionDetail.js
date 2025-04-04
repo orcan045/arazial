@@ -13,7 +13,7 @@ const PageContainer = styled.div`
   padding: 0 1.5rem;
   
   @media (max-width: 768px) {
-    padding: 0 1rem;
+    padding: 0;
   }
 `;
 
@@ -29,6 +29,10 @@ const BackButton = styled.button`
   cursor: pointer;
   padding: 0.25rem 0;
   transition: color 0.2s ease;
+  
+  @media (max-width: 768px) {
+    margin-left: 1rem;
+  }
   
   &:hover {
     color: var(--color-primary-dark);
@@ -48,6 +52,8 @@ const AuctionContainer = styled.div`
   @media (max-width: 1023px) {
     display: flex;
     flex-direction: column;
+    margin-top: 0;
+    gap: 0;
   }
 `;
 
@@ -162,7 +168,6 @@ const Column = styled.div`
   }
   
   @media (max-width: 768px) {
-    /* On mobile, we want specific ordering */
     & > .gallery-card {
       order: 1;
     }
@@ -175,12 +180,16 @@ const Column = styled.div`
       order: 3;
     }
     
-    & > .details-card {
+    & > .details-card, & > .description-card {
       order: 4;
+      margin-left: 1rem;
+      margin-right: 1rem;
+      border-radius: 8px;
     }
     
     & > .description-card {
       order: 5;
+      margin-top: 1rem;
     }
   }
 `;
@@ -195,11 +204,8 @@ const Card = styled.section`
   @media (max-width: 768px) {
     &.gallery-card {
       border-radius: 0;
-      margin-left: -1rem;
-      margin-right: -1rem;
-      width: calc(100% + 2rem);
-      margin-top: -0.75rem;
-      margin-bottom: 0;
+      margin: 0;
+      width: 100%;
       box-shadow: none;
     }
   }
@@ -934,7 +940,7 @@ const DesktopHeader = styled.div`
 const MobileHeader = styled.div`
   margin-bottom: 1rem;
   margin-top: 1rem;
-  padding: 0 0.5rem;
+  padding: 0 1rem;
   
   @media (min-width: 768px) {
     display: none;
@@ -942,19 +948,12 @@ const MobileHeader = styled.div`
 `;
 
 const MobileBidCard = styled.div`
-  margin-bottom: 1rem;
+  margin-bottom: 0;
   background-color: white;
-  border-radius: 8px;
-  box-shadow: var(--shadow-md);
+  border-radius: 0;
+  box-shadow: none;
   overflow: hidden;
-  
-  @media (max-width: 768px) {
-    margin-top: 0;
-    border-radius: 0 0 8px 8px;
-    margin-left: -1rem;
-    margin-right: -1rem;
-    width: calc(100% + 2rem);
-  }
+  width: 100%;
   
   @media (min-width: 1024px) {
     display: none;
@@ -996,7 +995,6 @@ const BidCard = ({
     <div style={{ 
       backgroundColor: 'white', 
       borderRadius: '8px', 
-      boxShadow: 'var(--shadow-md)', 
       overflow: 'hidden',
       margin: 0,
       padding: 0
