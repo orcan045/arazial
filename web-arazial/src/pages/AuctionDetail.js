@@ -337,7 +337,7 @@ const ImageGallery = styled.div`
   overflow-x: auto;
   
   @media (max-width: 768px) {
-    padding: 0.5rem 1rem;
+    padding: 0.25rem 1rem 0.5rem;
     background-color: white;
     border-bottom: 1px solid var(--color-border);
   }
@@ -833,9 +833,10 @@ const OfferInput = styled.input`
   }
   
   @media (max-width: 768px) {
-    padding: 0.6rem 0.75rem;
+    padding: 0.5rem 0.75rem;
     margin-bottom: 0;
     font-size: 0.875rem;
+    height: 36px;
   }
 `;
 
@@ -845,9 +846,9 @@ const OfferButton = styled(Button)`
   
   @media (max-width: 768px) {
     margin-top: 0;
-    padding: 0.6rem 0.75rem;
+    padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
-    min-height: 38px;
+    min-height: 36px;
   }
 `;
 
@@ -1044,7 +1045,7 @@ const BidCard = ({
       )}
       
       <div style={{ 
-        padding: isMobile ? '0.75rem 1rem' : '1rem 1rem 0 1rem', 
+        padding: isMobile ? '0.6rem 1rem' : '1rem 1rem 0 1rem', 
         display: 'flex', 
         flexDirection: 'column',
         paddingBottom: 0
@@ -1700,7 +1701,7 @@ const AuctionDetail = () => {
       {/* MOBILE LAYOUT - Different structure than desktop */}
       <div className="mobile-layout" style={{ display: 'none', flexDirection: 'column', width: '100%' }}>
         {/* 1. IMAGES */}
-        <div className="mobile-gallery" style={{ width: '100%' }}>
+        <div className="mobile-gallery" style={{ width: '100%', marginBottom: '0' }}>
           <MainGalleryContainer>
             <MainImage 
               src={auction.images[currentImageIndex]} 
@@ -1750,7 +1751,7 @@ const AuctionDetail = () => {
           bottom: 0,
           left: 0,
           zIndex: 100,
-          boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 -2px 5px -1px rgba(0, 0, 0, 0.1)',
           backgroundColor: 'white',
           borderRadius: '8px 8px 0 0',
           transition: 'all 0.3s ease'
@@ -1782,10 +1783,10 @@ const AuctionDetail = () => {
         </div>
         
         {/* Add padding at the bottom to account for fixed bid card */}
-        <div style={{ paddingBottom: '100px' }}></div>
+        <div style={{ paddingBottom: '80px' }}></div>
         
         {/* 3. TITLE AND DETAILS */}
-        <div className="mobile-header-section" style={{ padding: '0 1rem', marginTop: '1rem' }}>
+        <div className="mobile-header-section" style={{ padding: '0 1rem', marginTop: '0' }}>
           <AuctionTitle>{auction.title}</AuctionTitle>
           
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -1813,7 +1814,7 @@ const AuctionDetail = () => {
         </div>
         
         {/* 4. PROPERTY DETAILS */}
-        <div className="mobile-details-section" style={{ padding: '0 1rem', marginTop: '1rem' }}>
+        <div className="mobile-details-section" style={{ padding: '0 1rem', marginTop: '0.5rem' }}>
           <Card className="details-card">
             <CardHeader><CardTitle><PropertyIcon/> İlan Detayları</CardTitle></CardHeader>
             <CardContent>
