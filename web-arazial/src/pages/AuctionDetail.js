@@ -47,7 +47,7 @@ const AuctionContainer = styled.div`
   
   @media (max-width: 1023px) {
     display: flex;
-    flex-direction: column-reverse; /* Show the action column first on mobile */
+    flex-direction: column;
   }
 `;
 
@@ -890,6 +890,259 @@ const MobileHeader = styled.div`
   }
 `;
 
+const MobileBidCard = styled.div`
+  margin-bottom: 1rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  
+  @media (min-width: 1024px) {
+    display: none;
+  }
+`;
+
+const DesktopBidCard = styled.div`
+  @media (max-width: 1023px) {
+    display: none;
+  }
+`;
+
+// Add BidCard component
+const BidCard = ({ 
+  isOfferListing,
+  currentStatus,
+  user,
+  authLoading,
+  bidAmount,
+  setBidAmount,
+  getMinimumBidAmount,
+  bidError,
+  submitLoading,
+  handleSubmitBid,
+  formatPrice,
+  bids,
+  isExpanded,
+  setIsExpanded,
+  formatDate,
+  userActiveOffer,
+  showRejectedMessage,
+  offerAmount,
+  setOfferAmount,
+  offerError,
+  handleSubmitOffer,
+  showOfferForm
+}) => {
+  return (
+    <div style={{ 
+      backgroundColor: 'white', 
+      borderRadius: '8px', 
+      boxShadow: 'var(--shadow-md)', 
+      overflow: 'hidden',
+      margin: 0,
+      padding: 0
+    }}>
+      <div style={{ 
+        padding: '1.25rem', 
+        borderBottom: '1px solid var(--color-border)', 
+        backgroundColor: 'var(--color-background)'
+      }}>
+        <h2 style={{ 
+          fontSize: '1.25rem', 
+          fontWeight: 600, 
+          color: 'var(--color-text)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '0.75rem',
+          margin: 0
+        }}>
+          {isOfferListing ? (
+            <>
+              <OfferIcon/> Teklif Yap
+            </>
+          ) : (
+            <>
+              <BidsIcon/> Teklifler
+            </>
+          )}
+        </h2>
+      </div>
+      
+      <div style={{ padding: '1rem 1rem 0 1rem', display: 'flex', flexDirection: 'column', paddingBottom: 0 }}>
+        {/* AUCTION BIDDING UI */}
+        {!isOfferListing && (
+          <>
+            {/* Bid Form for Active Auctions */} 
+            {currentStatus === 'active' && (
+              <form onSubmit={handleSubmitBid} style={{ marginBottom: '1rem' }}>
+                {!user && !authLoading && (
+                  <p style={{ textAlign: 'center', marginBottom: '1rem' }}>Teklif vermek için <a href="/login">giriş yapın</a>.</p>
+                )}
+                {user && (
+                  <>
+                    <PropertyLabel htmlFor="bidAmount">Teklifiniz (Min: {formatPrice(getMinimumBidAmount())})</PropertyLabel>
+                    <OfferInput 
+                      type="number"
+                      id="bidAmount"
+                      value={bidAmount}
+                      onChange={(e) => setBidAmount(e.target.value)}
+                      placeholder={`Min. ${formatPrice(getMinimumBidAmount())}`}
+                      step="any"
+                      required 
+                      disabled={submitLoading || authLoading}
+                    />
+                    {bidError && <p style={{ color: 'red', fontSize: '0.875rem', marginTop: '-0.5rem', marginBottom: '0.5rem' }}>{bidError}</p>}
+                    <OfferButton type="submit" disabled={submitLoading || authLoading}>
+                      {submitLoading ? <LoadingIcon /> : 'Teklif Ver'}
+                    </OfferButton>
+                  </>
+                )}
+              </form>
+            )}
+            
+            {/* Messages for non-active auctions */} 
+            {currentStatus !== 'active' && (
+              <p style={{ marginTop: '1rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                {currentStatus === 'upcoming' ? 'Teklif verme henüz başlamadı.' : 'Teklif verme sona erdi.'}
+              </p>
+            )}
+            
+            {/* Bid History */}
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: '1rem 0 0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
+              Teklif Geçmişi
+            </h3>
+            
+            {bids.length === 0 && (
+              <div style={{ textAlign: 'center', color: 'var(--color-text-secondary)', margin: 0, padding: 0 }}>
+                <NoBidsIcon />
+                <p style={{ margin: 0 }}>Henüz teklif yapılmadı.</p>
+              </div>
+            )}
+            
+            {bids.length > 0 && (
+              <div style={{ margin: 0, padding: 0 }}>
+                {(isExpanded ? bids : bids.slice(0, 3)).map((bid, index, array) => (
+                  <BidItem 
+                    key={bid.id} 
+                    style={index === array.length - 1 && !isExpanded && array.length <= 3 ? { marginBottom: 0 } : {}}
+                  >
+                    <BidAmount>{formatPrice(bid.amount)}</BidAmount>
+                    <BidTime>{formatDate(bid.created_at)}</BidTime>
+                  </BidItem>
+                ))}
+                
+                {bids.length > 3 && (
+                  <div style={{
+                    borderTop: '1px solid var(--color-border)',
+                    marginTop: '0.75rem',
+                    paddingTop: '0.75rem',
+                    paddingBottom: '0.5rem',
+                    display: 'flex',
+                    justifyContent: 'center'
+                  }}>
+                    <button
+                      onClick={() => setIsExpanded(prev => !prev)} 
+                      style={{
+                        background: 'rgba(var(--color-primary-rgb), 0.05)',
+                        border: '1px solid rgba(var(--color-primary-rgb), 0.1)',
+                        borderRadius: '0.375rem',
+                        color: 'var(--color-primary)',
+                        fontSize: '0.875rem',
+                        fontWeight: 500,
+                        padding: '0.5rem 1rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.background = 'rgba(var(--color-primary-rgb), 0.1)';
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                        e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.05)';
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.background = 'rgba(var(--color-primary-rgb), 0.05)';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
+                      }}
+                    >
+                      {isExpanded ? 'Daha Az Göster' : `Daha Fazla Göster (${bids.length - 3} teklif daha)`}
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '0.5rem' }}>
+                        {isExpanded ? (
+                          <polyline points="18 15 12 9 6 15" />
+                        ) : (
+                          <polyline points="6 9 12 15 18 9" />
+                        )}
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+        
+        {/* OFFER SUBMISSION UI */}
+        {isOfferListing && (
+          <>
+            {/* Login prompt */} 
+            {!user && !authLoading && (
+              <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: '2rem' }}>
+                Teklif yapmak için <a href="/login">giriş yapmanız</a> gerekmektedir.
+              </p>
+            )}
+            
+            {/* Loading Auth prompt */} 
+            {authLoading && (
+              <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: '2rem' }}>
+                Kullanıcı bilgileri yükleniyor...
+              </p>
+            )}
+            
+            {/* Display existing pending/accepted offer */} 
+            {user && !authLoading && userActiveOffer && (
+              <OfferStatusMessage status={userActiveOffer.status} style={{ marginBottom: '2rem' }}>
+                Mevcut Teklifiniz: {formatPrice(userActiveOffer.amount)} 
+                ({userActiveOffer.status === 'pending' ? 'Beklemede' : 'Kabul Edildi'})
+              </OfferStatusMessage>
+            )}
+            
+            {/* Message about rejected offer */} 
+            {user && !authLoading && showRejectedMessage && (
+              <OfferStatusMessage status="rejected" style={{ marginBottom: '1.5rem' }}>
+                Önceki teklifiniz reddedildi. Yeni bir teklif yapabilirsiniz.
+              </OfferStatusMessage>
+            )}
+            
+            {/* Show Offer Form */} 
+            {showOfferForm && (
+              <form onSubmit={handleSubmitOffer} style={{ marginTop: showRejectedMessage ? '1.5rem' : '0', marginBottom: '2rem' }}>
+                <PropertyLabel htmlFor="offerAmount">Teklif Miktarınız</PropertyLabel>
+                <OfferInput 
+                  type="number"
+                  id="offerAmount"
+                  value={offerAmount}
+                  onChange={(e) => setOfferAmount(e.target.value)}
+                  placeholder="Teklifinizi Girin (₺)"
+                  step="any"
+                  required 
+                  disabled={submitLoading}
+                />
+                 {offerError && <p style={{ color: 'red', fontSize: '0.875rem', marginTop: '-0.5rem', marginBottom: '1rem' }}>{offerError}</p>}
+                 <OfferButton type="submit" disabled={submitLoading}>
+                    {submitLoading ? <LoadingIcon /> : 'Teklifi Gönder'}
+                 </OfferButton>
+              </form>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const AuctionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -1411,6 +1664,34 @@ const AuctionDetail = () => {
               </div>
             </div>
           </MobileHeader>
+          
+          {/* Mobile Bid Card - only visible on mobile */}
+          <MobileBidCard>
+            <BidCard 
+              isOfferListing={isOfferListing}
+              currentStatus={currentStatus}
+              user={user}
+              authLoading={authLoading}
+              bidAmount={bidAmount}
+              setBidAmount={setBidAmount}
+              getMinimumBidAmount={getMinimumBidAmount}
+              bidError={bidError}
+              submitLoading={submitLoading}
+              handleSubmitBid={handleSubmitBid}
+              formatPrice={formatPrice}
+              bids={bids}
+              isExpanded={isExpanded}
+              setIsExpanded={setIsExpanded}
+              formatDate={formatDate}
+              userActiveOffer={userActiveOffer}
+              showRejectedMessage={showRejectedMessage}
+              offerAmount={offerAmount}
+              setOfferAmount={setOfferAmount}
+              offerError={offerError}
+              handleSubmitOffer={handleSubmitOffer}
+              showOfferForm={showOfferForm}
+            />
+          </MobileBidCard>
 
           <Card>
             <CardHeader><CardTitle><PropertyIcon/> İlan Detayları</CardTitle></CardHeader>
@@ -1476,215 +1757,34 @@ const AuctionDetail = () => {
 
         {/* --- Right Column (Actions) --- */} 
         <Column style={{ position: 'sticky', top: '2rem', height: 'min-content', marginBottom: 0, padding: 0 }}>
-          {/* Action Card (Bids or Offers) */} 
-          <div style={{ 
-            backgroundColor: 'white', 
-            borderRadius: '8px', 
-            boxShadow: 'var(--shadow-md)', 
-            overflow: 'hidden',
-            margin: 0,
-            padding: 0
-          }}>
-            <div style={{ 
-              padding: '1.25rem', 
-              borderBottom: '1px solid var(--color-border)', 
-              backgroundColor: 'var(--color-background)'
-            }}>
-              <h2 style={{ 
-                fontSize: '1.25rem', 
-                fontWeight: 600, 
-                color: 'var(--color-text)', 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.75rem',
-                margin: 0
-              }}>
-                {isOfferListing ? (
-                  <>
-                    <OfferIcon/> Teklif Yap
-                  </>
-                ) : (
-                  <>
-                    <BidsIcon/> Teklifler
-                  </>
-                )}
-              </h2>
-            </div>
-            
-            <div style={{ padding: '1rem 1rem 0 1rem', display: 'flex', flexDirection: 'column', paddingBottom: 0 }}>
-              {/* AUCTION BIDDING UI */}
-              {!isOfferListing && (
-                <>
-                  {/* Bid Form for Active Auctions */} 
-                  {currentStatus === 'active' && (
-                    <form onSubmit={handleSubmitBid} style={{ marginBottom: '1rem' }}>
-                      {!user && !authLoading && (
-                        <p style={{ textAlign: 'center', marginBottom: '1rem' }}>Teklif vermek için <a href="/login">giriş yapın</a>.</p>
-                      )}
-                      {user && (
-                        <>
-                          <PropertyLabel htmlFor="bidAmount">Teklifiniz (Min: {formatPrice(getMinimumBidAmount())})</PropertyLabel>
-                          <OfferInput 
-                            type="number"
-                            id="bidAmount"
-                            value={bidAmount}
-                            onChange={(e) => setBidAmount(e.target.value)}
-                            placeholder={`Min. ${formatPrice(getMinimumBidAmount())}`}
-                            step="any"
-                            required 
-                            disabled={submitLoading || authLoading}
-                          />
-                          {bidError && <p style={{ color: 'red', fontSize: '0.875rem', marginTop: '-0.5rem', marginBottom: '0.5rem' }}>{bidError}</p>}
-                          <OfferButton type="submit" disabled={submitLoading || authLoading}>
-                            {submitLoading ? <LoadingIcon /> : 'Teklif Ver'}
-                          </OfferButton>
-                        </>
-                      )}
-                    </form>
-                  )}
-                  
-                  {/* Messages for non-active auctions */} 
-                  {currentStatus !== 'active' && (
-                    <p style={{ marginTop: '1rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                      {currentStatus === 'upcoming' ? 'Teklif verme henüz başlamadı.' : 'Teklif verme sona erdi.'}
-                    </p>
-                  )}
-                  
-                  {/* Bid History - COMPLETELY REDONE */}
-                  <h3 style={{ fontSize: '1rem', fontWeight: 600, margin: '1rem 0 0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
-                    Teklif Geçmişi
-                  </h3>
-                  
-                  {bids.length === 0 && (
-                    <div style={{ textAlign: 'center', color: 'var(--color-text-secondary)', margin: 0, padding: 0 }}>
-                      <NoBidsIcon />
-                      <p style={{ margin: 0 }}>Henüz teklif yapılmadı.</p>
-                    </div>
-                  )}
-                  
-                  {bids.length > 0 && (
-                    <div style={{ margin: 0, padding: 0 }}>
-                      {(isExpanded ? bids : bids.slice(0, 3)).map((bid, index, array) => (
-                        <BidItem 
-                          key={bid.id} 
-                          style={index === array.length - 1 && !isExpanded && array.length <= 3 ? { marginBottom: 0 } : {}}
-                        >
-                          <BidAmount>{formatPrice(bid.amount)}</BidAmount>
-                          <BidTime>{formatDate(bid.created_at)}</BidTime>
-                        </BidItem>
-                      ))}
-                      
-                      {bids.length > 3 && (
-                        <div style={{
-                          borderTop: '1px solid var(--color-border)',
-                          marginTop: '0.75rem',
-                          paddingTop: '0.75rem',
-                          paddingBottom: '0.5rem',
-                          display: 'flex',
-                          justifyContent: 'center'
-                        }}>
-                          <button
-                            onClick={() => setIsExpanded(prev => !prev)} 
-                            style={{
-                              background: 'rgba(var(--color-primary-rgb), 0.05)',
-                              border: '1px solid rgba(var(--color-primary-rgb), 0.1)',
-                              borderRadius: '0.375rem',
-                              color: 'var(--color-primary)',
-                              fontSize: '0.875rem',
-                              fontWeight: 500,
-                              padding: '0.5rem 1rem',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              transition: 'all 0.2s ease',
-                              boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
-                            }}
-                            onMouseOver={(e) => {
-                              e.currentTarget.style.background = 'rgba(var(--color-primary-rgb), 0.1)';
-                              e.currentTarget.style.transform = 'translateY(-1px)';
-                              e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.05)';
-                            }}
-                            onMouseOut={(e) => {
-                              e.currentTarget.style.background = 'rgba(var(--color-primary-rgb), 0.05)';
-                              e.currentTarget.style.transform = 'translateY(0)';
-                              e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
-                            }}
-                          >
-                            {isExpanded ? 'Daha Az Göster' : `Daha Fazla Göster (${bids.length - 3} teklif daha)`}
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: '0.5rem' }}>
-                              {isExpanded ? (
-                                <polyline points="18 15 12 9 6 15" />
-                              ) : (
-                                <polyline points="6 9 12 15 18 9" />
-                              )}
-                            </svg>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
-              
-              {/* OFFER SUBMISSION UI */}
-              {isOfferListing && (
-                <>
-                  {/* Login prompt */} 
-                  {!user && !authLoading && (
-                    <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: '2rem' }}>
-                      Teklif yapmak için <a href="/login">giriş yapmanız</a> gerekmektedir.
-                    </p>
-                  )}
-                  
-                  {/* Loading Auth prompt */} 
-                  {authLoading && (
-                    <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: '2rem' }}>
-                      Kullanıcı bilgileri yükleniyor...
-                    </p>
-                  )}
-                  
-                  {/* Display existing pending/accepted offer */} 
-                  {user && !authLoading && userActiveOffer && (
-                    <OfferStatusMessage status={userActiveOffer.status} style={{ marginBottom: '2rem' }}>
-                      Mevcut Teklifiniz: {formatPrice(userActiveOffer.amount)} 
-                      ({userActiveOffer.status === 'pending' ? 'Beklemede' : 'Kabul Edildi'})
-                    </OfferStatusMessage>
-                  )}
-                  
-                  {/* Message about rejected offer */} 
-                  {user && !authLoading && showRejectedMessage && (
-                    <OfferStatusMessage status="rejected" style={{ marginBottom: '1.5rem' }}>
-                      Önceki teklifiniz reddedildi. Yeni bir teklif yapabilirsiniz.
-                    </OfferStatusMessage>
-                  )}
-                  
-                  {/* Show Offer Form */} 
-                  {showOfferForm && (
-                    <form onSubmit={handleSubmitOffer} style={{ marginTop: showRejectedMessage ? '1.5rem' : '0', marginBottom: '2rem' }}>
-                      <PropertyLabel htmlFor="offerAmount">Teklif Miktarınız</PropertyLabel>
-                      <OfferInput 
-                        type="number"
-                        id="offerAmount"
-                        value={offerAmount}
-                        onChange={(e) => setOfferAmount(e.target.value)}
-                        placeholder="Teklifinizi Girin (₺)"
-                        step="any"
-                        required 
-                        disabled={submitLoading}
-                      />
-                       {offerError && <p style={{ color: 'red', fontSize: '0.875rem', marginTop: '-0.5rem', marginBottom: '1rem' }}>{offerError}</p>}
-                       <OfferButton type="submit" disabled={submitLoading}>
-                          {submitLoading ? <LoadingIcon /> : 'Teklifi Gönder'}
-                       </OfferButton>
-                    </form>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+          {/* Action Card (Bids or Offers) - Desktop version */} 
+          <DesktopBidCard>
+            <BidCard 
+              isOfferListing={isOfferListing}
+              currentStatus={currentStatus}
+              user={user}
+              authLoading={authLoading}
+              bidAmount={bidAmount}
+              setBidAmount={setBidAmount}
+              getMinimumBidAmount={getMinimumBidAmount}
+              bidError={bidError}
+              submitLoading={submitLoading}
+              handleSubmitBid={handleSubmitBid}
+              formatPrice={formatPrice}
+              bids={bids}
+              isExpanded={isExpanded}
+              setIsExpanded={setIsExpanded}
+              formatDate={formatDate}
+              userActiveOffer={userActiveOffer}
+              showRejectedMessage={showRejectedMessage}
+              offerAmount={offerAmount}
+              setOfferAmount={setOfferAmount}
+              offerError={offerError}
+              handleSubmitOffer={handleSubmitOffer}
+              showOfferForm={showOfferForm}
+            />
+          </DesktopBidCard>
         </Column>
-        
       </AuctionContainer>
 
       {/* Lightbox */}
