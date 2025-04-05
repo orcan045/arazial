@@ -74,6 +74,12 @@ const Logo = styled(Link)`
   @media (max-width: 767px) {
     font-size: 1.25rem;
   }
+  
+  @media (max-width: 359px) {
+    span {
+      display: none;
+    }
+  }
 `;
 
 const LogoIcon = styled.div`
@@ -87,11 +93,17 @@ const LogoIcon = styled.div`
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--color-primary);
+    background-color: white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     
     @media (max-width: 767px) {
-      height: 3rem;
-      width: 3rem;
+      height: 2.75rem;
+      width: 2.75rem;
     }
+  }
+  
+  @media (max-width: 359px) {
+    margin-right: 0;
   }
 `;
 
@@ -538,7 +550,14 @@ const Navbar = () => {
       <NavbarContent $isScrolled={isScrolled}>
         <Logo to="/">
           <LogoIcon>
-            <img src="/images/arazialcomlogo.png" alt="Arazialcom Logo" />
+            <img 
+              src="/images/arazialcomlogo.jpeg" 
+              alt="Arazialcom Logo" 
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "/images/arazialcomlogo.png";
+              }}
+            />
           </LogoIcon>
           <span>Arazialcom</span>
         </Logo>
