@@ -215,11 +215,10 @@ const Card = styled.section`
   &.bid-card {
     margin-bottom: 0 !important;
     @media (max-width: 1023px) {
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      position: static;
+      z-index: 1;
       margin-bottom: 1rem;
-      border-radius: 0 0 8px 8px;
+      border-radius: 8px;
     }
     
     /* Ensure no elements in the bid card add extra space */
@@ -1766,17 +1765,13 @@ const AuctionDetail = () => {
           </ImageGallery>
         </div>
         
-        {/* 2. TEKLIF YAP */}
+        {/* 2. TEKLIF YAP - Now placed directly under the image instead of fixed at bottom */}
         <div className="mobile-bid-section" style={{ 
           width: '100%', 
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          zIndex: 100,
-          boxShadow: '0 -2px 5px -1px rgba(0, 0, 0, 0.1)',
           backgroundColor: 'white',
-          borderRadius: '8px 8px 0 0',
-          transition: 'all 0.3s ease'
+          borderRadius: '8px',
+          margin: '0.5rem 0',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
         }}>
           <BidCard 
             isOfferListing={isOfferListing}
