@@ -547,7 +547,7 @@ const Navbar = () => {
       <NavbarContent $isScrolled={isScrolled}>
         <Logo to="/">
           <LogoIcon>
-            <img src="/images/logo.png" alt="Arazialcom Logo" />
+            <img src="/logo.png" alt="Arazialcom Logo" />
           </LogoIcon>
           <span>Arazialcom</span>
         </Logo>
