@@ -551,11 +551,11 @@ const Navbar = () => {
         <Logo to="/">
           <LogoIcon>
             <img 
-              src="/images/arazialcomlogo.jpeg" 
+              src="/images/arazialcomlogo.png" 
               alt="Arazialcom Logo" 
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.src = "/images/arazialcomlogo.png";
+                e.target.src = "/images/arazialcomlogo.jpeg";
               }}
             />
           </LogoIcon>
