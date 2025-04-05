@@ -87,18 +87,19 @@ const LogoIcon = styled.div`
   display: flex;
   align-items: center;
   
-  img {
+  svg {
     height: 3.5rem;
     width: 3.5rem;
     border-radius: 50%;
     background-color: white;
     border: 2px solid var(--color-primary);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    object-fit: cover;
+    padding: 0.5rem;
     
     @media (max-width: 767px) {
       height: 2.75rem;
       width: 2.75rem;
+      padding: 0.4rem;
     }
   }
   
@@ -550,22 +551,20 @@ const Navbar = () => {
       <NavbarContent $isScrolled={isScrolled}>
         <Logo to="/">
           <LogoIcon>
-            <img
-              src="/images/tree-logo.png?v=1"
-              alt="Arazialcom Logo"
-              onError={(e) => {
-                console.error("Failed to load logo image");
-                e.target.onerror = null;
-                // Try a few backup paths if the main one fails
-                if (e.target.src.includes('tree-logo.png')) {
-                  e.target.src = "/images/logo.png?v=1";
-                } else if (e.target.src.includes('logo.png')) {
-                  e.target.src = "/images/arazialcomlogo.png?v=1";
-                } else if (e.target.src.includes('arazialcomlogo.png')) {
-                  e.target.src = "/images/arazialcomlogo.jpeg?v=1";
-                }
-              }}
-            />
+            <svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Outer circle */}
+              <circle cx="256" cy="256" r="240" fill="white" stroke="#111111" strokeWidth="16"/>
+              
+              {/* Tree */}
+              <path d="M256 120C215 152 185 190 165 228C205 210 240 202 256 200C272 202 307 210 347 228C327 190 297 152 256 120Z" fill="#4CAF50" stroke="#111111" strokeWidth="12"/>
+              <path d="M256 140V380" stroke="#111111" strokeWidth="12" strokeLinecap="round"/>
+              
+              {/* Ground */}
+              <path d="M140 350C167 335 212 320 256 320C300 320 345 335 372 350C390 362 400 372 400 380C400 388 390 398 372 410C345 425 300 440 256 440C212 440 167 425 140 410C122 398 112 388 112 380C112 372 122 362 140 350Z" fill="#4CAF50" stroke="#111111" strokeWidth="12"/>
+              <path d="M140 370C167 355 212 340 256 340C300 340 345 355 372 370" stroke="#111111" strokeWidth="8" strokeLinecap="round"/>
+              <path d="M140 390C167 375 212 360 256 360C300 360 345 375 372 390" stroke="#111111" strokeWidth="8" strokeLinecap="round"/>
+              <path d="M140 410C167 395 212 380 256 380C300 380 345 395 372 410" stroke="#111111" strokeWidth="8" strokeLinecap="round"/>
+            </svg>
           </LogoIcon>
           <span>Arazialcom</span>
         </Logo>
