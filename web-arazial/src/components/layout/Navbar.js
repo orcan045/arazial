@@ -87,18 +87,19 @@ const LogoIcon = styled.div`
   display: flex;
   align-items: center;
   
-  img {
+  svg {
     height: 3.5rem;
     width: 3.5rem;
     border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid var(--color-primary);
     background-color: white;
+    border: 2px solid var(--color-primary);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    padding: 0.4rem;
     
     @media (max-width: 767px) {
       height: 2.75rem;
       width: 2.75rem;
+      padding: 0.3rem;
     }
   }
   
@@ -550,14 +551,13 @@ const Navbar = () => {
       <NavbarContent $isScrolled={isScrolled}>
         <Logo to="/">
           <LogoIcon>
-            <img 
-              src="/images/arazialcomlogo.png" 
-              alt="Arazialcom Logo" 
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "/images/arazialcomlogo.jpeg";
-              }}
-            />
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3.9 12C3.9 10.29 5 8.8 6.44 8.17C7.42 7.72 8.55 7.5 9.78 7.5H14.22C15.45 7.5 16.58 7.72 17.56 8.17C19 8.8 20.1 10.29 20.1 12C20.1 13.43 19.38 14.59 18.35 15.34C17.27 16.13 15.74 16.5 14 16.5H10C8.26 16.5 6.73 16.13 5.65 15.34C4.62 14.59 3.9 13.43 3.9 12Z" fill="#0F3460" />
+              <path d="M10.9 7.5C10.9 8.6 11.8 9.5 12.9 9.5C14 9.5 14.9 8.6 14.9 7.5C14.9 6.4 14 5.5 12.9 5.5C11.8 5.5 10.9 6.4 10.9 7.5Z" fill="#0F3460" />
+              <path d="M16.5 8C16.5 9.1 17.4 10 18.5 10C19.6 10 20.5 9.1 20.5 8C20.5 6.9 19.6 6 18.5 6C17.4 6 16.5 6.9 16.5 8Z" fill="#0F3460" />
+              <path d="M10.9 16.5C10.9 17.6 11.8 18.5 12.9 18.5C14 18.5 14.9 17.6 14.9 16.5C14.9 15.4 14 14.5 12.9 14.5C11.8 14.5 10.9 15.4 10.9 16.5Z" fill="#0F3460" />
+              <path d="M5.3 8C5.3 9.1 6.2 10 7.3 10C8.4 10 9.3 9.1 9.3 8C9.3 6.9 8.4 6 7.3 6C6.2 6 5.3 6.9 5.3 8Z" fill="#0F3460" />
+            </svg>
           </LogoIcon>
           <span>Arazialcom</span>
         </Logo>
