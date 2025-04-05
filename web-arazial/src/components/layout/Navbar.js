@@ -551,8 +551,20 @@ const Navbar = () => {
         <Logo to="/">
           <LogoIcon>
             <img
-              src="/images/logo.png"
+              src="/images/tree-logo.png?v=1"
               alt="Arazialcom Logo"
+              onError={(e) => {
+                console.error("Failed to load logo image");
+                e.target.onerror = null;
+                // Try a few backup paths if the main one fails
+                if (e.target.src.includes('tree-logo.png')) {
+                  e.target.src = "/images/logo.png?v=1";
+                } else if (e.target.src.includes('logo.png')) {
+                  e.target.src = "/images/arazialcomlogo.png?v=1";
+                } else if (e.target.src.includes('arazialcomlogo.png')) {
+                  e.target.src = "/images/arazialcomlogo.jpeg?v=1";
+                }
+              }}
             />
           </LogoIcon>
           <span>Arazialcom</span>
