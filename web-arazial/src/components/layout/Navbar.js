@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import { resetAllAuthStorage } from '../../services/appState';
+import logoImage from '../../assets/logo.png';
 
 const NavbarContainer = styled.nav`
   background-color: ${props => props.$isScrolled ? 'rgba(255, 255, 255, 0.95)' : 'var(--color-surface)'};
@@ -547,7 +548,7 @@ const Navbar = () => {
       <NavbarContent $isScrolled={isScrolled}>
         <Logo to="/">
           <LogoIcon>
-            <img src="/logo.png" alt="Arazialcom Logo" />
+            <img src={logoImage} alt="Arazialcom Logo" />
           </LogoIcon>
           <span>Arazialcom</span>
         </Logo>
