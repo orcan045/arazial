@@ -130,6 +130,9 @@ export const fetchListings = async (type = 'auction', forceRefresh = false, upda
             startTime: listing.start_time || listing.startTime,
             endTime: listing.end_time || listing.endTime,
             finalPrice: listing.final_price || listing.finalPrice,
+            // Ensure ada_no and parsel_no are preserved
+            ada_no: listing.ada_no || null,
+            parsel_no: listing.parsel_no || null,
             // Ensure images is always an array
             images: Array.isArray(listing.images) ? listing.images : []
           };

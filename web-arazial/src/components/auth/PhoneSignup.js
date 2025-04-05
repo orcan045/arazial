@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { forceAuthRefresh } from '../../services/appState';
+import { supabase } from '../../services/supabase';
 
 // Define default colors to avoid undefined theme issues
 const defaultColors = {
@@ -196,18 +197,29 @@ const PhoneSignup = () => {
     setLoading(true);
     
     try {
+      // Add debug logging
+      console.log('Formatted phone number:', formatted);
+      
       // Call the Supabase Edge Function
       const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`
         },
-        body: JSON.stringify({ phoneNumber: formatted }),
+        body: JSON.stringify({
+          phone_number: formatted
+        }),
       });
       
       const data = await response.json();
+      console.log('OTP response:', data);
       
       if (!response.ok) {
+        throw new Error(data.error || 'Doğrulama kodu gönderilirken bir hata oluştu');
+      }
+      
+      if (!data.success) {
         throw new Error(data.error || 'Doğrulama kodu gönderilirken bir hata oluştu');
       }
       

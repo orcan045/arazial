@@ -1718,6 +1718,18 @@ const Auctions = () => {
                 <span>{auction.area_size} {auction.area_unit || 'm²'}</span>
               </PropertyInfoItem>
             )}
+            {auction.ada_no && (
+              <PropertyInfoItem>
+                <DocumentIcon />
+                <span>Ada: {auction.ada_no}</span>
+              </PropertyInfoItem>
+            )}
+            {auction.parsel_no && (
+              <PropertyInfoItem>
+                <DocumentIcon />
+                <span>Parsel: {auction.parsel_no}</span>
+              </PropertyInfoItem>
+            )}
             {auction.document_type && (
               <PropertyInfoItem>
                 <DocumentIcon />
@@ -2128,6 +2140,18 @@ const Auctions = () => {
                 <span>{auction.area_size} {auction.area_unit || 'm²'}</span>
               </PropertyInfoItem>
             )}
+            {auction.ada_no && (
+              <PropertyInfoItem>
+                <DocumentIcon />
+                <span>Ada: {auction.ada_no}</span>
+              </PropertyInfoItem>
+            )}
+            {auction.parsel_no && (
+              <PropertyInfoItem>
+                <DocumentIcon />
+                <span>Parsel: {auction.parsel_no}</span>
+              </PropertyInfoItem>
+            )}
             {auction.document_type && (
               <PropertyInfoItem>
                 <DocumentIcon />
@@ -2165,13 +2189,8 @@ const Auctions = () => {
   return (
     <PageContainer>
       <PageHeader>
-        <PageTitle>Arazi İlanları</PageTitle>
         <PageDescription>
-          {listingType === 'auction' 
-            ? 'Açık arttırma ile satışa sunulan arazileri inceleyin ve teklifinizi verin.'
-            : listingType === 'offer'
-              ? 'Pazarlık usulü ile satışa sunulan arazileri inceleyin ve iletişime geçin.'
-              : 'Son bir hafta içinde eklenmiş, açık arttırma ve pazarlık usulü ile satışa sunulan en güncel arazi ilanlarını inceleyin.'}
+          Türkiye'nin dört bir yanındaki değerli araziler için ihale tekliflerinizi verin.
         </PageDescription>
       </PageHeader>
 

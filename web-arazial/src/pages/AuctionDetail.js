@@ -994,7 +994,8 @@ const BidCard = ({
   setOfferAmount,
   offerError,
   handleSubmitOffer,
-  showOfferForm
+  showOfferForm,
+  auction
 }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showAuthLoading, setShowAuthLoading] = useState(false);
@@ -1202,6 +1203,29 @@ const BidCard = ({
         {/* OFFER SUBMISSION UI */}
         {isOfferListing && (
           <>
+            {/* Display listing price */}
+            {(auction?.price || auction?.start_price || auction?.startPrice || auction?.highest_bid || auction?.final_price || auction?.finalPrice) && (
+              <div style={{ 
+                marginBottom: isMobile ? '0.75rem' : '1.25rem',
+                borderRadius: '0.5rem',
+                backgroundColor: 'rgba(var(--color-primary-rgb), 0.05)',
+                padding: '0.75rem 1rem',
+                border: '1px solid rgba(var(--color-primary-rgb), 0.1)'
+              }}>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
+                  İlan Fiyatı
+                </div>
+                <div style={{ 
+                  fontSize: isMobile ? '1.25rem' : '1.5rem', 
+                  fontWeight: '700', 
+                  color: 'var(--color-primary)',
+                  marginTop: '0.25rem'
+                }}>
+                  {formatPrice(auction?.price || auction?.start_price || auction?.startPrice || auction?.highest_bid || auction?.final_price || auction?.finalPrice || 0)}
+                </div>
+              </div>
+            )}
+            
             {/* Login prompt */} 
             {!user && !authLoading && (
               <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: isMobile ? '0.5rem' : '2rem' }}>
@@ -1309,6 +1333,15 @@ const AuctionDetail = () => {
       if (auctionError || !auctionData) {
         throw auctionError || new Error('İlan bulunamadı.');
       }
+      
+      console.log("AUCTION DATA FETCHED:", {
+        id: auctionData.id,
+        title: auctionData.title,
+        price: auctionData.price,
+        hasPrice: !!auctionData.price,
+        listingType: auctionData.listing_type
+      });
+      
       setAuction(auctionData);
 
       // 2. Fetch Bids OR Offers based on type
@@ -1530,13 +1563,10 @@ const AuctionDetail = () => {
     }
   };
 
+  // Format price with Turkish Lira (₺) symbol
   const formatPrice = (price) => {
-    if (price === null || price === undefined) return 'Belirtilmemiş';
-    try {
-        return `₺${parseFloat(price).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    } catch { 
-        return 'Hatalı Fiyat';
-    }
+    if (price === undefined || price === null) return '₺0';
+    return `₺${parseFloat(price).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   };
 
   const formatDate = (dateString) => {
@@ -1704,18 +1734,6 @@ const AuctionDetail = () => {
           <AuctionLocation>
             <LocationIcon /> {auction.location || 'Konum belirtilmemiş'}
           </AuctionLocation>
-          
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#3b5998" stroke="#3b5998" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-            </button>
-            <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#1DA1F2" stroke="#1DA1F2" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
-            </button>
-            <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#0077b5" stroke="#0077b5" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
-            </button>
-          </div>
         </div>
       </DesktopHeader>
       
@@ -1796,6 +1814,7 @@ const AuctionDetail = () => {
             offerError={offerError}
             handleSubmitOffer={handleSubmitOffer}
             showOfferForm={showOfferForm}
+            auction={auction}
           />
         </div>
         
@@ -1815,31 +1834,14 @@ const AuctionDetail = () => {
             <AuctionLocation>
               <LocationIcon /> {auction.location || 'Konum belirtilmemiş'}
             </AuctionLocation>
-            
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#3b5998" stroke="#3b5998" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-              </button>
-              <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#1DA1F2" stroke="#1DA1F2" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg>
-              </button>
-              <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#0077b5" stroke="#0077b5" strokeWidth="0" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
-              </button>
-            </div>
           </div>
         </div>
         
         {/* 4. PROPERTY DETAILS */}
         <div className="mobile-details-section" style={{ padding: '0 1rem', marginTop: '0.5rem' }}>
           <Card className="details-card">
-            <CardHeader><CardTitle><PropertyIcon/> İlan Detayları</CardTitle></CardHeader>
             <CardContent>
               <PropertyGrid>
-                <PropertyItem>
-                  <PropertyLabel>Konum</PropertyLabel>
-                  <PropertyValue>{auction.location || '-'}</PropertyValue>
-                </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>Emlak Tipi</PropertyLabel>
                   <PropertyValue>{auction.property_type || '-'}</PropertyValue>
@@ -1854,11 +1856,11 @@ const AuctionDetail = () => {
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>Ada No</PropertyLabel>
-                  <PropertyValue>{auction.parcel_island || '-'}</PropertyValue>
+                  <PropertyValue>{auction.ada_no || '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>Parsel No</PropertyLabel>
-                  <PropertyValue>{auction.parcel_number || '-'}</PropertyValue>
+                  <PropertyValue>{auction.parsel_no || '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>İlan Sahibi</PropertyLabel>
@@ -1889,7 +1891,6 @@ const AuctionDetail = () => {
         {/* 5. DESCRIPTION */}
         <div className="mobile-description-section" style={{ padding: '0 1rem', marginTop: '1rem', marginBottom: '1.5rem' }}>
           <Card className="description-card">
-            <CardHeader><CardTitle><InfoIcon/> İlan Açıklaması</CardTitle></CardHeader>
             <CardContent>
               <Description>{auction.description || 'Açıklama girilmemiş.'}</Description>
             </CardContent>
@@ -1946,13 +1947,8 @@ const AuctionDetail = () => {
 
           {/* Property Details Card */}
           <Card className="details-card">
-            <CardHeader><CardTitle><PropertyIcon/> İlan Detayları</CardTitle></CardHeader>
             <CardContent>
               <PropertyGrid>
-                <PropertyItem>
-                  <PropertyLabel>Konum</PropertyLabel>
-                  <PropertyValue>{auction.location || '-'}</PropertyValue>
-                </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>Emlak Tipi</PropertyLabel>
                   <PropertyValue>{auction.property_type || '-'}</PropertyValue>
@@ -1967,11 +1963,11 @@ const AuctionDetail = () => {
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>Ada No</PropertyLabel>
-                  <PropertyValue>{auction.parcel_island || '-'}</PropertyValue>
+                  <PropertyValue>{auction.ada_no || '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>Parsel No</PropertyLabel>
-                  <PropertyValue>{auction.parcel_number || '-'}</PropertyValue>
+                  <PropertyValue>{auction.parsel_no || '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>İlan Sahibi</PropertyLabel>
@@ -2000,7 +1996,6 @@ const AuctionDetail = () => {
 
           {/* Description Card */}
           <Card className="description-card">
-            <CardHeader><CardTitle><InfoIcon/> İlan Açıklaması</CardTitle></CardHeader>
             <CardContent>
               <Description>{auction.description || 'Açıklama girilmemiş.'}</Description>
             </CardContent>
@@ -2035,6 +2030,7 @@ const AuctionDetail = () => {
               offerError={offerError}
               handleSubmitOffer={handleSubmitOffer}
               showOfferForm={showOfferForm}
+              auction={auction}
             />
           </DesktopBidCard>
         </Column>
