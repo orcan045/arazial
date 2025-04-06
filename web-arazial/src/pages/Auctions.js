@@ -13,7 +13,7 @@ const PageContainer = styled.div`
   padding: 2rem;
   
   @media (max-width: 768px) {
-    padding: 1.25rem;
+    padding: 1rem 0.75rem;
   }
 `;
 
@@ -195,6 +195,7 @@ const ContentHeader = styled.div`
   
   @media (max-width: 768px) {
     margin-bottom: 1.25rem;
+    padding: 0 0.75rem;
   }
 `;
 
@@ -205,13 +206,16 @@ const TabsContainer = styled.div`
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  position: relative;
   
   &::-webkit-scrollbar {
     display: none;
   }
   
   @media (max-width: 768px) {
-    padding-bottom: 0.25rem;
+    margin: 0 -0.75rem 1.5rem -0.75rem;
+    padding: 0 0.75rem 0.25rem 0.75rem;
+    width: calc(100% + 1.5rem);
   }
 `;
 
@@ -221,10 +225,9 @@ const SubTabsContainer = styled(TabsContainer)`
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   
   @media (max-width: 768px) {
-    width: 100%;
-    padding-bottom: 0.5rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    margin: 0.5rem -0.75rem 1rem -0.75rem;
+    padding: 0 0.75rem 0.5rem 0.75rem;
+    width: calc(100% + 1.5rem);
   }
 `;
 
@@ -279,6 +282,11 @@ const SortContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: space-between;
+  }
 `;
 
 const SortLabel = styled.span`
@@ -288,7 +296,7 @@ const SortLabel = styled.span`
 `;
 
 const SortSelect = styled.select`
-  padding: 0.65rem 1.25rem 0.65rem 0.75rem;
+  padding: 0.65rem 2rem 0.65rem 0.75rem;
   border: 1px solid var(--color-border);
   border-radius: 10px;
   font-size: 0.875rem;
@@ -299,7 +307,12 @@ const SortSelect = styled.select`
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236E6E6E' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 0.5rem center;
+  background-position: right 0.75rem center;
+  
+  @media (max-width: 768px) {
+    flex: 1;
+    max-width: none;
+  }
   
   &:focus {
     outline: none;
@@ -362,15 +375,24 @@ const AuctionsGrid = styled.div`
   
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: 1.25rem;
+    gap: 1rem;
+    margin: 0 -0.75rem;
+    width: calc(100% + 1.5rem);
   }
 `;
 
-// Add a grid item wrapper component to limit width
 const GridItemWrapper = styled.div`
-  max-width: 380px;
   width: 100%;
-  justify-self: center;
+  
+  @media (min-width: 769px) {
+    max-width: 380px;
+    justify-self: center;
+  }
+  
+  @media (max-width: 768px) {
+    max-width: none;
+    padding: 0 0.75rem;
+  }
 `;
 
 const AuctionsList = styled.div`
@@ -393,10 +415,20 @@ const AuctionCard = styled.div`
   display: flex;
   flex-direction: column;
   
+  @media (max-width: 768px) {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
     border-color: var(--color-primary-light);
+    
+    @media (max-width: 768px) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    }
   }
   
   &::after {
@@ -1247,6 +1279,89 @@ const CityOption = styled.div`
   }
 `;
 
+const MobileFiltersButton = styled.button`
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: white;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  color: var(--color-text);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  
+  @media (max-width: 768px) {
+    display: flex;
+  }
+`;
+
+const MobileFiltersPanel = styled.div`
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: white;
+  z-index: 1000;
+  padding: 1rem;
+  overflow-y: auto;
+  transform: translateX(${props => props.$isOpen ? '0' : '100%'});
+  transition: transform 0.3s ease;
+  
+  @media (max-width: 768px) {
+    display: block;
+  }
+`;
+
+const MobileFiltersPanelHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+`;
+
+const MobileFiltersPanelTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+`;
+
+const MobileFiltersPanelClose = styled.button`
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  
+  svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+`;
+
+const ContentControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  
+  @media (max-width: 768px) {
+    flex-wrap: wrap;
+    padding: 0 0.75rem;
+  }
+`;
+
 const Auctions = () => {
   const navigate = useNavigate();
   const [listingType, setListingType] = useState('new'); // 'auction', 'offer', or 'new'
@@ -1270,6 +1385,9 @@ const Auctions = () => {
     maxPrice: '',
     status: 'all'
   });
+  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+  const [propertyType, setPropertyType] = useState('');
+  const [location, setLocation] = useState('');
   const [sortOption, setSortOption] = useState('newest');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
@@ -1851,9 +1969,11 @@ const Auctions = () => {
     return (
         <>
       <AuctionsGrid>
-            {paginatedAuctions.map(auction => (
+            {getPaginatedListings().map(auction => (
               <GridItemWrapper key={auction.id}>
-                {renderAuctionCard(auction)}
+                <AuctionCard onClick={() => handleAuctionClick(auction.id)}>
+                  {renderAuctionCard(auction)}
+                </AuctionCard>
               </GridItemWrapper>
             ))}
           </AuctionsGrid>
@@ -1864,7 +1984,7 @@ const Auctions = () => {
       return (
         <>
           <AuctionsList>
-            {paginatedAuctions.map(auction => renderAuctionListItem(auction))}
+            {getPaginatedListings().map(auction => renderAuctionListItem(auction))}
           </AuctionsList>
           {renderPagination()}
         </>
@@ -2189,6 +2309,7 @@ const Auctions = () => {
   return (
     <PageContainer>
       <PageHeader>
+        <PageTitle>İlanlar</PageTitle>
         <PageDescription>
           Türkiye'nin dört bir yanındaki değerli araziler için ihale tekliflerinizi verin.
         </PageDescription>
@@ -2280,105 +2401,6 @@ const Auctions = () => {
           {renderAuctions()}
         </MainContentArea>
       </FiltersAndContentWrapper>
-      
-      {/* Mobile Filter Panel */}
-      <MobileFilterOverlay isOpen={mobileFiltersOpen} onClick={() => setMobileFiltersOpen(false)} />
-      <MobileFilterPanel isOpen={mobileFiltersOpen}>
-        <MobileFilterHeader>
-          <MobileFilterTitle>Filtreler</MobileFilterTitle>
-          <CloseButton onClick={() => setMobileFiltersOpen(false)}>
-            <CloseIcon />
-          </CloseButton>
-        </MobileFilterHeader>
-        
-        <FilterGroup>
-          <FilterLabel htmlFor="mobile-city-select">Şehir Seçiniz</FilterLabel>
-          <MultiSelectWrapper className="mobile-city-dropdown">
-            <MultiSelectBox 
-              onClick={() => setMobileCityDropdownOpen(!mobileCityDropdownOpen)}
-              className="mobile-city-dropdown"
-            >
-              <SelectedCities>
-                {filters.cities.length === 0 ? (
-                  <span style={{ color: 'var(--color-text-tertiary)' }}>Tüm Şehirler</span>
-                ) : (
-                  filters.cities.map(city => (
-                    <CityTag key={city}>
-                      {city}
-                      <button onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveCity(city);
-                      }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                      </button>
-                    </CityTag>
-                  ))
-                )}
-              </SelectedCities>
-              <DropdownIcon isOpen={mobileCityDropdownOpen}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </DropdownIcon>
-            </MultiSelectBox>
-            
-            <CityDropdown isOpen={mobileCityDropdownOpen} className="mobile-city-dropdown">
-              <SearchInput 
-                placeholder="Şehir ara..." 
-                value={mobileCitySearch}
-                onChange={(e) => setMobileCitySearch(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-              />
-              <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                {filteredMobileCities.map(city => (
-                  <CityOption key={city} onClick={(e) => {
-                    e.stopPropagation();
-                    handleCitySelect(city);
-                  }}>
-                    <input 
-                      type="checkbox" 
-                      checked={filters.cities.includes(city)}
-                      onChange={() => {}} // Handled by the parent click
-                    />
-                    {city}
-                  </CityOption>
-                ))}
-                {filteredMobileCities.length === 0 && (
-                  <div style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)' }}>
-                    Sonuç bulunamadı
-                  </div>
-                )}
-              </div>
-            </CityDropdown>
-          </MultiSelectWrapper>
-        </FilterGroup>
-        
-        <MobileFilterActions>
-          <Button 
-            onClick={clearFilters} 
-            variant="secondary" 
-            style={{ 
-              flex: 1,
-              height: '50px'
-            }}
-          >
-            Temizle
-          </Button>
-          <Button 
-            onClick={applyFilters} 
-            variant="primary" 
-            style={{ 
-              flex: 1,
-              height: '50px'
-            }}
-          >
-            Uygula
-          </Button>
-        </MobileFilterActions>
-      </MobileFilterPanel>
     </PageContainer>
   );
 };
