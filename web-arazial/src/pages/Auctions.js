@@ -227,31 +227,13 @@ const TabsContainer = styled.div`
   
   @media (max-width: 768px) {
     margin: 0 -0.75rem 1.5rem -0.75rem;
-    padding: 0 0.75rem 0.25rem 0.75rem;
+    padding: 0 0.75rem;
     width: calc(100% + 1.5rem);
+    justify-content: space-between;
     
     &::after {
-      content: '';
-      position: absolute;
-      right: 0;
-      top: 0;
-      bottom: 0;
-      width: 24px;
-      background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,1));
-      pointer-events: none;
+      display: none;
     }
-  }
-`;
-
-const SubTabsContainer = styled(TabsContainer)`
-  margin-top: 1rem;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  
-  @media (max-width: 768px) {
-    margin: 0.5rem -0.75rem 1rem -0.75rem;
-    padding: 0 0.75rem 0.5rem 0.75rem;
-    width: calc(100% + 1.5rem);
   }
 `;
 
@@ -266,15 +248,29 @@ const TabButton = styled.button`
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
-  flex-shrink: 0;
+  flex: 1;
   
   &:hover {
     color: var(--color-primary);
   }
   
   @media (max-width: 768px) {
-    padding: 0.875rem 1.25rem;
-    font-size: 0.95rem;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
+    text-align: center;
+  }
+`;
+
+const SubTabsContainer = styled(TabsContainer)`
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  
+  @media (max-width: 768px) {
+    margin: 0.5rem -0.75rem 1rem -0.75rem;
+    padding: 0 0.75rem;
+    width: calc(100% + 1.5rem);
+    justify-content: space-between;
   }
 `;
 
