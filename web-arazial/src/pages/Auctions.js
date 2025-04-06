@@ -219,6 +219,7 @@ const TabsContainer = styled.div`
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   position: relative;
+  width: 100%;
   
   &::-webkit-scrollbar {
     display: none;
@@ -228,6 +229,17 @@ const TabsContainer = styled.div`
     margin: 0 -0.75rem 1.5rem -0.75rem;
     padding: 0 0.75rem 0.25rem 0.75rem;
     width: calc(100% + 1.5rem);
+    
+    &::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 24px;
+      background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,1));
+      pointer-events: none;
+    }
   }
 `;
 
@@ -253,6 +265,8 @@ const TabButton = styled.button`
   border-bottom: 2px solid ${props => props.$isActive ? 'var(--color-primary)' : 'transparent'};
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
   
   &:hover {
     color: var(--color-primary);
@@ -260,6 +274,7 @@ const TabButton = styled.button`
   
   @media (max-width: 768px) {
     padding: 0.875rem 1.25rem;
+    font-size: 0.95rem;
   }
 `;
 
@@ -271,6 +286,7 @@ const SubTabButton = styled(TabButton)`
     padding: 0.625rem 1rem;
     font-size: 0.85rem;
     white-space: nowrap;
+    flex-shrink: 0;
   }
 `;
 
@@ -288,6 +304,13 @@ const TabCount = styled.span`
   margin-left: 0.5rem;
   padding: 0 0.5rem;
   transition: all 0.25s ease;
+  
+  @media (max-width: 768px) {
+    min-width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    margin-left: 0.375rem;
+  }
 `;
 
 const SortContainer = styled.div`
