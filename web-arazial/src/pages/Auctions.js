@@ -271,6 +271,7 @@ const SubTabsContainer = styled(TabsContainer)`
     padding: 0 0.75rem;
     width: calc(100% + 1.5rem);
     justify-content: space-between;
+    gap: 0;
   }
 `;
 
@@ -279,10 +280,18 @@ const SubTabButton = styled(TabButton)`
   font-size: 0.95rem;
   
   @media (max-width: 768px) {
-    padding: 0.625rem 1rem;
-    font-size: 0.85rem;
-    white-space: nowrap;
-    flex-shrink: 0;
+    padding: 0.5rem;
+    font-size: 0.75rem;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    text-align: center;
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.2;
   }
 `;
 
@@ -302,10 +311,11 @@ const TabCount = styled.span`
   transition: all 0.25s ease;
   
   @media (max-width: 768px) {
-    min-width: 20px;
-    height: 20px;
-    font-size: 0.7rem;
-    margin-left: 0.375rem;
+    min-width: 18px;
+    height: 18px;
+    font-size: 0.65rem;
+    margin-left: 0;
+    padding: 0 0.25rem;
   }
 `;
 
