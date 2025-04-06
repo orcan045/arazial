@@ -14,6 +14,8 @@ const PageContainer = styled.div`
   
   @media (max-width: 768px) {
     padding: 1rem 0.75rem;
+    width: 100%;
+    overflow-x: hidden;
   }
 `;
 
@@ -57,6 +59,11 @@ const FiltersAndContentWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  width: 100%;
+  
+  @media (max-width: 768px) {
+    gap: 1rem;
+  }
 `;
 
 // Update the FiltersPanel to appear inline instead of sidebar
@@ -183,6 +190,11 @@ const RangeSeparator = styled.span`
 const MainContentArea = styled.div`
   display: flex;
   flex-direction: column;
+  width: 100%;
+  
+  @media (max-width: 768px) {
+    overflow-x: hidden;
+  }
 `;
 
 const ContentHeader = styled.div`
@@ -400,6 +412,13 @@ const AuctionsList = styled.div`
   flex-direction: column;
   gap: 1.25rem;
   margin-bottom: 3rem;
+  width: 100%;
+  
+  @media (max-width: 768px) {
+    gap: 1rem;
+    margin: 0 -0.75rem;
+    width: calc(100% + 1.5rem);
+  }
 `;
 
 const AuctionCard = styled.div`
@@ -470,6 +489,8 @@ const AuctionListItem = styled.div`
   
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    width: 100%;
+    margin: 0 auto;
   }
   
   @media (min-width: 769px) and (max-width: 1200px) {
@@ -512,7 +533,8 @@ const ListItemImage = styled.div`
   }
   
   @media (max-width: 768px) {
-    height: 180px;
+    height: 200px;
+    width: 100%;
   }
 `;
 
@@ -521,6 +543,10 @@ const ListItemContent = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
+  
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `;
 
 const ListItemActions = styled.div`
@@ -535,6 +561,7 @@ const ListItemActions = styled.div`
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    padding: 1rem;
     border-top: 1px solid var(--color-border);
     background-color: rgba(0, 0, 0, 0.01);
   }
@@ -679,6 +706,7 @@ const ListItemPriceAndStatus = styled.div`
   
   @media (max-width: 768px) {
     align-items: flex-start;
+    gap: 0.5rem;
   }
 `;
 
@@ -695,6 +723,11 @@ const PropertyInfoGrid = styled.div`
   margin: 0.75rem 0;
   
   @media (max-width: 1200px) {
+    gap: 0.5rem;
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem;
   }
 `;
