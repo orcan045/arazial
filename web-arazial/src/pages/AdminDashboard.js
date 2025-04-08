@@ -2465,6 +2465,18 @@ function AdminDashboard() {
                     placeholder="Örn: Arsa, Tarla"
                   />
                 </FormGroup>
+
+                <FormGroup>
+                  <Label htmlFor="ilan_sahibi">İlan Sahibi</Label>
+                  <Input 
+                    type="text" 
+                    id="ilan_sahibi" 
+                    name="ilan_sahibi"
+                    value={auctionForm.ilan_sahibi}
+                    onChange={handleAuctionFormChange}
+                    placeholder="İlan sahibinin adı"
+                  />
+                </FormGroup>
               </FormGrid>
 
               {/* Description */}
@@ -2779,6 +2791,18 @@ function AdminDashboard() {
                     value={auctionForm.emlak_tipi}
                     onChange={handleAuctionFormChange}
                     placeholder="Örn: Arsa, Tarla"
+                  />
+                </FormGroup>
+
+                <FormGroup>
+                  <Label htmlFor="ilan_sahibi">İlan Sahibi</Label>
+                  <Input 
+                    type="text" 
+                    id="ilan_sahibi" 
+                    name="ilan_sahibi"
+                    value={auctionForm.ilan_sahibi}
+                    onChange={handleAuctionFormChange}
+                    placeholder="İlan sahibinin adı"
                   />
                 </FormGroup>
               </FormGrid>
