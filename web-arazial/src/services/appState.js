@@ -17,6 +17,8 @@ class AppStateManager {
     this.listeners = new Map();
     this.pendingRefresh = false;
     this.initialSetupComplete = false;
+    this.retryAttempts = 0;
+    this.maxRetryAttempts = 3;
     
     // Maps for different event types
     this.eventTypes = ['visibility', 'auth', 'network', 'refresh'];
@@ -30,7 +32,8 @@ class AppStateManager {
       session: null,
       profile: null,
       isAdmin: false,
-      initialized: false
+      initialized: false,
+      lastProfileFetch: null
     };
     
     // Initialize handlers
@@ -120,7 +123,7 @@ class AppStateManager {
     }
   }
   
-  // Fetch user profile data
+  // Fetch user profile data with retry logic
   async fetchUserProfile(userId) {
     try {
       // Skip if no user ID
@@ -130,34 +133,68 @@ class AppStateManager {
         return;
       }
       
+      // Check if we've fetched the profile recently (within last 30 seconds)
+      const now = Date.now();
+      if (this.auth.lastProfileFetch && (now - this.auth.lastProfileFetch) < 30000) {
+        console.log('[AppState] Using cached profile data');
+        return;
+      }
+      
       console.log('[AppState] Fetching user profile for:', userId);
       
-      // Fetch profile with timeout protection
-      const fetchPromise = supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-        
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Profile fetch timed out')), 5000);
-      });
+      // Implement retry logic
+      let lastError = null;
+      for (let attempt = 0; attempt <= this.maxRetryAttempts; attempt++) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+            
+          if (error) throw error;
+          
+          this.auth.profile = data;
+          this.auth.isAdmin = data?.role === 'admin';
+          this.auth.lastProfileFetch = now;
+          
+          // Cache the admin status in localStorage as backup
+          if (this.auth.isAdmin) {
+            localStorage.setItem('isAdmin', 'true');
+            localStorage.setItem('adminCacheTime', now.toString());
+          }
+          
+          console.log('[AppState] User profile loaded, isAdmin:', this.auth.isAdmin);
+          return;
+        } catch (error) {
+          lastError = error;
+          console.warn(`[AppState] Profile fetch attempt ${attempt + 1} failed:`, error);
+          
+          // If we have more attempts, wait before retrying
+          if (attempt < this.maxRetryAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+          }
+        }
+      }
       
-      // Race between fetch and timeout
-      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+      // All retries failed - check if we have cached admin status
+      const cachedIsAdmin = localStorage.getItem('isAdmin') === 'true';
+      const adminCacheTime = parseInt(localStorage.getItem('adminCacheTime') || '0');
+      const cacheAge = now - adminCacheTime;
       
-      if (error) {
-        console.error('[AppState] Error fetching profile:', error);
+      // Use cached admin status if it's less than 1 hour old
+      if (cachedIsAdmin && cacheAge < 3600000) {
+        console.log('[AppState] Using cached admin status');
+        this.auth.isAdmin = true;
+        this.auth.profile = { ...this.auth.profile, role: 'admin' };
+      } else {
         // Set default profile on error
+        console.error('[AppState] All profile fetch attempts failed:', lastError);
         this.auth.profile = { role: 'user' };
         this.auth.isAdmin = false;
-      } else {
-        this.auth.profile = data;
-        this.auth.isAdmin = data?.role === 'admin';
-        console.log('[AppState] User profile loaded, isAdmin:', this.auth.isAdmin);
       }
     } catch (error) {
-      console.error('[AppState] Exception fetching profile:', error);
+      console.error('[AppState] Exception in fetchUserProfile:', error);
       // Set default profile on error
       this.auth.profile = { role: 'user' };
       this.auth.isAdmin = false;
@@ -502,9 +539,18 @@ class AppStateManager {
     return this.auth.profile;
   }
   
-  // Check if user is admin
+  // Check if user is admin with fallback to cached value
   isUserAdmin() {
-    return this.auth.isAdmin;
+    // First check the current state
+    if (this.auth.isAdmin) return true;
+    
+    // If not admin in current state, check cache as fallback
+    const cachedIsAdmin = localStorage.getItem('isAdmin') === 'true';
+    const adminCacheTime = parseInt(localStorage.getItem('adminCacheTime') || '0');
+    const cacheAge = Date.now() - adminCacheTime;
+    
+    // Use cached value if it's less than 1 hour old
+    return cachedIsAdmin && cacheAge < 3600000;
   }
   
   // Check if user is authenticated
@@ -515,6 +561,18 @@ class AppStateManager {
   // Get loading state
   isLoading() {
     return !this.auth.initialized || this.pendingRefresh;
+  }
+  
+  // Add method to force refresh profile
+  async forceRefreshProfile() {
+    if (this.auth.user?.id) {
+      // Clear cache
+      this.auth.lastProfileFetch = null;
+      // Fetch fresh profile
+      await this.fetchUserProfile(this.auth.user.id);
+      // Notify listeners
+      this.notifyListeners('auth');
+    }
   }
 }
 

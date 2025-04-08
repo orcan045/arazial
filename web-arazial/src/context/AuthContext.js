@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase';
 import appState, { forceAuthRefresh } from '../services/appState';
 
@@ -18,37 +18,50 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   
   // Loading timeout - prevents perpetual loading states
   useEffect(() => {
-    // If loading persists too long, force reset it
+    // If loading persists too long, attempt retry
     const loadingTimeout = setTimeout(() => {
       if (loading) {
-        console.error('Auth context loading timeout reached, forcing reset');
-        setLoading(false);
-        setError('Authentication timeout. Please refresh the page.');
+        console.log('Auth loading timeout reached, attempting retry');
+        setRetryCount(prev => prev + 1);
+        // Force refresh the profile
+        appState.forceRefreshProfile();
       }
-    }, 15000); // 15 seconds max
+    }, 5000); // 5 seconds before retry
     
     return () => clearTimeout(loadingTimeout);
   }, [loading]);
+
+  // Reset retry count when user changes
+  useEffect(() => {
+    if (user) {
+      setRetryCount(0);
+    }
+  }, [user]);
   
   // Subscribe to auth changes from centralized appState
   useEffect(() => {
     // Update our local state whenever appState auth changes
     const handleAuthChange = () => {
-      // Set user from appState
-      setUser(appState.getUser());
+      const currentUser = appState.getUser();
+      setUser(currentUser);
       
       // Set profile from appState
       const userProfile = appState.getUserProfile();
       setProfile(userProfile);
       
-      // Set admin status
-      setIsAdmin(appState.isUserAdmin());
+      // Set admin status with fallback to cache
+      const adminStatus = appState.isUserAdmin();
+      setIsAdmin(adminStatus);
       
-      // Update loading state
-      setLoading(appState.isLoading());
+      // Only stop loading if we have either successfully loaded the profile
+      // or have made maximum retry attempts
+      if (!currentUser || retryCount >= 3 || userProfile) {
+        setLoading(false);
+      }
     };
     
     // Initial state update
@@ -59,8 +72,7 @@ export function AuthProvider({ children }) {
     
     // Additional subscription for visibility/refresh changes
     const refreshUnsubscribe = appState.onRefresh(() => {
-      // This just updates the loading state when refreshes happen
-      setLoading(appState.isLoading());
+      handleAuthChange();
     });
     
     // Cleanup
@@ -68,7 +80,7 @@ export function AuthProvider({ children }) {
       unsubscribe();
       refreshUnsubscribe();
     };
-  }, []);
+  }, [retryCount]);
   
   // Sign in function
   const signIn = async (email, password) => {
@@ -196,20 +208,18 @@ export function AuthProvider({ children }) {
     }
   };
   
-  // Force reload of user profile
-  const reloadUserProfile = async () => {
+  // Add a function to force profile refresh
+  const reloadUserProfile = useCallback(async () => {
     setLoading(true);
-    
     try {
-      // Use appState to refresh auth
-      await appState.refreshAuth();
+      await appState.forceRefreshProfile();
     } catch (error) {
-      console.error('Error reloading user profile:', error);
-      setError('Profil yüklenirken bir hata oluştu, lütfen tekrar deneyin.');
+      console.error('Failed to reload user profile:', error);
+      setError('Failed to reload profile. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
   
   // Only log in development
   if (process.env.NODE_ENV === 'development') {
@@ -232,7 +242,8 @@ export function AuthProvider({ children }) {
     signOut,
     resetPassword,
     updatePassword,
-    reloadUserProfile
+    reloadUserProfile,
+    retryCount
   };
   
   return (

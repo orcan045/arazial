@@ -666,8 +666,10 @@ const imarDurumuOptions = [
 
 function AdminDashboard() {
   const navigate = useNavigate();
-  const { user, isAdmin: authIsAdmin, loading: authLoading, userRole } = useAuth();
+  const { user, isAdmin: authIsAdmin, loading: authLoading, userRole, reloadUserProfile } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [adminCheckAttempts, setAdminCheckAttempts] = useState(0);
+  const [lastAdminCheck, setLastAdminCheck] = useState(Date.now());
   const [activeSection, setActiveSection] = useState('auctions');
   const [auctions, setAuctions] = useState([]);
   const [users, setUsers] = useState([]);
@@ -698,6 +700,7 @@ function AdminDashboard() {
     description: '',
     startingPrice: '',
     minIncrement: '',
+    offerIncrement: '',
     startDate: '',
     endDate: '',
     startTime: '12:00',
@@ -707,12 +710,11 @@ function AdminDashboard() {
     locationDetails: '',
     status: 'upcoming',
     listingType: 'auction',
-    offerIncrement: '',
     ada_no: '',
     parsel_no: '',
     images: [],
     area_size: '',
-    area_unit: 'm2',
+    area_unit: 'm2', // Always set to m2
     emlak_tipi: '',
     imar_durumu: '',
     ilan_sahibi: ''
@@ -731,36 +733,60 @@ function AdminDashboard() {
   const [deposits, setDeposits] = useState([]);
   const [depositStats, setDepositStats] = useState(null);
   
+  // Effect to handle admin status checks
   useEffect(() => {
-    // Wait for auth state to be fully loaded
-    if (authLoading) {
-      console.log("Auth is still loading, waiting...");
-      return;
-    }
+    const checkAdminStatus = async () => {
+      // If we're still loading auth, wait
+      if (authLoading) return;
+      
+      // If no user, redirect to login
+      if (!user) {
+        console.log("No user, redirecting to login");
+        navigate('/login');
+        return;
+      }
+      
+      // Check if we need to retry admin status check
+      const now = Date.now();
+      const timeSinceLastCheck = now - lastAdminCheck;
+      
+      if (!authIsAdmin && adminCheckAttempts < 3 && timeSinceLastCheck > 5000) {
+        console.log(`Retrying admin check (attempt ${adminCheckAttempts + 1})`);
+        setAdminCheckAttempts(prev => prev + 1);
+        setLastAdminCheck(now);
+        await reloadUserProfile();
+        return;
+      }
+      
+      // If still not admin after retries, redirect
+      if (!authIsAdmin) {
+        console.log("User is not admin after retries, redirecting to dashboard");
+        navigate('/dashboard');
+        return;
+      }
+      
+      // Initialize storage bucket for auction images if needed
+      initializeStorage();
+      
+      // Load initial data for auctions
+      console.log("User is admin, loading auctions data");
+      fetchSectionData('auctions');
+      setLoading(false);
+    };
     
-    console.log("Auth loaded, checking admin status:", { user: !!user, userRole, authIsAdmin });
+    checkAdminStatus();
+  }, [user, authIsAdmin, authLoading, adminCheckAttempts, lastAdminCheck, navigate, reloadUserProfile]);
+
+  // Add periodic admin status check
+  useEffect(() => {
+    if (!authIsAdmin) return;
     
-    // Redirect non-admin users
-    if (!user) {
-      console.log("No user, redirecting to login");
-      navigate('/login');
-      return;
-    }
+    const checkInterval = setInterval(async () => {
+      await reloadUserProfile();
+    }, 60000); // Check every minute
     
-    if (!authIsAdmin) {
-      console.log("User is not admin, redirecting to dashboard");
-      navigate('/dashboard');
-      return;
-    }
-    
-    // Initialize storage bucket for auction images if needed
-    initializeStorage();
-    
-    // Load initial data for auctions
-    console.log("User is admin, loading auctions data");
-    fetchSectionData('auctions');
-    setLoading(false);
-  }, [user, userRole, authIsAdmin, authLoading, navigate]);
+    return () => clearInterval(checkInterval);
+  }, [authIsAdmin, reloadUserProfile]);
   
   // Function to initialize storage bucket
   const initializeStorage = async () => {
@@ -2453,53 +2479,18 @@ function AdminDashboard() {
                     placeholder="Örn: 150.50"
                   />
                 </FormGroup>
-                 <FormGroup>
-                   <Label htmlFor="area_unit">Alan Birimi</Label>
-                   <Input 
-                     type="text" 
-                     id="area_unit" 
-                     name="area_unit"
-                     value={auctionForm.area_unit}
-                     onChange={handleAuctionFormChange}
-                     placeholder="Örn: m2, dönüm"
-                     required // Make unit required
-                   />
-                 </FormGroup>
-                 {/* === ADDED TEXT FIELDS === */}
-                 <FormGroup>
-                   <Label htmlFor="emlak_tipi">Emlak Tipi (Metin)</Label>
-                   <Input 
-                     type="text" 
-                     id="emlak_tipi" 
-                     name="emlak_tipi"
-                     value={auctionForm.emlak_tipi}
-                     onChange={handleAuctionFormChange}
-                     placeholder="Örn: Arsa, Tarla"
-                   />
-                 </FormGroup>
-                 <FormGroup>
-                   <Label htmlFor="imar_durumu">İmar Durumu (Metin)</Label>
-                   <Input 
-                     type="text" 
-                     id="imar_durumu" 
-                     name="imar_durumu"
-                     value={auctionForm.imar_durumu}
-                     onChange={handleAuctionFormChange}
-                     placeholder="Örn: Konut, Ticari+Konut"
-                   />
-                 </FormGroup>
-                 <FormGroup>
-                   <Label htmlFor="ilan_sahibi">İlan Sahibi (Metin)</Label>
-                   <Input 
-                     type="text" 
-                     id="ilan_sahibi" 
-                     name="ilan_sahibi"
-                     value={auctionForm.ilan_sahibi}
-                     onChange={handleAuctionFormChange}
-                     placeholder="Örn: Firma Adı, Kişi Adı"
-                   />
-                 </FormGroup>
-                 {/* === END ADDED TEXT FIELDS === */}
+                
+                <FormGroup>
+                  <Label htmlFor="emlak_tipi">Emlak Tipi (Metin)</Label>
+                  <Input 
+                    type="text" 
+                    id="emlak_tipi" 
+                    name="emlak_tipi"
+                    value={auctionForm.emlak_tipi}
+                    onChange={handleAuctionFormChange}
+                    placeholder="Örn: Arsa, Tarla"
+                  />
+                </FormGroup>
               </FormGrid>
 
               {/* Description */}
@@ -2804,53 +2795,18 @@ function AdminDashboard() {
                     placeholder="Örn: 150.50"
                   />
                 </FormGroup>
-                 <FormGroup>
-                   <Label htmlFor="area_unit">Alan Birimi</Label>
-                   <Input 
-                     type="text" 
-                     id="area_unit" 
-                     name="area_unit"
-                     value={auctionForm.area_unit}
-                     onChange={handleAuctionFormChange}
-                     placeholder="Örn: m2, dönüm"
-                     required
-                   />
-                 </FormGroup>
-                 {/* === ADDED TEXT FIELDS === */}
-                 <FormGroup>
-                   <Label htmlFor="emlak_tipi">Emlak Tipi (Metin)</Label>
-                   <Input 
-                     type="text" 
-                     id="emlak_tipi" 
-                     name="emlak_tipi"
-                     value={auctionForm.emlak_tipi}
-                     onChange={handleAuctionFormChange}
-                     placeholder="Örn: Arsa, Tarla"
-                   />
-                 </FormGroup>
-                 <FormGroup>
-                   <Label htmlFor="imar_durumu">İmar Durumu (Metin)</Label>
-                   <Input 
-                     type="text" 
-                     id="imar_durumu" 
-                     name="imar_durumu"
-                     value={auctionForm.imar_durumu}
-                     onChange={handleAuctionFormChange}
-                     placeholder="Örn: Konut, Ticari+Konut"
-                   />
-                 </FormGroup>
-                 <FormGroup>
-                   <Label htmlFor="ilan_sahibi">İlan Sahibi (Metin)</Label>
-                   <Input 
-                     type="text" 
-                     id="ilan_sahibi" 
-                     name="ilan_sahibi"
-                     value={auctionForm.ilan_sahibi}
-                     onChange={handleAuctionFormChange}
-                     placeholder="Örn: Firma Adı, Kişi Adı"
-                   />
-                 </FormGroup>
-                 {/* === END ADDED TEXT FIELDS === */}
+                
+                <FormGroup>
+                  <Label htmlFor="emlak_tipi">Emlak Tipi (Metin)</Label>
+                  <Input 
+                    type="text" 
+                    id="emlak_tipi" 
+                    name="emlak_tipi"
+                    value={auctionForm.emlak_tipi}
+                    onChange={handleAuctionFormChange}
+                    placeholder="Örn: Arsa, Tarla"
+                  />
+                </FormGroup>
               </FormGrid>
 
               {/* Description */}
