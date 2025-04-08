@@ -153,107 +153,28 @@ const ProtectedRoute = ({ children }) => {
 // Admin Route Wrapper
 const AdminRoute = ({ children }) => {
   const { user, isAdmin, loading, reloadUserProfile } = useAuth();
-  const [loadingTime, setLoadingTime] = useState(0);
-  const [maxLoadingTime, setMaxLoadingTime] = useState(15);
-  const [showLoading, setShowLoading] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 3;
   
   useEffect(() => {
-    let timer;
-    let loadingDelayTimer;
-    let retryTimer;
-    
-    const checkAdminStatus = async () => {
-      if (!user) return;
-      
-      try {
-        await reloadUserProfile();
-        // Reset retry count on successful load
-        setRetryCount(0);
-      } catch (error) {
-        console.error("Error checking admin status:", error);
-        if (retryCount < maxRetries) {
-          setRetryCount(prev => prev + 1);
-          // Exponential backoff for retries
-          retryTimer = setTimeout(checkAdminStatus, Math.pow(2, retryCount) * 1000);
-        }
-      }
-    };
-    
-    if (loading) {
-      // Only show loading spinner if loading takes more than 500ms
-      loadingDelayTimer = setTimeout(() => {
-        setShowLoading(true);
-      }, 500);
-      
-      timer = setInterval(() => {
-        setLoadingTime(prev => {
-          // Auto-retry after maxLoadingTime seconds
-          if (prev + 1 >= maxLoadingTime) {
-            console.log("Auto-retrying admin profile load after timeout");
-            checkAdminStatus();
-            return 0; // Reset timer after auto-retry
-          }
-          return prev + 1;
-        });
-      }, 1000);
-    } else {
-      setLoadingTime(0);
-      setShowLoading(false);
+    // Silently check admin status in the background without blocking UI
+    if (user && document.visibilityState === 'visible') {
+      reloadUserProfile().catch(error => {
+        console.error("Background admin status check failed:", error);
+      });
     }
-    
-    // Add visibility change listener
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log("Page became visible, checking admin status");
-        checkAdminStatus();
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      clearInterval(timer);
-      clearTimeout(loadingDelayTimer);
-      clearTimeout(retryTimer);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [loading, reloadUserProfile, maxLoadingTime, retryCount, user]);
-  
-  const handleRetry = () => {
-    console.log("Manual retry of admin profile loading");
-    setLoadingTime(0);
-    setRetryCount(0);
-    reloadUserProfile();
-    // Increase timeout for next retry
-    setMaxLoadingTime(prev => Math.min(prev + 5, 30));
-  };
-  
-  if (loading && showLoading) {
-    return (
-      <LoadingSpinner 
-        message={`Yönetici bilgileri kontrol ediliyor... ${retryCount > 0 ? `(Deneme ${retryCount}/${maxRetries})` : ''}`}
-        loadingTime={loadingTime}
-        retryAction={handleRetry}
-      />
-    );
-  }
-  
+  }, [user, reloadUserProfile]);
+
+  // If no user, redirect to login
   if (!user && !loading) {
     return <Navigate to="/login" />;
   }
   
+  // If we know they're definitely not admin, redirect
   if (!isAdmin && !loading) {
     console.log("User is not admin, redirecting to dashboard");
     return <Navigate to="/dashboard" />;
   }
   
-  // If still loading but not showing spinner yet, render nothing to avoid flicker
-  if (loading) {
-    return null;
-  }
-  
+  // Otherwise render the admin UI
   return children;
 };
 

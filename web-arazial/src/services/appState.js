@@ -132,6 +132,22 @@ class AppStateManager {
       
       console.log('[AppState] Fetching user profile for:', userId);
       
+      // First check if we have a cached profile and it's not too old
+      const cachedProfile = localStorage.getItem('user_profile');
+      const cachedTime = localStorage.getItem('user_profile_time');
+      const now = Date.now();
+      
+      // Use cache if it exists and is less than 30 minutes old
+      if (cachedProfile && cachedTime && (now - parseInt(cachedTime)) < 30 * 60 * 1000) {
+        const profile = JSON.parse(cachedProfile);
+        if (profile.id === userId) {
+          console.log('[AppState] Using cached profile');
+          this.auth.profile = profile;
+          this.auth.isAdmin = profile.role === 'admin';
+          return;
+        }
+      }
+      
       // Fetch profile with timeout protection
       const fetchPromise = supabase
         .from('profiles')
@@ -148,19 +164,26 @@ class AppStateManager {
       
       if (error) {
         console.error('[AppState] Error fetching profile:', error);
-        // Set default profile on error
-        this.auth.profile = { role: 'user' };
-        this.auth.isAdmin = false;
+        // Keep existing profile if we have one, otherwise set default
+        if (!this.auth.profile) {
+          this.auth.profile = { role: 'user' };
+          this.auth.isAdmin = false;
+        }
       } else {
         this.auth.profile = data;
         this.auth.isAdmin = data?.role === 'admin';
-        console.log('[AppState] User profile loaded, isAdmin:', this.auth.isAdmin);
+        // Cache the profile
+        localStorage.setItem('user_profile', JSON.stringify(data));
+        localStorage.setItem('user_profile_time', now.toString());
+        console.log('[AppState] User profile loaded and cached, isAdmin:', this.auth.isAdmin);
       }
     } catch (error) {
       console.error('[AppState] Exception fetching profile:', error);
-      // Set default profile on error
-      this.auth.profile = { role: 'user' };
-      this.auth.isAdmin = false;
+      // Keep existing profile if we have one, otherwise set default
+      if (!this.auth.profile) {
+        this.auth.profile = { role: 'user' };
+        this.auth.isAdmin = false;
+      }
     }
   }
   
