@@ -2371,7 +2371,6 @@ const Auctions = () => {
   return (
     <PageContainer>
       <PageHeader>
-        <PageTitle>İlanlar</PageTitle>
         <PageDescription>
           Türkiye'nin dört bir yanındaki değerli araziler için ihale tekliflerinizi verin.
         </PageDescription>
