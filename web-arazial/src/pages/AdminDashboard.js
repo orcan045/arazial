@@ -1158,7 +1158,7 @@ function AdminDashboard() {
       const { data: userBids, error: bidsError } = await supabase
         .from('bids')
         .select('*, auctions(title)')
-        .eq('user_id', userId)
+        .eq('bidder_id', userId)
         .order('created_at', { ascending: false });
         
       if (bidsError) {

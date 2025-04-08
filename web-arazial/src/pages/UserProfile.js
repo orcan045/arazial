@@ -207,7 +207,7 @@ const UserProfile = () => {
               status
             )
           `)
-          .eq('user_id', user.id)
+          .eq('bidder_id', user.id)
           .order('created_at', { ascending: false });
           
         if (bidsError) throw bidsError;

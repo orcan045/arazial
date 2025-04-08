@@ -22,6 +22,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import UserSettings from './pages/UserSettings';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
+import PaymentCallback from './pages/PaymentCallback';
 
 // Loading spinner component
 const LoadingSpinner = ({ message, loadingTime, retryAction }) => (
@@ -492,6 +493,8 @@ const App = () => {
               </ProtectedRoute>
             } 
           />
+          
+          <Route path="/payment/:status/:auctionId" element={<PaymentCallback />} />
           
           {/* Catch-all route redirects to home */}
           <Route path="*" element={<Navigate to="/" />} />
