@@ -2,8 +2,11 @@
 
 class ValletPaymentService {
   constructor() {
-    // Using the DNS hostname instead of IP address
-    this.proxyUrl = 'http://srv759491.hstgr.cloud:3001';
+    // Use HTTPS for the proxy URL
+    // Assuming standard port 443, so no port needed unless configured otherwise
+    this.proxyUrl = 'https://srv759491.hstgr.cloud/api/payment/create'; 
+    // If HTTPS is on a non-standard port (e.g., 3001 still): 
+    // this.proxyUrl = 'https://srv759491.hstgr.cloud:3001'; 
   }
 
   async createPaymentLink(params) {
@@ -32,8 +35,8 @@ class ValletPaymentService {
         callbackFailUrl: params.callbackFailUrl
       };
 
-      // Make request to our proxy server
-      const response = await fetch(`${this.proxyUrl}/api/payment/create`, {
+      // Make request to our proxy server (now using HTTPS)
+      const response = await fetch(`${this.proxyUrl}`, { // Removed endpoint path duplication
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
