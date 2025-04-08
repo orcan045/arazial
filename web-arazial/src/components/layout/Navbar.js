@@ -49,6 +49,11 @@ const NavbarContent = styled.div`
     display: grid;
     grid-template-columns: auto 1fr auto;
     gap: 1rem;
+    
+    > *:nth-child(2) {
+      justify-self: center;
+      margin-left: -2rem; /* Offset the space taken by menu button */
+    }
   }
   
   @media (max-width: 480px) {
@@ -77,6 +82,8 @@ const Logo = styled(Link)`
   
   @media (max-width: 767px) {
     font-size: 1.25rem;
+    margin: 0 auto;
+    justify-content: center;
   }
   
   @media (max-width: 359px) {
