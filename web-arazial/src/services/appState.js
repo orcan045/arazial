@@ -18,12 +18,8 @@ class AppStateManager {
     this.pendingRefresh = false;
     this.initialSetupComplete = false;
     
-    // Request configuration
-    this.MAX_RETRIES = 3;
-    this.RETRY_DELAY = 1000; // 1 second
-    
     // Maps for different event types
-    this.eventTypes = ['visibility', 'auth', 'network', 'refresh', 'error'];
+    this.eventTypes = ['visibility', 'auth', 'network', 'refresh'];
     this.eventTypes.forEach(type => {
       this.listeners.set(type, new Set());
     });
@@ -34,7 +30,7 @@ class AppStateManager {
       session: null,
       profile: null,
       isAdmin: false,
-      error: null
+      initialized: false
     };
     
     // Initialize handlers
@@ -82,114 +78,173 @@ class AppStateManager {
   
   // Set up authentication state listener
   setupAuthListener() {
-    // Get initial session
-    this.refreshAuth();
-    
-    // Subscribe to auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          this.auth.user = session.user;
-          this.auth.session = session;
-          await this.fetchUserProfile(session.user.id);
-        } else {
+    try {
+      // Get initial session
+      this.refreshAuth();
+      
+      // Subscribe to auth changes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log('[AppState] Auth state changed:', event);
+          
+          try {
+            if (session?.user) {
+              this.auth.user = session.user;
+              this.auth.session = session;
+              this.isAuthed = true;
+              
+              // Fetch user profile
+              await this.fetchUserProfile(session.user.id);
+            } else {
+              this.auth.user = null;
+              this.auth.session = null;
+              this.auth.profile = null;
+              this.auth.isAdmin = false;
+              this.isAuthed = false;
+            }
+            
+            // Notify subscribers
+            this.notifyListeners('auth');
+          } catch (error) {
+            console.error('[AppState] Error handling auth change:', error);
+          }
+        }
+      );
+      
+      // Store subscription for cleanup
+      this.authSubscription = subscription;
+      
+      console.log('[AppState] Auth listener set up');
+    } catch (error) {
+      console.error('[AppState] Error setting up auth listener:', error);
+    }
+  }
+  
+  // Fetch user profile data
+  async fetchUserProfile(userId) {
+    try {
+      // Skip if no user ID
+      if (!userId) {
+        this.auth.profile = null;
+        this.auth.isAdmin = false;
+        return;
+      }
+      
+      console.log('[AppState] Fetching user profile for:', userId);
+      
+      // Fetch profile with timeout protection
+      const fetchPromise = supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Profile fetch timed out')), 5000);
+      });
+      
+      // Race between fetch and timeout
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
+      
+      if (error) {
+        console.error('[AppState] Error fetching profile:', error);
+        // Set default profile on error
+        this.auth.profile = { role: 'user' };
+        this.auth.isAdmin = false;
+      } else {
+        this.auth.profile = data;
+        this.auth.isAdmin = data?.role === 'admin';
+        console.log('[AppState] User profile loaded, isAdmin:', this.auth.isAdmin);
+      }
+    } catch (error) {
+      console.error('[AppState] Exception fetching profile:', error);
+      // Set default profile on error
+      this.auth.profile = { role: 'user' };
+      this.auth.isAdmin = false;
+    }
+  }
+  
+  // Manually refresh authentication state
+  async refreshAuth() {
+    try {
+      // Set initialized to true immediately to avoid long loading states
+      this.auth.initialized = true;
+      
+      // Prevent multiple concurrent refreshes
+      if (this.pendingRefresh) {
+        console.log('[AppState] Auth refresh already in progress');
+        return;
+      }
+      
+      this.pendingRefresh = true;
+      console.log('[AppState] Refreshing auth state');
+      let sessionError = null; // Keep track of session error
+      
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        sessionError = error; // Store error, if any
+        
+        if (error) {
+          console.error('[AppState] Error getting session:', error.message);
+          // Clear auth state on session errors
           this.auth.user = null;
           this.auth.session = null;
           this.auth.profile = null;
           this.auth.isAdmin = false;
+          this.isAuthed = false;
+        } else if (data.session) {
+          // We have a valid session
+          this.auth.user = data.session.user;
+          this.auth.session = data.session;
+          this.isAuthed = true;
+          
+          try {
+            // Fetch user profile (fetchUserProfile handles its own errors/defaults)
+            await this.fetchUserProfile(data.session.user.id);
+          } catch (profileError) {
+            // This catch might be redundant if fetchUserProfile handles all internally
+            console.error('[AppState] Error fetching profile during refresh:', profileError);
+            // Ensure profile/admin are reset if fetch fails critically here
+            this.auth.profile = this.auth.profile || { role: 'user' }; // Keep potentially defaulted profile
+            this.auth.isAdmin = this.auth.isAdmin || false; 
+          }
+        } else {
+          // No valid session found
+          console.log('[AppState] No active session');
+          this.auth.user = null;
+          this.auth.session = null;
+          this.auth.profile = null;
+          this.auth.isAdmin = false;
+          this.isAuthed = false;
         }
-        this.notifyListeners('auth');
-      }
-    );
-    
-    this.authSubscription = subscription;
-  }
-  
-  // Utility function to handle retries
-  async withRetry(operation, maxRetries = this.MAX_RETRIES) {
-    let lastError;
-    
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
-      try {
-        return await operation();
-      } catch (error) {
-        lastError = error;
-        console.warn(`[AppState] Operation failed (attempt ${attempt + 1}/${maxRetries}):`, error);
         
-        if (attempt < maxRetries - 1) {
-          await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY));
-        }
-      }
-    }
-    
-    throw lastError;
-  }
-  
-  // Fetch user profile data with improved error handling
-  async fetchUserProfile(userId) {
-    if (!userId) {
-      this.auth.profile = null;
-      this.auth.isAdmin = false;
-      return;
-    }
-    
-    try {
-      const { data, error } = await this.withRetry(() => 
-        supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single()
-      );
-      
-      if (error) throw error;
-      
-      this.auth.profile = data;
-      this.auth.isAdmin = data?.role === 'admin';
-      this.auth.error = null;
-    } catch (error) {
-      console.error('[AppState] Error fetching profile:', error);
-      this.auth.profile = null;
-      this.auth.isAdmin = false;
-      this.auth.error = error;
-      this.notifyListeners('error');
-    }
-  }
-  
-  // Manually refresh authentication state with improved error handling
-  async refreshAuth() {
-    try {
-      const { data, error } = await this.withRetry(() => 
-        supabase.auth.getSession()
-      );
-      
-      if (error) throw error;
-      
-      if (!data.session) {
+      } catch (criticalError) { // Catch critical errors during getSession/profile fetch
+        console.error('[AppState] Critical error during auth refresh process:', criticalError);
+        // Reset auth state
         this.auth.user = null;
         this.auth.session = null;
         this.auth.profile = null;
         this.auth.isAdmin = false;
-        this.auth.error = null;
-        return;
+        this.isAuthed = false;
+        sessionError = criticalError; // Store the error
       }
       
-      this.auth.user = data.session.user;
-      this.auth.session = data.session;
-      await this.fetchUserProfile(data.session.user.id);
-      this.auth.error = null;
+      // Update refresh timestamp regardless of outcome
+      this.lastRefreshTime = Date.now();
       
-    } catch (error) {
-      console.error('[AppState] Error refreshing auth:', error);
-      this.auth.user = null;
-      this.auth.session = null;
-      this.auth.profile = null;
-      this.auth.isAdmin = false;
-      this.auth.error = error;
-      this.notifyListeners('error');
+      // Notify listeners *after* all state updates are done
+      this.notifyListeners('auth');
+      this.notifyListeners('refresh');
+      
+      console.log('[AppState] Auth refresh complete. Session error:', sessionError ? sessionError.message : 'None');
+      
+    } finally { // Outer finally
+      // Always clear pending flag
+      this.pendingRefresh = false;
+      // Ensure loading state reflects final status (initialized=true, pending=false)
+      // Notify again in case state changed between previous notify and finally
+      this.notifyListeners('auth'); 
     }
-    
-    this.notifyListeners('auth');
   }
   
   /* Event Handlers */
@@ -238,14 +293,13 @@ class AppStateManager {
   // Handle online event
   handleOnline() {
     try {
-      const wasOffline = !this.isOnline;
       this.isOnline = true;
+      console.log('[AppState] Network connection restored');
       
-      if (wasOffline) {
-        console.log('[AppState] Network connection restored, refreshing state');
-        this.refreshAuth();
-      }
+      // Trigger visibility state change logic to refresh data
+      this.handleVisibilityStateChange();
       
+      // Notify network listeners
       this.notifyListeners('network');
     } catch (error) {
       console.error('[AppState] Error in online handler:', error);
@@ -257,6 +311,8 @@ class AppStateManager {
     try {
       this.isOnline = false;
       console.log('[AppState] Network connection lost');
+      
+      // Notify network listeners
       this.notifyListeners('network');
     } catch (error) {
       console.error('[AppState] Error in offline handler:', error);
@@ -334,8 +390,12 @@ class AppStateManager {
     const listeners = this.listeners.get(type);
     listeners.add(callback);
     
+    console.log(`[AppState] Added ${type} listener, total: ${listeners.size}`);
+    
+    // Return unsubscribe function
     return () => {
       listeners.delete(callback);
+      console.log(`[AppState] Removed ${type} listener, remaining: ${listeners.size}`);
     };
   }
   
@@ -346,18 +406,16 @@ class AppStateManager {
   
   // Subscribe to auth state changes
   onAuthChange(callback) {
-    const authListeners = this.listeners.get('auth');
-    if (!authListeners) {
-      this.listeners.set('auth', new Set([callback]));
-    } else {
-      authListeners.add(callback);
-    }
-    return () => {
-      const listeners = this.listeners.get('auth');
-      if (listeners) {
-        listeners.delete(callback);
+    // Call immediately if auth is already initialized
+    if (this.auth.initialized) {
+      try {
+        callback();
+      } catch (error) {
+        console.error('[AppState] Error in auth change callback:', error);
       }
-    };
+    }
+    
+    return this.subscribe('auth', callback);
   }
   
   // Subscribe to network state changes
@@ -370,16 +428,15 @@ class AppStateManager {
     return this.subscribe('refresh', callback);
   }
   
-  // Subscribe to error events
-  onError(callback) {
-    return this.subscribe('error', callback);
-  }
-  
   // Notify all listeners of a specific event type
   notifyListeners(type) {
+    if (!this.listeners.has(type)) {
+      return;
+    }
+    
     const listeners = this.listeners.get(type);
-    if (!listeners) return;
-
+    console.log(`[AppState] Notifying ${listeners.size} ${type} listeners`);
+    
     listeners.forEach(callback => {
       try {
         callback();
@@ -423,10 +480,7 @@ class AppStateManager {
         
         // Clear all listeners
         this.eventTypes.forEach(type => {
-          const listeners = this.listeners.get(type);
-          if (listeners) {
-            listeners.clear();
-          }
+          this.listeners.get(type).clear();
         });
         
         console.log('[AppState] Cleaned up all listeners');
@@ -448,7 +502,7 @@ class AppStateManager {
     return this.auth.profile;
   }
   
-  // Check if user is admin with fallback to cached value
+  // Check if user is admin
   isUserAdmin() {
     return this.auth.isAdmin;
   }
@@ -461,23 +515,6 @@ class AppStateManager {
   // Get loading state
   isLoading() {
     return !this.auth.initialized || this.pendingRefresh;
-  }
-  
-  // Add method to force refresh profile
-  async forceRefreshProfile() {
-    if (this.auth.user?.id) {
-      // Clear cache
-      this.auth.lastProfileFetch = null;
-      // Fetch fresh profile
-      await this.fetchUserProfile(this.auth.user.id);
-      // Notify listeners
-      this.notifyListeners('auth');
-    }
-  }
-  
-  // Get current error state
-  getError() {
-    return this.auth.error;
   }
 }
 

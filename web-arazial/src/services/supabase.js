@@ -17,6 +17,15 @@ export const supabase = createClient(
       persistSession: true,
       detectSessionInUrl: true
     },
+    global: {
+      // Add timeout and retry settings for better reliability
+      fetch: (url, options = {}) => {
+        // Set a reasonable timeout for all fetch requests (10 seconds)
+        options.timeout = options.timeout || 10000;
+        return fetch(url, options);
+      }
+    },
+    // Automatically retry failed requests
     realtime: {
       params: {
         eventsPerSecond: 10

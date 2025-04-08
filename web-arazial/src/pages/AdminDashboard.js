@@ -666,10 +666,8 @@ const imarDurumuOptions = [
 
 function AdminDashboard() {
   const navigate = useNavigate();
-  const { user, isAdmin: authIsAdmin, loading: authLoading, userRole, reloadUserProfile } = useAuth();
+  const { user, isAdmin: authIsAdmin, loading: authLoading, userRole } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [adminCheckAttempts, setAdminCheckAttempts] = useState(0);
-  const [lastAdminCheck, setLastAdminCheck] = useState(Date.now());
   const [activeSection, setActiveSection] = useState('auctions');
   const [auctions, setAuctions] = useState([]);
   const [users, setUsers] = useState([]);
@@ -733,60 +731,36 @@ function AdminDashboard() {
   const [deposits, setDeposits] = useState([]);
   const [depositStats, setDepositStats] = useState(null);
   
-  // Effect to handle admin status checks
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      // If we're still loading auth, wait
-      if (authLoading) return;
-      
-      // If no user, redirect to login
-      if (!user) {
-        console.log("No user, redirecting to login");
-        navigate('/login');
-        return;
-      }
-      
-      // Check if we need to retry admin status check
-      const now = Date.now();
-      const timeSinceLastCheck = now - lastAdminCheck;
-      
-      if (!authIsAdmin && adminCheckAttempts < 3 && timeSinceLastCheck > 5000) {
-        console.log(`Retrying admin check (attempt ${adminCheckAttempts + 1})`);
-        setAdminCheckAttempts(prev => prev + 1);
-        setLastAdminCheck(now);
-        await reloadUserProfile();
-        return;
-      }
-      
-      // If still not admin after retries, redirect
-      if (!authIsAdmin) {
-        console.log("User is not admin after retries, redirecting to dashboard");
-        navigate('/dashboard');
-        return;
-      }
-      
-      // Initialize storage bucket for auction images if needed
-      initializeStorage();
-      
-      // Load initial data for auctions
-      console.log("User is admin, loading auctions data");
-      fetchSectionData('auctions');
-      setLoading(false);
-    };
+    // Wait for auth state to be fully loaded
+    if (authLoading) {
+      console.log("Auth is still loading, waiting...");
+      return;
+    }
     
-    checkAdminStatus();
-  }, [user, authIsAdmin, authLoading, adminCheckAttempts, lastAdminCheck, navigate, reloadUserProfile]);
-
-  // Add periodic admin status check
-  useEffect(() => {
-    if (!authIsAdmin) return;
+    console.log("Auth loaded, checking admin status:", { user: !!user, userRole, authIsAdmin });
     
-    const checkInterval = setInterval(async () => {
-      await reloadUserProfile();
-    }, 60000); // Check every minute
+    // Redirect non-admin users
+    if (!user) {
+      console.log("No user, redirecting to login");
+      navigate('/login');
+      return;
+    }
     
-    return () => clearInterval(checkInterval);
-  }, [authIsAdmin, reloadUserProfile]);
+    if (!authIsAdmin) {
+      console.log("User is not admin, redirecting to dashboard");
+      navigate('/dashboard');
+      return;
+    }
+    
+    // Initialize storage bucket for auction images if needed
+    initializeStorage();
+    
+    // Load initial data for auctions
+    console.log("User is admin, loading auctions data");
+    fetchSectionData('auctions');
+    setLoading(false);
+  }, [user, userRole, authIsAdmin, authLoading, navigate]);
   
   // Function to initialize storage bucket
   const initializeStorage = async () => {
