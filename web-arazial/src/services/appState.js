@@ -299,12 +299,8 @@ class AppStateManager {
     const listeners = this.listeners.get(type);
     listeners.add(callback);
     
-    console.log(`[AppState] Added ${type} listener, total: ${listeners.size}`);
-    
-    // Return unsubscribe function
     return () => {
       listeners.delete(callback);
-      console.log(`[AppState] Removed ${type} listener, remaining: ${listeners.size}`);
     };
   }
   
@@ -315,11 +311,18 @@ class AppStateManager {
   
   // Subscribe to auth state changes
   onAuthChange(callback) {
-    if (!this.listeners) {
-      this.listeners = new Set();
+    const authListeners = this.listeners.get('auth');
+    if (!authListeners) {
+      this.listeners.set('auth', new Set([callback]));
+    } else {
+      authListeners.add(callback);
     }
-    this.listeners.add(callback);
-    return () => this.listeners.delete(callback);
+    return () => {
+      const listeners = this.listeners.get('auth');
+      if (listeners) {
+        listeners.delete(callback);
+      }
+    };
   }
   
   // Subscribe to network state changes
@@ -334,15 +337,16 @@ class AppStateManager {
   
   // Notify all listeners of a specific event type
   notifyListeners(type) {
-    if (type === 'auth' && this.listeners) {
-      this.listeners.forEach(callback => {
-        try {
-          callback();
-        } catch (error) {
-          console.error('Error in auth listener:', error);
-        }
-      });
-    }
+    const listeners = this.listeners.get(type);
+    if (!listeners) return;
+
+    listeners.forEach(callback => {
+      try {
+        callback();
+      } catch (error) {
+        console.error(`[AppState] Error in ${type} listener:`, error);
+      }
+    });
   }
   
   // Force a refresh
@@ -379,7 +383,10 @@ class AppStateManager {
         
         // Clear all listeners
         this.eventTypes.forEach(type => {
-          this.listeners.get(type).clear();
+          const listeners = this.listeners.get(type);
+          if (listeners) {
+            listeners.clear();
+          }
         });
         
         console.log('[AppState] Cleaned up all listeners');
