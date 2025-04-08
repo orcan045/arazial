@@ -207,9 +207,13 @@ const MobileMenu = styled.div`
   box-shadow: ${props => props.$isOpen ? '-4px 0 25px rgba(0, 0, 0, 0.1)' : 'none'};
   overflow-y: auto;
   padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
 `;
 
 const MobileNavLink = styled(Link)`
+  display: flex;
+  align-items: center;
   padding: 1.25rem 2rem;
   color: var(--color-text);
   text-decoration: none;
@@ -217,6 +221,7 @@ const MobileNavLink = styled(Link)`
   font-size: 1.125rem;
   border-bottom: 1px solid var(--color-surface-secondary);
   transition: all 0.2s ease;
+  width: 100%;
   
   &:hover {
     background-color: var(--color-surface-secondary);
@@ -229,6 +234,21 @@ const MobileNavLink = styled(Link)`
     font-weight: 600;
     border-left: 3px solid var(--color-primary);
     background-color: rgba(15, 52, 96, 0.04);
+  }
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 0.75rem;
+  }
+
+  &[as="button"] {
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-size: 1.125rem;
+    font-family: inherit;
   }
 `;
 
@@ -406,6 +426,8 @@ const DisabledUserMenuItem = styled.div`
 `;
 
 const DisabledMobileNavLink = styled.div`
+  display: flex;
+  align-items: center;
   padding: 1.25rem 2rem;
   color: var(--color-text-secondary);
   text-decoration: none;
@@ -414,6 +436,7 @@ const DisabledMobileNavLink = styled.div`
   border-bottom: 1px solid var(--color-surface-secondary);
   opacity: 0.6;
   cursor: not-allowed;
+  width: 100%;
 `;
 
 const MobileAuthButtons = styled.div`
@@ -422,6 +445,7 @@ const MobileAuthButtons = styled.div`
   flex-direction: column;
   gap: 0.75rem;
   border-bottom: 1px solid var(--color-surface-secondary);
+  width: 100%;
   
   button {
     width: 100%;
