@@ -19,7 +19,6 @@ class AppStateManager {
     this.initialSetupComplete = false;
     
     // Request configuration
-    this.REQUEST_TIMEOUT = 10000; // 10 seconds
     this.MAX_RETRIES = 3;
     this.RETRY_DELAY = 1000; // 1 second
     
@@ -106,47 +105,19 @@ class AppStateManager {
     this.authSubscription = subscription;
   }
   
-  // Utility function to handle timeouts
-  async withTimeout(promise, timeoutMs = this.REQUEST_TIMEOUT) {
-    let timeoutId;
-    
-    const timeoutPromise = new Promise((_, reject) => {
-      timeoutId = setTimeout(() => {
-        reject(new Error('Request timed out'));
-      }, timeoutMs);
-    });
-
-    try {
-      const result = await Promise.race([promise, timeoutPromise]);
-      clearTimeout(timeoutId);
-      return result;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      throw error;
-    }
-  }
-
   // Utility function to handle retries
-  async withRetry(operation, retries = this.MAX_RETRIES) {
+  async withRetry(operation, maxRetries = this.MAX_RETRIES) {
     let lastError;
     
-    for (let attempt = 0; attempt <= retries; attempt++) {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
-        return await this.withTimeout(operation());
+        return await operation();
       } catch (error) {
         lastError = error;
-        console.warn(`[AppState] Operation failed (attempt ${attempt + 1}/${retries + 1}):`, error);
+        console.warn(`[AppState] Operation failed (attempt ${attempt + 1}/${maxRetries}):`, error);
         
-        if (error.message === 'Invalid login credentials') {
-          // Don't retry auth errors
-          throw error;
-        }
-        
-        if (attempt < retries) {
-          // Wait before retrying, with exponential backoff
-          await new Promise(resolve => 
-            setTimeout(resolve, this.RETRY_DELAY * Math.pow(2, attempt))
-          );
+        if (attempt < maxRetries - 1) {
+          await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY));
         }
       }
     }
