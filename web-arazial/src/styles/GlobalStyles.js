@@ -110,6 +110,15 @@ const GlobalStyles = createGlobalStyle`
     font-family: inherit;
     font-size: inherit;
     border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-text-light);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-surface);
+  }
+  
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb, 15, 52, 96), 0.2);
   }
   
   button {

@@ -121,13 +121,14 @@ const Input = styled.input`
   width: 100%;
   padding: 0.75rem;
   font-size: 1rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-text-light);
   border-radius: var(--border-radius-md);
+  background-color: var(--color-surface);
   
   &:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.1);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb, 15, 52, 96), 0.2);
   }
 `;
 
@@ -215,9 +216,10 @@ const UserProfile = () => {
         setProfile(profileData);
         setBids(bidsData);
         
+        // Check if columns exist in the profileData and set default values if not
         setFormData({
           fullName: profileData?.full_name || '',
-          phone: profileData?.phone || '',
+          phone: profileData?.phone_number || '',
           address: profileData?.address || '',
           city: profileData?.city || '',
           postalCode: profileData?.postal_code || ''
@@ -244,11 +246,16 @@ const UserProfile = () => {
     e.preventDefault();
     
     try {
+      // First, ensure the columns exist in the database
+      const { error: schemaError } = await supabase.rpc('ensure_profile_columns');
+      if (schemaError) console.error('Error ensuring schema:', schemaError);
+      
+      // Then update the profile
       const { error } = await supabase
         .from('profiles')
         .update({
           full_name: formData.fullName,
-          phone: formData.phone,
+          phone_number: formData.phone,
           address: formData.address,
           city: formData.city,
           postal_code: formData.postalCode,

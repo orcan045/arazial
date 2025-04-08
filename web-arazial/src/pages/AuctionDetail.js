@@ -6,7 +6,6 @@ import { supabase } from '../services/supabase';
 import appState from '../services/appState';
 import CountdownTimer from '../components/CountdownTimer';
 import Button from '../components/ui/Button';
-import DepositPayment from '../components/DepositPayment';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -996,10 +995,7 @@ const BidCard = ({
   offerError,
   handleSubmitOffer,
   showOfferForm,
-  auction,
-  checkingDeposit,  // Add this prop
-  hasDeposit,       // Add this prop
-  setHasDeposit     // Add this prop
+  auction
 }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showAuthLoading, setShowAuthLoading] = useState(false);
@@ -1082,51 +1078,31 @@ const BidCard = ({
                 )}
                 {user && (
                   <>
-                    {checkingDeposit ? (
-                      <div style={{ textAlign: 'center', padding: '1rem' }}>
-                        <LoadingIcon />
-                        <p>Depozito durumu kontrol ediliyor...</p>
-                      </div>
-                    ) : hasDeposit ? (
-                      <>
-                        {!isMobile && (
-                          <PropertyLabel htmlFor="bidAmount">Teklifiniz (Min: {formatPrice(getMinimumBidAmount())})</PropertyLabel>
-                        )}
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                          <OfferInput 
-                            type="number"
-                            id="bidAmount"
-                            value={bidAmount}
-                            onChange={(e) => setBidAmount(e.target.value)}
-                            placeholder={isMobile ? `Min. ${formatPrice(getMinimumBidAmount())}` : `Min. ${formatPrice(getMinimumBidAmount())}`}
-                            step="any"
-                            required 
-                            disabled={submitLoading || authLoading}
-                            style={{ margin: 0, flex: 1 }}
-                          />
-                          <OfferButton 
-                            type="submit" 
-                            disabled={submitLoading || authLoading}
-                            style={{ marginTop: 0, width: 'auto' }}
-                          >
-                            {submitLoading ? <LoadingIcon /> : 'Teklif Ver'}
-                          </OfferButton>
-                        </div>
-                        {bidError && <p style={{ color: 'red', fontSize: '0.875rem', marginTop: '0.5rem', marginBottom: '0' }}>{bidError}</p>}
-                      </>
-                    ) : (
-                      <DepositPayment 
-                        auction={auction} 
-                        user={user} 
-                        onPaymentComplete={() => setHasDeposit(true)} 
-                      />
+                    {!isMobile && (
+                      <PropertyLabel htmlFor="bidAmount">Teklifiniz (Min: {formatPrice(getMinimumBidAmount())})</PropertyLabel>
                     )}
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <OfferInput 
+                        type="number"
+                        id="bidAmount"
+                        value={bidAmount}
+                        onChange={(e) => setBidAmount(e.target.value)}
+                        placeholder={isMobile ? `Min. ${formatPrice(getMinimumBidAmount())}` : `Min. ${formatPrice(getMinimumBidAmount())}`}
+                        step="any"
+                        required 
+                        disabled={submitLoading || authLoading}
+                        style={{ margin: 0, flex: 1 }}
+                      />
+                      <OfferButton 
+                        type="submit" 
+                        disabled={submitLoading || authLoading}
+                        style={{ marginTop: 0, width: 'auto' }}
+                      >
+                        {submitLoading ? <LoadingIcon /> : 'Teklif Ver'}
+                      </OfferButton>
+                    </div>
+                    {bidError && <p style={{ color: 'red', fontSize: '0.875rem', marginTop: '0.5rem', marginBottom: '0' }}>{bidError}</p>}
                   </>
-                )}
-                {!user && authLoading && showAuthLoading && (
-                  <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: isMobile ? '0.5rem' : '1rem' }}>
-                    Oturum bilgileri yükleniyor...
-                  </p>
                 )}
               </form>
             )}
@@ -1333,8 +1309,6 @@ const AuctionDetail = () => {
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [hasDeposit, setHasDeposit] = useState(false);
-  const [checkingDeposit, setCheckingDeposit] = useState(true);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -1447,12 +1421,6 @@ const AuctionDetail = () => {
     }
     if (!auction || auction.listing_type !== 'auction') {
       setBidError('Bu ilana teklif verilemez.');
-      return;
-    }
-    
-    // Check for active deposit first
-    if (!hasDeposit) {
-      setBidError('Teklif vermek için önce depozito yatırmanız gerekmektedir.');
       return;
     }
     
@@ -1719,34 +1687,6 @@ const AuctionDetail = () => {
       }
     }
   }, [loading, auction]);
-  
-  // Add useEffect to check deposit status
-  useEffect(() => {
-    const checkDeposit = async () => {
-      if (!user || !auction) {
-        setCheckingDeposit(false);
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .rpc('has_active_deposit', {
-            p_auction_id: auction.id,
-            p_user_id: user.id
-          });
-
-        if (error) throw error;
-        setHasDeposit(data);
-      } catch (err) {
-        console.error('Error checking deposit status:', err);
-        setHasDeposit(false);
-      } finally {
-        setCheckingDeposit(false);
-      }
-    };
-
-    checkDeposit();
-  }, [user, auction]);
 
   if (loading && !auction) {
       return <PageContainer><LoadingSpinner message="İlan yükleniyor..." /></PageContainer>;
@@ -1778,15 +1718,6 @@ const AuctionDetail = () => {
       );
     }
 
-    if (checkingDeposit) {
-      return <LoadingSpinner />;
-    }
-
-    if (!hasDeposit) {
-      return <DepositPayment auction={auction} user={user} />;
-    }
-
-    // Original bid form code
     return (
       <BidForm onSubmit={handleSubmitBid}>
         {/* ... existing bid form code ... */}
@@ -1896,9 +1827,6 @@ const AuctionDetail = () => {
             handleSubmitOffer={handleSubmitOffer}
             showOfferForm={showOfferForm}
             auction={auction}
-            checkingDeposit={checkingDeposit}
-            hasDeposit={hasDeposit}
-            setHasDeposit={setHasDeposit}
           />
         </div>
         
@@ -2115,9 +2043,6 @@ const AuctionDetail = () => {
               handleSubmitOffer={handleSubmitOffer}
               showOfferForm={showOfferForm}
               auction={auction}
-              checkingDeposit={checkingDeposit}
-              hasDeposit={hasDeposit}
-              setHasDeposit={setHasDeposit}
             />
           </DesktopBidCard>
         </Column>

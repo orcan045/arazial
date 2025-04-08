@@ -1,117 +1,152 @@
 import React from 'react';
 import styled from 'styled-components';
 
-const PageContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 3rem 2rem;
-`;
-
-const HeroSection = styled.section`
-  text-align: center;
-  margin-bottom: 4rem;
-`;
-
-const PageTitle = styled.h1`
-  font-size: 2.5rem;
-  color: var(--color-text);
-  margin-bottom: 1rem;
-`;
-
-const Subtitle = styled.p`
-  font-size: 1.25rem;
-  color: var(--color-text-secondary);
+const AboutContainer = styled.div`
   max-width: 800px;
-  margin: 0 auto 2rem;
-  line-height: 1.6;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+  
+  @media (min-width: 768px) {
+    padding: 5rem 2rem;
+  }
 `;
 
-const Divider = styled.div`
-  height: 4px;
-  width: 60px;
-  background-color: var(--color-primary);
-  margin: 0 auto 3rem;
+const Title = styled.h1`
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 2rem;
+  text-align: center;
+`;
+
+const Section = styled.section`
+  margin-bottom: 3rem;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
 const SectionTitle = styled.h2`
   font-size: 1.75rem;
+  font-weight: 600;
   color: var(--color-text);
   margin-bottom: 1.5rem;
 `;
 
-const SectionContent = styled.div`
-  margin-bottom: 4rem;
+const Paragraph = styled.p`
+  color: var(--color-text-secondary);
+  line-height: 1.75;
+  margin-bottom: 1.5rem;
+  font-size: 1.125rem;
 `;
 
-const TextBlock = styled.p`
-  font-size: 1.125rem;
+const Divider = styled.hr`
+  border: none;
+  border-top: 1px solid var(--color-surface-secondary);
+  margin: 3rem 0;
+`;
+
+const List = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+`;
+
+const ListItem = styled.li`
   color: var(--color-text-secondary);
-  line-height: 1.8;
+  line-height: 1.75;
+  margin-bottom: 1rem;
+  font-size: 1.125rem;
+  display: flex;
+  align-items: baseline;
+  
+  &:before {
+    content: "•";
+    color: var(--color-primary);
+    font-weight: bold;
+    margin-right: 0.75rem;
+  }
+`;
+
+const NumberedList = styled.ol`
+  padding-left: 1.25rem;
+  margin: 1.5rem 0;
+`;
+
+const NumberedListItem = styled.li`
+  color: var(--color-text-secondary);
+  line-height: 1.75;
   margin-bottom: 1.5rem;
+  font-size: 1.125rem;
+  padding-left: 0.5rem;
+  
+  &::marker {
+    color: var(--color-primary);
+    font-weight: 600;
+  }
 `;
 
 const About = () => {
   return (
-    <PageContainer>
-      <HeroSection>
-        <PageTitle>Hakkımızda</PageTitle>
-        <Subtitle>
-          Arazialcom, Türkiye'nin ilk dijital arazi ihale platformu olarak gayrimenkul sektöründe 
-          şeffaflık ve erişilebilirlik sağlamayı amaçlayan yenilikçi bir girişimdir.
-        </Subtitle>
-        <Divider />
-      </HeroSection>
+    <AboutContainer>
+      <Title>Hakkımızda</Title>
       
-      <SectionContent>
-        <SectionTitle>Vizyonumuz</SectionTitle>
-        <TextBlock>
-          Arazialcom'da vizyonumuz, Türkiye'deki arazi ihalelerini dijitalleştirerek daha geniş bir kitleye ulaştırmak 
-          ve ihale süreçlerini daha şeffaf, güvenli ve erişilebilir hale getirmektir. Gayrimenkul sektöründeki 
-          geleneksel ve zaman alıcı ihale süreçlerinin yerini, modern teknolojileri kullanarak daha verimli ve 
-          kullanıcı dostu bir platform sunuyoruz.
-        </TextBlock>
-        <TextBlock>
-          Hedefimiz, coğrafi sınırlamaları ortadan kaldırarak, Türkiye'nin her yerindeki değerli arazilere erişimi 
-          kolaylaştırmak ve arazi sahibi olmak isteyenler için fırsatları artırmaktır. Aynı zamanda, arazi 
-          satıcılarına da daha geniş bir alıcı kitlesine ulaşma imkanı sağlayarak, adil piyasa değerlerine 
-          ulaşmalarına yardımcı oluyoruz.
-        </TextBlock>
-      </SectionContent>
+      <Section>
+        <Paragraph>
+          Arazialcom, arsaların ve arazilerin açık artırma yöntemiyle satışa sunulduğu modern bir dijital ihale platformudur. Türkiye'nin dört bir yanındaki araziler, güvenli ve şeffaf bir ortamda yatırımcılarla buluşur.
+        </Paragraph>
+        
+        <Paragraph>
+          Amacımız; kullanıcıların kolayca katılabileceği, güvenle teklif verebileceği ve yasal sürecin eksiksiz tamamlandığı bir sistem sunmaktır. Tüm işlemler online ortamda gerçekleştirilir ve satış, resmi tapu devri ile tamamlanır.
+        </Paragraph>
+      </Section>
       
-      <SectionContent>
-        <SectionTitle>Misyonumuz</SectionTitle>
-        <TextBlock>
-          Misyonumuz, teknoloji ve inovasyonu kullanarak arazi ihale süreçlerini demokratikleştirmek ve 
-          Türkiye'nin gayrimenkul sektöründe dijital dönüşümü hızlandırmaktır. Şeffaflık, güvenlik ve 
-          kullanıcı deneyimi, platformumuzun temel değerlerini oluşturmaktadır.
-        </TextBlock>
-        <TextBlock>
-          Arazialcom olarak, her bir ihalenin güvenli, adil ve verimli bir şekilde gerçekleşmesini sağlayarak, 
-          hem alıcılara hem de satıcılara değer katmayı hedefliyoruz. Platformumuzun kullanımı kolay arayüzü 
-          ve şeffaf ihale süreci sayesinde, gayrimenkul alım satımında yeni bir standart oluşturuyoruz.
-        </TextBlock>
-      </SectionContent>
+      <Divider />
       
-      <SectionContent>
-        <SectionTitle>Değerlerimiz</SectionTitle>
-        <TextBlock>
-          <strong>Şeffaflık:</strong> Tüm ihale süreçlerinde şeffaflığı ve dürüstlüğü ön planda tutuyoruz. 
-          Platformumuzda gerçekleşen her işlem kayıt altına alınıyor ve izlenebilir kılınıyor.
-        </TextBlock>
-        <TextBlock>
-          <strong>Güvenlik:</strong> Kullanıcılarımızın verilerinin güvenliği ve ihale süreçlerinin güvenilirliği 
-          en önemli önceliklerimiz arasında. En yüksek güvenlik standartlarını uyguluyoruz.
-        </TextBlock>
-        <TextBlock>
-          <strong>Erişilebilirlik:</strong> Herkesin, her yerden arazi ihalelerine katılabilmesini sağlayarak, 
-          fırsat eşitliği yaratıyoruz.
-        </TextBlock>
-        <TextBlock>
-          <strong>Yenilikçilik:</strong> Sürekli olarak platformumuzu geliştiriyor ve gayrimenkul sektöründe 
-          yenilikçi çözümler sunmaya devam ediyoruz.
-        </TextBlock>
-      </SectionContent>
-    </PageContainer>
+      <Section>
+        <SectionTitle>Sistem Nasıl Çalışır?</SectionTitle>
+        
+        <Paragraph>
+          Arazialcom'da iki farklı satış türü bulunmaktadır:
+        </Paragraph>
+        
+        <NumberedList>
+          <NumberedListItem>
+            <strong>Teklif Toplama (Açık Artırma) Süreci:</strong>
+            <br />
+            Belirlenen başlangıç ve bitiş süresi boyunca kullanıcılar, araziye teminat yatırarak teklif verebilir. En yüksek teklifi veren kişi ihalenin sonunda araziyi satın alma hakkı kazanır.
+          </NumberedListItem>
+          
+          <NumberedListItem>
+            <strong>Doğrudan Satış (Sabit Fiyatlı Satış):</strong>
+            <br />
+            Bazı araziler sabit fiyatla satışa sunulur. Teminat yatırarak bu arazilere de başvuru yapılabilir. İlk başvuru yapan kullanıcı, belirtilen süre içinde işlemleri tamamlarsa satın alma hakkını elde eder.
+          </NumberedListItem>
+        </NumberedList>
+        
+        <Paragraph>
+          Her iki satış türünde de süreç teminatla başlar ve kazanan kişiyle birlikte tapu devri işlemleri başlatılır. Tapu devri, ilgili tapu müdürlüğünde yasal olarak gerçekleştirilir.
+        </Paragraph>
+      </Section>
+      
+      <Divider />
+      
+      <Section>
+        <SectionTitle>Neden Arazialcom?</SectionTitle>
+        <List>
+          <ListItem>Açık ve şeffaf satış modeli</ListItem>
+          <ListItem>Teminat sistemiyle güvenli ihale katılımı</ListItem>
+          <ListItem>Kullanıcı dostu, hızlı ve pratik arayüz</ListItem>
+          <ListItem>İhaleyi kazanamayanlara teminat iadesi garantisi</ListItem>
+          <ListItem>Satışlar tapu müdürlüğünde resmi olarak tamamlanır</ListItem>
+        </List>
+        
+        <Paragraph style={{ marginTop: '2rem' }}>
+          Arazialcom, modern teknolojiyle arazi yatırım süreçlerini daha adil, daha hızlı ve daha erişilebilir hale getirmek için kurulmuştur.
+        </Paragraph>
+      </Section>
+    </AboutContainer>
   );
 };
 

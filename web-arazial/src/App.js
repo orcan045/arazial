@@ -23,6 +23,7 @@ import UserSettings from './pages/UserSettings';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
 import PaymentCallback from './pages/PaymentCallback';
+import FAQ from './pages/FAQ';
 
 // Loading spinner component
 const LoadingSpinner = ({ message, loadingTime, retryAction }) => (
@@ -383,6 +384,15 @@ const App = () => {
             element={
               <Layout>
                 <Contact />
+              </Layout>
+            } 
+          />
+          
+          <Route 
+            path="/sss" 
+            element={
+              <Layout>
+                <FAQ />
               </Layout>
             } 
           />

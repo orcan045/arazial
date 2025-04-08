@@ -224,12 +224,14 @@ const Input = styled.input`
   width: 100%;
   padding: 0.75rem;
   font-size: 1rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-text-light);
   border-radius: var(--border-radius-md);
+  background-color: var(--color-surface);
   
   &:focus {
     outline: none;
     border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb, 15, 52, 96), 0.2);
   }
 `;
 
@@ -237,13 +239,15 @@ const TextArea = styled.textarea`
   width: 100%;
   padding: 0.75rem;
   font-size: 1rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-text-light);
   border-radius: var(--border-radius-md);
+  background-color: var(--color-surface);
   min-height: 100px;
   
   &:focus {
     outline: none;
     border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb, 15, 52, 96), 0.2);
   }
 `;
 
@@ -251,13 +255,14 @@ const Select = styled.select`
   width: 100%;
   padding: 0.75rem;
   font-size: 1rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-text-light);
   border-radius: var(--border-radius-md);
-  background-color: white;
+  background-color: var(--color-surface);
   
   &:focus {
     outline: none;
     border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb, 15, 52, 96), 0.2);
   }
 `;
 
@@ -274,6 +279,25 @@ const EmptyState = styled.div`
   text-align: center;
   padding: 3rem 2rem;
   color: var(--color-text-secondary);
+`;
+
+const EmptyStateIcon = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1rem;
+  
+  svg {
+    width: 2rem;
+    height: 2rem;
+    color: var(--color-text-secondary);
+  }
+`;
+
+const EmptyStateTitle = styled.div`
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.5rem;
 `;
 
 const StatCardContainer = styled.div`
@@ -626,6 +650,20 @@ const FilterButton = styled.button`
   }
 `;
 
+// Define Enum options based on migration - REMOVED Emlak Tipi, Kept Imar Durumu (but won't be used on auctions table)
+/*
+const emlakTipiOptions = [
+  { value: 'ARSA', label: 'Arsa' },
+];
+*/
+const imarDurumuOptions = [
+  { value: 'KONUT', label: 'Konut' },
+  { value: 'TICARI', label: 'Ticari' },
+  { value: 'KARMA', label: 'Karma' },
+  { value: 'SANAYI', label: 'Sanayi' },
+  { value: 'TARIMSAL', label: 'Tarımsal' }
+];
+
 function AdminDashboard() {
   const navigate = useNavigate();
   const { user, isAdmin: authIsAdmin, loading: authLoading, userRole } = useAuth();
@@ -672,7 +710,12 @@ function AdminDashboard() {
     offerIncrement: '',
     ada_no: '',
     parsel_no: '',
-    images: []
+    images: [],
+    area_size: '',
+    area_unit: 'm2',
+    emlak_tipi: '',
+    imar_durumu: '',
+    ilan_sahibi: ''
   });
   
   // Form states
@@ -683,6 +726,10 @@ function AdminDashboard() {
     role: 'user',
     phone: ''
   });
+  
+  // Add new state variables at the top with other state declarations
+  const [deposits, setDeposits] = useState([]);
+  const [depositStats, setDepositStats] = useState(null);
   
   useEffect(() => {
     // Wait for auth state to be fully loaded
@@ -960,7 +1007,7 @@ function AdminDashboard() {
             : auctionForm.city)
         : auctionForm.locationDetails;
 
-      // Create auction data object
+      // Create auction data object - Adjust fields
       const auctionData = {
         title: auctionForm.title,
         description: auctionForm.description,
@@ -975,10 +1022,15 @@ function AdminDashboard() {
         end_time: formatDateForDatabase(auctionForm.endDate, auctionForm.endTime) || new Date(Date.now() + 7*24*60*60*1000).toISOString(),
         location: locationString,
         status: auctionForm.status,
-        created_by: user?.id,
+        created_by: user?.id, // Use created_by
         ada_no: auctionForm.ada_no,
         parsel_no: auctionForm.parsel_no,
-        images: imageUrls
+        images: imageUrls,
+        area_size: parseFloat(auctionForm.area_size) || 0, // Use area_size
+        area_unit: auctionForm.area_unit || 'm2', // ADDED area_unit
+        emlak_tipi: auctionForm.emlak_tipi,
+        imar_durumu: auctionForm.imar_durumu,
+        ilan_sahibi: auctionForm.ilan_sahibi
       };
       
       console.log("Attempting to create auction with data:", auctionData);
@@ -1010,7 +1062,7 @@ function AdminDashboard() {
       
       console.log("Auction created successfully:", data);
       
-      // Reset form
+      // Reset form - Adjust fields
       setAuctionForm({
         title: '',
         description: '',
@@ -1028,7 +1080,12 @@ function AdminDashboard() {
         listingType: 'auction',
         ada_no: '',
         parsel_no: '',
-        images: []
+        images: [],
+        area_size: '', // Use area_size
+        area_unit: 'm2', // ADDED area_unit
+        emlak_tipi: '',
+        imar_durumu: '',
+        ilan_sahibi: ''
       });
       setImages([]);
       
@@ -1253,130 +1310,127 @@ function AdminDashboard() {
   
   const fetchAuctionDetails = async (auctionId) => {
     setLoading(true);
-    setSelectedAuctionOffers([]); // Reset offers for the specific auction
     try {
-      // Fetch auction details
+      // First fetch the auction details
       const { data: auctionData, error: auctionError } = await supabase
         .from('auctions')
-        .select('*') // Select all fields initially
+        .select('*, profiles ( full_name, avatar_url )')
         .eq('id', auctionId)
         .single();
-        
-      if (auctionError) throw auctionError;
-      if (!auctionData) throw new Error("Auction not found");
 
-      // Parse location into city and location details if possible
+      if (auctionError || !auctionData) {
+        throw auctionError || new Error('İlan bulunamadı.');
+      }
+
+      console.log("AUCTION DATA FETCHED:", {
+        id: auctionData.id,
+        title: auctionData.title,
+        price: auctionData.price,
+        hasPrice: !!auctionData.price,
+        listingType: auctionData.listing_type
+      });
+
+      // Parse location into city and details if it exists
       let city = '';
       let locationDetails = '';
-      
       if (auctionData.location) {
-        // Try to extract city from location
-        for (const turkishCity of turkishCities) {
-          if (auctionData.location.includes(turkishCity)) {
-            city = turkishCity;
-            // Extract location details by removing the city
-            locationDetails = auctionData.location.replace(`, ${city}`, '').replace(`${city}`, '').trim();
-            if (locationDetails.endsWith(',')) {
-              locationDetails = locationDetails.slice(0, -1).trim();
-            }
-            break;
-          }
-        }
-        
-        // If no city was found, use the full location as location details
-        if (!city) {
-          locationDetails = auctionData.location;
+        const locationParts = auctionData.location.split(',').map(part => part.trim());
+        if (locationParts.length > 1) {
+          city = locationParts[locationParts.length - 1];
+          locationDetails = locationParts.slice(0, -1).join(', ');
+        } else {
+          city = locationParts[0];
         }
       }
-      
-      // Set auction form data (including listingType)
+
+      // Set auction form data - Adjust fields
       setAuctionForm({
         title: auctionData.title || '',
         description: auctionData.description || '',
-        startingPrice: auctionData.start_price || 0,
-        minIncrement: auctionData.min_increment || '', // Keep as string or handle null
-        offerIncrement: auctionData.offer_increment || '', // Keep as string or handle null
-        listingType: auctionData.listing_type || 'auction', // Make sure to fetch and set this
-        startDate: formatDateForInput(auctionData.start_time) || '', // Use start_time for date input
-        endDate: formatDateForInput(auctionData.end_time) || '',   // Use end_time for date input
+        startingPrice: auctionData.starting_price || auctionData.start_price || 0,
+        minIncrement: auctionData.min_increment || '',
+        offerIncrement: auctionData.offer_increment || '',
+        listingType: auctionData.listing_type || 'auction',
+        startDate: formatDateForInput(auctionData.start_time) || '',
+        endDate: formatDateForInput(auctionData.end_time) || '',
         startTime: formatTimeForInput(auctionData.start_time) || '12:00',
         endTime: formatTimeForInput(auctionData.end_time) || '12:00',
-        location: '', // Old field, now split into city and locationDetails
         city: city,
         locationDetails: locationDetails,
         status: auctionData.status || 'upcoming',
-        images: auctionData.images || []
+        images: auctionData.images || [],
+        ada_no: auctionData.ada_no || '',
+        parsel_no: auctionData.parsel_no || '',
+        area_size: auctionData.area_size || '', // Use area_size
+        area_unit: auctionData.area_unit || 'm2', // ADDED area_unit
+        emlak_tipi: auctionData.emlak_tipi || '',
+        imar_durumu: auctionData.imar_durumu || '',
+        ilan_sahibi: auctionData.ilan_sahibi || ''
       });
-      
-      // Fetch bids for this auction (existing logic)
-      const { data: bidsData, error: bidsError } = await supabase
-        .from('bids')
-        .select('*, profiles(full_name, email)')
-        .eq('auction_id', auctionId)
-        .order('amount', { ascending: false });
-        
-      if (bidsError) {
-        console.error('Error fetching bids:', bidsError);
-        setBids([]);
-      } else {
-        setBids(bidsData || []);
-      }
-      
-      // Fetch payments for this auction (existing logic)
-      // ... (keep existing payment fetch logic) ...
-      const { data: paymentsData, error: paymentsError } = await supabase
-        .from('payments')
-        .select('*') // Fetch profiles later if needed
-        .eq('auction_id', auctionId)
-        .order('created_at', { ascending: false });
 
-      if (paymentsError) {
-          console.error('Error fetching payments:', paymentsError);
-          setPayments([]);
-      } else {
-          // Enhance payments with user details (simplified)
-          let enhancedPayments = [];
-          for (const payment of paymentsData || []) {
-              if (payment.user_id) {
-                  const { data: profile } = await supabase.from('profiles').select('full_name, email').eq('id', payment.user_id).single();
-                  enhancedPayments.push({ ...payment, profiles: profile });
-              } else {
-                  enhancedPayments.push(payment);
-              }
-          }
-          setPayments(enhancedPayments);
-      }
+      setSelectedAuctionId(auctionId);
 
-      // ---- Fetch Offers for this auction IF it's an 'offer' type ----
-      if (auctionData.listing_type === 'offer') {
+      // 2. Fetch Bids OR Offers based on type
+      if (auctionData.listing_type === 'auction') {
+        // Fetch bids with user details - exactly matching public auction page
+        const { data: bidsData, error: bidsError } = await supabase
+          .from('bids')
+          .select(`
+            *,
+            profiles!bids_bidder_id_fkey (
+              id,
+              full_name,
+              phone_number,
+              avatar_url
+            )
+          `)
+          .eq('auction_id', auctionId)
+          .order('amount', { ascending: false });
+
+        if (bidsError) {
+          console.error('Error fetching bids:', bidsError);
+          setBids([]);
+        } else {
+          // Process bids to maintain consistent data structure
+          const processedBids = (bidsData || []).map((bid, index) => ({
+            ...bid,
+            isHighestBid: index === 0 // Mark the first bid as highest since we ordered by amount desc
+          }));
+          console.log("Processed bids:", processedBids);
+          setBids(processedBids);
+        }
+      } else if (auctionData.listing_type === 'offer') {
+        // Fetch all offers for this listing
         const { data: offersData, error: offersError } = await supabase
           .from('offers')
           .select(`
             *,
-            profiles ( id, full_name, email )
+            profiles!offers_user_id_fkey (
+              id,
+              full_name,
+              phone_number,
+              avatar_url
+            )
           `)
           .eq('auction_id', auctionId)
           .order('created_at', { ascending: false });
 
         if (offersError) {
-          console.error('Error fetching offers for auction:', offersError);
-          setSelectedAuctionOffers([]); // Set to empty array on error
+          console.error('Error fetching offers:', offersError);
+          setSelectedAuctionOffers([]);
         } else {
-          console.log('Fetched offers for auction', auctionId, ':', offersData);
-          setSelectedAuctionOffers(offersData || []);
+          // Process offers to maintain consistent data structure
+          const processedOffers = (offersData || []).map(offer => ({
+            ...offer
+          }));
+          console.log("Processed offers:", processedOffers);
+          setSelectedAuctionOffers(processedOffers);
         }
-      } else {
-          setSelectedAuctionOffers([]); // Ensure it's empty for non-offer types
       }
-      // --------------------------------------------------------------
-      
-      setSelectedAuctionId(auctionId);
-      // setActiveSection('auction-details'); // No need to set section here, it's already set
+
     } catch (error) {
       console.error('Error fetching auction details:', error);
-      alert('İhale detayları getirilirken bir hata oluştu.');
-      // Optionally navigate back if fetch fails critically
-      // handleSectionChange('auctions'); 
+      alert('İhale detayları getirilirken bir hata oluştu');
     } finally {
       setLoading(false);
     }
@@ -1506,7 +1560,7 @@ function AdminDashboard() {
             : auctionForm.city)
         : auctionForm.locationDetails;
 
-      // Update auction data
+      // Update auction data - Adjust fields
       const auctionData = {
         title: auctionForm.title,
         description: auctionForm.description,
@@ -1520,7 +1574,12 @@ function AdminDashboard() {
         end_time: formatDateForDatabase(auctionForm.endDate, auctionForm.endTime),
         location: locationString,
         status: auctionForm.status,
-        images: imageUrls
+        images: imageUrls,
+        area_size: parseFloat(auctionForm.area_size) || 0, // Use area_size
+        area_unit: auctionForm.area_unit || 'm2', // ADDED area_unit
+        emlak_tipi: auctionForm.emlak_tipi,
+        imar_durumu: auctionForm.imar_durumu,
+        ilan_sahibi: auctionForm.ilan_sahibi
       };
       
       console.log("Attempting to update auction with data:", auctionData);
@@ -2287,14 +2346,15 @@ function AdminDashboard() {
         return (
           <>
             <SectionTitle>
-              Yeni İhale Oluştur
-              <Button variant="secondary" onClick={() => handleSectionChange('auctions')}>İhalelere Dön</Button>
+              Yeni İlan Oluştur
+              <Button variant="secondary" onClick={() => handleSectionChange('auctions')}>İlanlara Dön</Button>
             </SectionTitle>
             
             <form onSubmit={handleCreateAuction}>
+              {/* Basic Info */}
               <FormGrid>
                 <FormGroup>
-                  <Label htmlFor="title">İhale Başlığı</Label>
+                  <Label htmlFor="title">İlan Başlığı</Label>
                   <Input 
                     type="text" 
                     id="title" 
@@ -2314,12 +2374,77 @@ function AdminDashboard() {
                     onChange={handleAuctionFormChange}
                   >
                     <option value="auction">İhale (Açık Artırma)</option>
-                    <option value="fixed">Sabit Fiyat</option>
-                    <option value="offer">Teklif Usulü</option>
+                    <option value="offer">Teklif Usulü (Pazarlık)</option>
                   </Select>
                 </FormGroup>
               </FormGrid>
-              
+
+              {/* Property Details - Using Correct Schema Columns */}
+              <FormGrid>               
+                <FormGroup>
+                  <Label htmlFor="area_size">Alan (m²)</Label>
+                  <Input 
+                    type="number" 
+                    id="area_size" 
+                    name="area_size"
+                    value={auctionForm.area_size}
+                    onChange={handleAuctionFormChange}
+                    required
+                    min="0"
+                    step="0.01"
+                    placeholder="Örn: 150.50"
+                  />
+                </FormGroup>
+                 <FormGroup>
+                   <Label htmlFor="area_unit">Alan Birimi</Label>
+                   <Input 
+                     type="text" 
+                     id="area_unit" 
+                     name="area_unit"
+                     value={auctionForm.area_unit}
+                     onChange={handleAuctionFormChange}
+                     placeholder="Örn: m2, dönüm"
+                     required // Make unit required
+                   />
+                 </FormGroup>
+                 {/* === ADDED TEXT FIELDS === */}
+                 <FormGroup>
+                   <Label htmlFor="emlak_tipi">Emlak Tipi (Metin)</Label>
+                   <Input 
+                     type="text" 
+                     id="emlak_tipi" 
+                     name="emlak_tipi"
+                     value={auctionForm.emlak_tipi}
+                     onChange={handleAuctionFormChange}
+                     placeholder="Örn: Arsa, Tarla"
+                   />
+                 </FormGroup>
+                 <FormGroup>
+                   <Label htmlFor="imar_durumu">İmar Durumu (Metin)</Label>
+                   <Input 
+                     type="text" 
+                     id="imar_durumu" 
+                     name="imar_durumu"
+                     value={auctionForm.imar_durumu}
+                     onChange={handleAuctionFormChange}
+                     placeholder="Örn: Konut, Ticari+Konut"
+                   />
+                 </FormGroup>
+                 <FormGroup>
+                   <Label htmlFor="ilan_sahibi">İlan Sahibi (Metin)</Label>
+                   <Input 
+                     type="text" 
+                     id="ilan_sahibi" 
+                     name="ilan_sahibi"
+                     value={auctionForm.ilan_sahibi}
+                     onChange={handleAuctionFormChange}
+                     placeholder="Örn: Firma Adı, Kişi Adı"
+                   />
+                 </FormGroup>
+                 {/* === END ADDED TEXT FIELDS === */}
+              </FormGrid>
+
+              {/* Description */}
               <FormGroup>
                 <Label htmlFor="description">İlan Açıklaması</Label>
                 <TextArea 
@@ -2331,6 +2456,7 @@ function AdminDashboard() {
                 />
               </FormGroup>
               
+              {/* Pricing */}
               <FormRow>
                 <FormGroup>
                   <Label htmlFor="startingPrice">
@@ -2365,6 +2491,7 @@ function AdminDashboard() {
                 </FormGroup>
               </FormRow>
               
+              {/* Dates & Times */}
               <FormRow>
                 <FormGroup>
                   <Label htmlFor="startDate">Başlangıç Tarihi</Label>
@@ -2417,31 +2544,38 @@ function AdminDashboard() {
                 </FormGroup>
               </FormRow>
               
+              {/* Location */}
               <FormRow>
                 <FormGroup>
                   <Label htmlFor="city">Şehir</Label>
-                  <Input 
-                    type="text" 
-                    id="city" 
-                    name="city"
-                    value={auctionForm.city}
-                    onChange={handleAuctionFormChange}
-                  />
+                   <Select 
+                      id="city" 
+                      name="city"
+                      value={auctionForm.city}
+                      onChange={handleAuctionFormChange}
+                      required
+                    >
+                      <option value="" disabled>Şehir Seçiniz...</option>
+                      {turkishCities.map(city => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </Select>
                 </FormGroup>
                 
                 <FormGroup>
-                  <Label htmlFor="locationDetails">Konum Detayları</Label>
+                  <Label htmlFor="locationDetails">Konum Detayları (Mahalle, Cadde vb.)</Label>
                   <Input 
                     type="text" 
                     id="locationDetails" 
                     name="locationDetails"
                     value={auctionForm.locationDetails}
                     onChange={handleAuctionFormChange}
-                    placeholder="Mahalle, cadde, vs."
+                    placeholder="Örn: Ulu Cami Mah. 389 Sk."
                   />
                 </FormGroup>
               </FormRow>
 
+              {/* Ada/Parsel */}
               <FormRow>
                 <FormGroup>
                   <Label htmlFor="ada_no">Ada No</Label>
@@ -2468,10 +2602,12 @@ function AdminDashboard() {
                 </FormGroup>
               </FormRow>
 
+              {/* Image Upload */}
               <ImageUploadContainer>
-                <Label>İhale Görselleri</Label>
+                 <Label>İhale Görselleri</Label>
                 
-                {/* Existing images */}
+                {/* Existing images - Needed for edit form, maybe remove from create? */}
+                {/* Consider removing this section for the create form 
                 {auctionForm.images && auctionForm.images.length > 0 && (
                   <>
                     <p>Mevcut Görseller:</p>
@@ -2484,10 +2620,20 @@ function AdminDashboard() {
                       ))}
                     </div>
                   </>
-                )}
+                )} 
+                */} 
                 
                 {/* Upload new images */}
-                <label className="upload-btn" style={{ marginTop: '1rem' }}>
+                <label className="upload-btn" style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem',
+                  padding: '0.75rem 1rem',
+                  border: '1px dashed var(--color-text-light)',
+                  borderRadius: 'var(--border-radius-md)',
+                  cursor: 'pointer',
+                  justifyContent: 'center'
+                }}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                     <circle cx="8.5" cy="8.5" r="1.5" />
@@ -2499,6 +2645,7 @@ function AdminDashboard() {
                     accept="image/*"
                     multiple
                     onChange={handleImageChange}
+                    style={{ display: 'none' }} // Hide default input 
                   />
                 </label>
                 
@@ -2506,19 +2653,26 @@ function AdminDashboard() {
                 
                 {images.length > 0 && (
                   <>
-                    <p>Yeni Görseller:</p>
-                    <div className="preview-area">
+                    <p>Yeni Yüklenecek Görseller:</p>
+                    <div style={{ 
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                        gap: '1rem'
+                      }}>
                       {images.map((image, index) => (
-                        <div key={index} className="image-preview">
+                        <ImagePreview key={index}>
                           <img src={URL.createObjectURL(image)} alt={`Preview ${index}`} />
-                          <div className="remove-btn" onClick={() => removeImage(index)}>×</div>
-                        </div>
+                          <button type="button" onClick={() => removeImage(index)}>
+                             <CloseIcon />
+                          </button>
+                        </ImagePreview>
                       ))}
                     </div>
                   </>
                 )}
               </ImageUploadContainer>
               
+              {/* Status */}
               <FormGroup>
                 <Label htmlFor="status">Durum</Label>
                 <Select 
@@ -2534,202 +2688,867 @@ function AdminDashboard() {
                 </Select>
               </FormGroup>
               
-              <Button type="submit" disabled={uploading}>İhaleyi Güncelle</Button>
+              <Button type="submit" disabled={uploading}>İhaleyi Oluştur</Button>
             </form>
           </>
         );
-      case 'add-payment':
+      case 'edit-auction':
+          // Previous edit added this case, let's ensure it's using correct fields
         return (
           <>
             <SectionTitle>
-              Ödeme Ekle
-              <Button 
-                variant="secondary" 
-                onClick={() => handleSectionChange('auction-details')}
-              >
-                İhale Detaylarına Dön
-              </Button>
+              İlanı Düzenle
+              <Button variant="secondary" onClick={() => handleSectionChange('auctions')}>İlanlara Dön</Button>
             </SectionTitle>
             
-            <form onSubmit={handleCreatePayment}>
+            <form onSubmit={handleUpdateAuction}>
+              {/* Basic Info */}
+              <FormGrid>
+                <FormGroup>
+                  <Label htmlFor="title">İlan Başlığı</Label>
+                  <Input 
+                    type="text" 
+                    id="title" 
+                    name="title"
+                    value={auctionForm.title}
+                    onChange={handleAuctionFormChange}
+                    required
+                  />
+                </FormGroup>
+                
+                <FormGroup>
+                  <Label htmlFor="listingType">İlan Tipi</Label>
+                  <Select 
+                    id="listingType" 
+                    name="listingType"
+                    value={auctionForm.listingType}
+                    onChange={handleAuctionFormChange}
+                  >
+                    <option value="auction">İhale (Açık Artırma)</option>
+                    <option value="offer">Teklif Usulü (Pazarlık)</option>
+                  </Select>
+                </FormGroup>
+              </FormGrid>
+
+              {/* Property Details - Using Correct Schema Columns */}
+              <FormGrid>               
+                <FormGroup>
+                  <Label htmlFor="area_size">Alan (m²)</Label>
+                  <Input 
+                    type="number" 
+                    id="area_size" 
+                    name="area_size"
+                    value={auctionForm.area_size}
+                    onChange={handleAuctionFormChange}
+                    required
+                    min="0"
+                    step="0.01"
+                    placeholder="Örn: 150.50"
+                  />
+                </FormGroup>
+                 <FormGroup>
+                   <Label htmlFor="area_unit">Alan Birimi</Label>
+                   <Input 
+                     type="text" 
+                     id="area_unit" 
+                     name="area_unit"
+                     value={auctionForm.area_unit}
+                     onChange={handleAuctionFormChange}
+                     placeholder="Örn: m2, dönüm"
+                     required
+                   />
+                 </FormGroup>
+                 {/* === ADDED TEXT FIELDS === */}
+                 <FormGroup>
+                   <Label htmlFor="emlak_tipi">Emlak Tipi (Metin)</Label>
+                   <Input 
+                     type="text" 
+                     id="emlak_tipi" 
+                     name="emlak_tipi"
+                     value={auctionForm.emlak_tipi}
+                     onChange={handleAuctionFormChange}
+                     placeholder="Örn: Arsa, Tarla"
+                   />
+                 </FormGroup>
+                 <FormGroup>
+                   <Label htmlFor="imar_durumu">İmar Durumu (Metin)</Label>
+                   <Input 
+                     type="text" 
+                     id="imar_durumu" 
+                     name="imar_durumu"
+                     value={auctionForm.imar_durumu}
+                     onChange={handleAuctionFormChange}
+                     placeholder="Örn: Konut, Ticari+Konut"
+                   />
+                 </FormGroup>
+                 <FormGroup>
+                   <Label htmlFor="ilan_sahibi">İlan Sahibi (Metin)</Label>
+                   <Input 
+                     type="text" 
+                     id="ilan_sahibi" 
+                     name="ilan_sahibi"
+                     value={auctionForm.ilan_sahibi}
+                     onChange={handleAuctionFormChange}
+                     placeholder="Örn: Firma Adı, Kişi Adı"
+                   />
+                 </FormGroup>
+                 {/* === END ADDED TEXT FIELDS === */}
+              </FormGrid>
+
+              {/* Description */}
               <FormGroup>
-                <Label htmlFor="userId">Kullanıcı</Label>
-                <Select 
-                  id="userId" 
-                  name="userId"
-                  required
-                >
-                  {users.map(user => (
-                    <option key={user.id} value={user.id}>
-                      {user.full_name || user.email}
-                    </option>
-                  ))}
-                </Select>
-              </FormGroup>
-              
-              <FormGroup>
-                <Label htmlFor="amount">Ödeme Tutarı (TL)</Label>
-                <Input 
-                  type="number" 
-                  id="amount" 
-                  name="amount"
-                  required
-                  min="0"
-                  step="0.01"
-                />
-              </FormGroup>
-              
-              <FormGroup>
-                <Label htmlFor="description">Açıklama</Label>
-                <Input 
-                  type="text" 
+                <Label htmlFor="description">İlan Açıklaması</Label>
+                <TextArea 
                   id="description" 
                   name="description"
-                  placeholder="İhale kazanım ödemesi"
+                  value={auctionForm.description}
+                  onChange={handleAuctionFormChange}
+                  required
                 />
               </FormGroup>
               
+              {/* Pricing */}
+              <FormRow>
+                <FormGroup>
+                  <Label htmlFor="startingPrice">
+                    {auctionForm.listingType === 'auction' ? 'Başlangıç Fiyatı (TL)' : 'Liste Fiyatı (TL)'}
+                  </Label>
+                  <Input 
+                    type="number" 
+                    id="startingPrice" 
+                    name="startingPrice"
+                    value={auctionForm.startingPrice}
+                    onChange={handleAuctionFormChange}
+                    required
+                    min="0"
+                    step="0.01"
+                  />
+                </FormGroup>
+                
+                <FormGroup>
+                  <Label htmlFor={auctionForm.listingType === 'auction' ? 'minIncrement' : 'offerIncrement'}>
+                    {auctionForm.listingType === 'auction' ? 'Minimum Artış Tutarı (TL)' : 'Teklif Artış Tutarı (TL)'}
+                  </Label>
+                  <Input 
+                    type="number" 
+                    id={auctionForm.listingType === 'auction' ? 'minIncrement' : 'offerIncrement'}
+                    name={auctionForm.listingType === 'auction' ? 'minIncrement' : 'offerIncrement'}
+                    value={auctionForm.listingType === 'auction' ? auctionForm.minIncrement : auctionForm.offerIncrement}
+                    onChange={handleAuctionFormChange}
+                    required
+                    min="0"
+                    step="0.01"
+                  />
+                </FormGroup>
+              </FormRow>
+              
+              {/* Dates & Times */}
+              <FormRow>
+                <FormGroup>
+                  <Label htmlFor="startDate">Başlangıç Tarihi</Label>
+                  <Input 
+                    type="date" 
+                    id="startDate" 
+                    name="startDate"
+                    value={auctionForm.startDate}
+                    onChange={handleAuctionFormChange}
+                    required
+                  />
+                </FormGroup>
+                
+                <FormGroup>
+                  <Label htmlFor="startTime">Başlangıç Saati</Label>
+                  <Input 
+                    type="time" 
+                    id="startTime" 
+                    name="startTime"
+                    value={auctionForm.startTime}
+                    onChange={handleAuctionFormChange}
+                    required
+                  />
+                </FormGroup>
+              </FormRow>
+              
+              <FormRow>
+                <FormGroup>
+                  <Label htmlFor="endDate">Bitiş Tarihi</Label>
+                  <Input 
+                    type="date" 
+                    id="endDate" 
+                    name="endDate"
+                    value={auctionForm.endDate}
+                    onChange={handleAuctionFormChange}
+                    required
+                  />
+                </FormGroup>
+                
+                <FormGroup>
+                  <Label htmlFor="endTime">Bitiş Saati</Label>
+                  <Input 
+                    type="time" 
+                    id="endTime" 
+                    name="endTime"
+                    value={auctionForm.endTime}
+                    onChange={handleAuctionFormChange}
+                    required
+                  />
+                </FormGroup>
+              </FormRow>
+              
+              {/* Location */}
+              <FormRow>
+                <FormGroup>
+                  <Label htmlFor="city">Şehir</Label>
+                   <Select 
+                      id="city" 
+                      name="city"
+                      value={auctionForm.city}
+                      onChange={handleAuctionFormChange}
+                      required
+                    >
+                      <option value="" disabled>Şehir Seçiniz...</option>
+                      {turkishCities.map(city => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </Select>
+                </FormGroup>
+                
+                <FormGroup>
+                  <Label htmlFor="locationDetails">Konum Detayları (Mahalle, Cadde vb.)</Label>
+                  <Input 
+                    type="text" 
+                    id="locationDetails" 
+                    name="locationDetails"
+                    value={auctionForm.locationDetails}
+                    onChange={handleAuctionFormChange}
+                    placeholder="Örn: Ulu Cami Mah. 389 Sk."
+                  />
+                </FormGroup>
+              </FormRow>
+
+              {/* Ada/Parsel */}
+              <FormRow>
+                <FormGroup>
+                  <Label htmlFor="ada_no">Ada No</Label>
+                  <Input 
+                    type="text" 
+                    id="ada_no" 
+                    name="ada_no"
+                    value={auctionForm.ada_no}
+                    onChange={handleAuctionFormChange}
+                    placeholder="Örn: 123"
+                  />
+                </FormGroup>
+                
+                <FormGroup>
+                  <Label htmlFor="parsel_no">Parsel No</Label>
+                  <Input 
+                    type="text" 
+                    id="parsel_no" 
+                    name="parsel_no"
+                    value={auctionForm.parsel_no}
+                    onChange={handleAuctionFormChange}
+                    placeholder="Örn: 456"
+                  />
+                </FormGroup>
+              </FormRow>
+
+              {/* Image Upload */}
+              <ImageUploadContainer>
+                 <Label>İhale Görselleri</Label>
+                
+                {/* Existing images */}
+                {auctionForm.images && auctionForm.images.length > 0 && (
+                  <>
+                    <p>Mevcut Görseller:</p>
+                     <div style={{ 
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                        gap: '1rem'
+                      }}>
+                      {auctionForm.images.map((imageUrl, index) => (
+                        <ImagePreview key={index}>
+                          <img src={imageUrl} alt={`Auction ${index}`} />
+                          <button type="button" onClick={() => removeExistingImage(index)}>
+                             <CloseIcon />
+                          </button>
+                        </ImagePreview>
+                      ))}
+                    </div>
+                  </>
+                )}
+                
+                {/* Upload new images */}
+                <label className="upload-btn" style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem',
+                  padding: '0.75rem 1rem',
+                  border: '1px dashed var(--color-text-light)',
+                  borderRadius: 'var(--border-radius-md)',
+                  cursor: 'pointer',
+                  justifyContent: 'center'
+                }}>
+                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                  Yeni Görsel Yükle
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageChange}
+                    style={{ display: 'none' }} // Hide default input 
+                  />
+                </label>
+                
+                {uploading && <p>Yükleniyor...</p>}
+                
+                {images.length > 0 && (
+                  <>
+                    <p>Yeni Yüklenecek Görseller:</p>
+                    <div style={{ 
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                        gap: '1rem'
+                      }}>
+                      {images.map((image, index) => (
+                        <ImagePreview key={index}>
+                          <img src={URL.createObjectURL(image)} alt={`Preview ${index}`} />
+                          <button type="button" onClick={() => removeImage(index)}>
+                             <CloseIcon />
+                          </button>
+                        </ImagePreview>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </ImageUploadContainer>
+              
+              {/* Status */}
               <FormGroup>
                 <Label htmlFor="status">Durum</Label>
                 <Select 
                   id="status" 
                   name="status"
+                  value={auctionForm.status}
+                  onChange={handleAuctionFormChange}
                   required
                 >
-                  <option value="pending">Beklemede</option>
-                  <option value="completed">Tamamlandı</option>
-                  <option value="canceled">İptal</option>
+                  <option value="upcoming">Yaklaşan</option>
+                  <option value="active">Aktif</option>
+                  <option value="completed">Tamamlandı</option> {/* Enable completed for editing */} 
                 </Select>
               </FormGroup>
               
-              <Button type="submit">Ödeme Ekle</Button>
+              <Button type="submit" disabled={uploading}>İlanı Güncelle</Button>
             </form>
+          </>
+        );
+      case 'users':
+      case 'create-user':
+      case 'user-details':
+        return (
+          <>
+            <SectionTitle>
+              Kullanıcılar
+              <Button onClick={() => handleSectionChange('create-user')}>Yeni Kullanıcı</Button>
+            </SectionTitle>
+            
+            {/* Replace the multiple tabs with a single "Listings" tab */}
+            <div style={{ marginBottom: '1.5rem', display: 'flex', borderBottom: '1px solid var(--color-border)' }}>
+              <TabButton 
+                active={true} 
+                style={{ 
+                  marginRight: '1rem',
+                  borderBottom: '2px solid var(--color-primary)',
+                  fontWeight: 'bold'
+                }}
+              >
+                Kullanıcılar
+              </TabButton>
+            </div>
+            
+            {/* Keep just the filters - same for all listing types */}
+            <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <FilterButton 
+                active={auctionFilter === 'all'} 
+                onClick={() => setAuctionFilter('all')}
+              >
+                Tümü
+              </FilterButton>
+              <FilterButton 
+                active={auctionFilter === 'active'} 
+                onClick={() => setAuctionFilter('active')}
+              >
+                Aktif
+              </FilterButton>
+              <FilterButton 
+                active={auctionFilter === 'upcoming'} 
+                onClick={() => setAuctionFilter('upcoming')}
+              >
+                Yaklaşan
+              </FilterButton>
+              <FilterButton 
+                active={auctionFilter === 'completed'} 
+                onClick={() => setAuctionFilter('completed')}
+              >
+                Tamamlanan
+              </FilterButton>
+            </div>
+            
+            <CardContainer>
+              {usersLoading && (
+                <LoadingOverlay>
+                  <div>Kullanıcılar yükleniyor...</div>
+                </LoadingOverlay>
+              )}
+              
+              {/* Single table for all listings */}
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader style={{ width: '60px' }}></TableHeader>
+                      <TableHeader>Ad Soyad</TableHeader>
+                      <TableHeader>E-posta</TableHeader>
+                      <TableHeader>Telefon</TableHeader>
+                      <TableHeader>Rol</TableHeader>
+                      <TableHeader>Kayıt Tarihi</TableHeader>
+                      <TableHeader>İşlemler</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <tbody>
+                    {users
+                      .filter(user => auctionFilter === 'all' || user.role === auctionFilter)
+                      .map(item => (
+                        <TableRow key={item.id}>
+                          <TableCell>
+                            {item.images && item.images.length > 0 ? (
+                              <div style={{ 
+                                width: '50px', 
+                                height: '50px', 
+                                borderRadius: 'var(--border-radius-sm)',
+                                overflow: 'hidden' 
+                              }}>
+                                <img 
+                                  src={item.images[0]} 
+                                  alt={item.title} 
+                                  style={{ 
+                                    width: '100%', 
+                                    height: '100%', 
+                                    objectFit: 'cover'
+                                  }} 
+                                />
+                              </div>
+                            ) : (
+                              <div style={{ 
+                                width: '50px', 
+                                height: '50px', 
+                                backgroundColor: 'var(--color-background)',
+                                borderRadius: 'var(--border-radius-sm)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                  <circle cx="8.5" cy="8.5" r="1.5" />
+                                  <polyline points="21 15 16 10 5 21" />
+                                </svg>
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>{item.full_name || '-'}</TableCell>
+                          <TableCell>{item.email}</TableCell>
+                          <TableCell>{item.phone || '-'}</TableCell>
+                          <TableCell>
+                            <StatusBadge status={item.role === 'admin' ? 'active' : 'completed'}>
+                              {item.role === 'admin' ? 'Yönetici' : 'Kullanıcı'}
+                            </StatusBadge>
+                          </TableCell>
+                          <TableCell>{formatDate(item.created_at)}</TableCell>
+                          <TableCell>
+                            <ActionButton 
+                              variant="primary" 
+                              size="small"
+                              onClick={() => handleViewUserDetails(item.id)}
+                            >
+                              Detaylar
+                            </ActionButton>
+                            <ActionButton 
+                              variant={item.role === 'admin' ? 'secondary' : 'primary'} 
+                              size="small"
+                              onClick={() => handleUpdateUserRole(item.id, item.role === 'admin' ? 'user' : 'admin')}
+                            >
+                              {item.role === 'admin' ? 'Kullanıcı Yap' : 'Yönetici Yap'}
+                            </ActionButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </tbody>
+                </Table>
+              </TableContainer>
+            </CardContainer>
           </>
         );
       case 'payments':
         return (
           <>
             <SectionTitle>
-              Ödeme Takibi
+              Ödemeler
+              <Button onClick={() => handleSectionChange('create-payment')}>Yeni Ödeme</Button>
             </SectionTitle>
             
-            {paymentsLoading ? (
-              <div>Yükleniyor...</div>
-            ) : payments.length > 0 ? (
-              <>
-                <div style={{ marginBottom: '1rem' }}>
-                  <SearchInput 
-                    type="text" 
-                    placeholder="Ödeme ara..." 
-                  />
-                </div>
-                
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableHeader>İhale</TableHeader>
-                        <TableHeader>Kullanıcı</TableHeader>
-                        <TableHeader>Tutar</TableHeader>
-                        <TableHeader>Ödeme Tarihi</TableHeader>
-                        <TableHeader>Durum</TableHeader>
-                        <TableHeader>İşlemler</TableHeader>
-                      </TableRow>
-                    </TableHead>
-                    <tbody>
-                      {payments.map(payment => (
-                        <TableRow key={payment.id}>
-                          <TableCell>{payment.auctions?.title || payment.auction_name || '-'}</TableCell>
-                          <TableCell>{
-                            (payment.profiles?.full_name && payment.profiles?.email) 
-                              ? `${payment.profiles.full_name} (${payment.profiles.email})`
-                              : payment.profiles?.full_name || payment.profiles?.email || payment.user_name || '-'
-                          }</TableCell>
-                          <TableCell>{payment.amount?.toLocaleString('tr-TR')} TL</TableCell>
-                          <TableCell>{formatDate(payment.created_at)}</TableCell>
+            {/* Replace the multiple tabs with a single "Listings" tab */}
+            <div style={{ marginBottom: '1.5rem', display: 'flex', borderBottom: '1px solid var(--color-border)' }}>
+              <TabButton 
+                active={true} 
+                style={{ 
+                  marginRight: '1rem',
+                  borderBottom: '2px solid var(--color-primary)',
+                  fontWeight: 'bold'
+                }}
+              >
+                Ödemeler
+              </TabButton>
+            </div>
+            
+            {/* Keep just the filters - same for all listing types */}
+            <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <FilterButton 
+                active={auctionFilter === 'all'} 
+                onClick={() => setAuctionFilter('all')}
+              >
+                Tümü
+              </FilterButton>
+              <FilterButton 
+                active={auctionFilter === 'active'} 
+                onClick={() => setAuctionFilter('active')}
+              >
+                Aktif
+              </FilterButton>
+              <FilterButton 
+                active={auctionFilter === 'upcoming'} 
+                onClick={() => setAuctionFilter('upcoming')}
+              >
+                Yaklaşan
+              </FilterButton>
+              <FilterButton 
+                active={auctionFilter === 'completed'} 
+                onClick={() => setAuctionFilter('completed')}
+              >
+                Tamamlanan
+              </FilterButton>
+            </div>
+            
+            <CardContainer>
+              {paymentsLoading && (
+                <LoadingOverlay>
+                  <div>Ödemeler yükleniyor...</div>
+                </LoadingOverlay>
+              )}
+              
+              {/* Single table for all listings */}
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader style={{ width: '60px' }}></TableHeader>
+                      <TableHeader>Kullanıcı</TableHeader>
+                      <TableHeader>İhale</TableHeader>
+                      <TableHeader>Ödeme Tutarı</TableHeader>
+                      <TableHeader>Durum</TableHeader>
+                      <TableHeader>Ödeme Tarihi</TableHeader>
+                      <TableHeader>İşlemler</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <tbody>
+                    {payments
+                      .filter(payment => auctionFilter === 'all' || payment.status === auctionFilter)
+                      .map(item => (
+                        <TableRow key={item.id}>
                           <TableCell>
-                            <StatusBadge status={
-                              payment.status === 'completed' ? 'active' : 
-                              payment.status === 'canceled' ? 'completed' : 
-                              'upcoming'
-                            }>
-                              {payment.status === 'completed' ? 'Tamamlandı' : 
-                               payment.status === 'pending' ? 'Beklemede' : 'İptal Edildi'}
+                            {item.images && item.images.length > 0 ? (
+                              <div style={{ 
+                                width: '50px', 
+                                height: '50px', 
+                                borderRadius: 'var(--border-radius-sm)',
+                                overflow: 'hidden' 
+                              }}>
+                                <img 
+                                  src={item.images[0]} 
+                                  alt={item.title} 
+                                  style={{ 
+                                    width: '100%', 
+                                    height: '100%', 
+                                    objectFit: 'cover'
+                                  }} 
+                                />
+                              </div>
+                            ) : (
+                              <div style={{ 
+                                width: '50px', 
+                                height: '50px', 
+                                backgroundColor: 'var(--color-background)',
+                                borderRadius: 'var(--border-radius-sm)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                  <circle cx="8.5" cy="8.5" r="1.5" />
+                                  <polyline points="21 15 16 10 5 21" />
+                                </svg>
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>{item.profiles?.full_name || '-'}</TableCell>
+                          <TableCell>{item.auctions?.title || '-'}</TableCell>
+                          <TableCell>{item.amount?.toLocaleString('tr-TR')} TL</TableCell>
+                          <TableCell>
+                            <StatusBadge status={item.status}>
+                              {getStatusText(item.status)}
                             </StatusBadge>
                           </TableCell>
+                          <TableCell>{formatDate(item.created_at)}</TableCell>
                           <TableCell>
                             <ActionButton 
                               variant="primary" 
                               size="small"
-                              onClick={() => handleUpdatePaymentStatus(payment.id, 'completed')}
-                              disabled={payment.status === 'completed'}
+                              onClick={() => handleViewPaymentDetails(item.id)}
                             >
-                              Tamamla
+                              Detaylar
                             </ActionButton>
                             <ActionButton 
                               variant="secondary" 
                               size="small"
-                              onClick={() => handleUpdatePaymentStatus(payment.id, 'pending')}
-                              disabled={payment.status === 'pending'}
+                              onClick={() => handleUpdatePaymentStatus(item.id, 'completed')}
                             >
-                              Beklet
-                            </ActionButton>
-                            <ActionButton 
-                              variant="danger" 
-                              size="small"
-                              onClick={() => handleUpdatePaymentStatus(payment.id, 'canceled')}
-                              disabled={payment.status === 'canceled'}
-                            >
-                              İptal
+                              Tamamla
                             </ActionButton>
                           </TableCell>
                         </TableRow>
                       ))}
-                    </tbody>
-                  </Table>
-                </TableContainer>
-              </>
-            ) : (
-              <EmptyState>
-                <p>Henüz ödeme kaydı bulunmamaktadır.</p>
-              </EmptyState>
-            )}
+                  </tbody>
+                </Table>
+              </TableContainer>
+            </CardContainer>
           </>
         );
       case 'settings':
         return (
           <>
-            <SectionTitle>Sistem Ayarları</SectionTitle>
+            <SectionTitle>Ayarlar</SectionTitle>
             
-            <FormGroup>
-              <Label htmlFor="siteName">Site Adı</Label>
-              <Input 
-                type="text" 
-                id="siteName" 
-                defaultValue="Arazialcom"
-              />
-            </FormGroup>
+            {/* Add your settings form components here */}
+          </>
+        );
+      case 'auction-details':
+        // Find the actual auction data from the auctions list for potentially more fields
+        const currentAuction = auctions.find(a => a.id === selectedAuctionId);
+        return (
+          <>
+            <SectionTitle>
+              İlan Detayları: {auctionForm.title}
+              <div>
+                <Button 
+                  variant="secondary" 
+                  onClick={() => handleSectionChange('auctions')}
+                  style={{ marginRight: '1rem' }}
+                >
+                  İlanlara Dön
+                </Button>
+                <Button onClick={() => handleSectionChange('edit-auction')}>
+                  İlanı Düzenle
+                </Button>
+              </div>
+            </SectionTitle>
+
+            {/* Auction Information */}
+            <CardContainer style={{ marginBottom: '2rem' }}>
+              <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>Genel Bilgiler</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                <div><strong>Başlık:</strong> {auctionForm.title}</div>
+                <div><strong>Durum:</strong> <StatusBadge status={auctionForm.status}>{getStatusText(auctionForm.status)}</StatusBadge></div>
+                <div><strong>Tür:</strong> {auctionForm.listingType === 'auction' ? 'İhale' : 'Pazarlık'}</div>
+                <div><strong>Başlangıç/Liste Fiyatı:</strong> {auctionForm.startingPrice?.toLocaleString('tr-TR')} TL</div>
+                {auctionForm.listingType === 'auction' && 
+                  <div><strong>Min. Artış:</strong> {auctionForm.minIncrement?.toLocaleString('tr-TR')} TL</div>
+                }
+                {auctionForm.listingType === 'offer' && 
+                  <div><strong>Teklif Artış:</strong> {auctionForm.offerIncrement?.toLocaleString('tr-TR')} TL</div>
+                }
+                <div><strong>Başlangıç:</strong> {formatDate(auctionForm.startDate)} {auctionForm.startTime}</div>
+                <div><strong>Bitiş:</strong> {formatDate(auctionForm.endDate)} {auctionForm.endTime}</div>
+                <div><strong>Konum:</strong> {auctionForm.locationDetails ? `${auctionForm.locationDetails}, ${auctionForm.city}` : auctionForm.city}</div>
+                {auctionForm.ada_no && <div><strong>Ada No:</strong> {auctionForm.ada_no}</div>}
+                {auctionForm.parsel_no && <div><strong>Parsel No:</strong> {auctionForm.parsel_no}</div>}
+                {/* Display new TEXT fields */}
+                <div><strong>Alan:</strong> {auctionForm.area_size} {auctionForm.area_unit}</div>
+                <div><strong>Emlak Tipi:</strong> {auctionForm.emlak_tipi || '-'}</div>
+                <div><strong>İmar Durumu:</strong> {auctionForm.imar_durumu || '-'}</div>
+                <div><strong>İlan Sahibi:</strong> {auctionForm.ilan_sahibi || '-'}</div>
+                {/* Display original creator if different */}
+                {currentAuction?.created_by && currentAuction.created_by !== auctionForm.ilan_sahibi && 
+                  <div><strong>Oluşturan:</strong> {currentAuction.profiles?.full_name || currentAuction.created_by}</div>
+                }
+              </div>
+               <h4 style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>Açıklama:</h4>
+               <p style={{ marginBottom: '0' }}>{auctionForm.description || '-'}</p>
+            </CardContainer>
             
-            <FormGroup>
-              <Label htmlFor="contactEmail">İletişim E-postası</Label>
-              <Input 
-                type="email" 
-                id="contactEmail" 
-                defaultValue="info@arazialcom.com"
-              />
-            </FormGroup>
+            {/* Image Gallery */}
+            {auctionForm.images && auctionForm.images.length > 0 && (
+              <CardContainer style={{ marginBottom: '2rem' }}>
+                <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>Görseller</h3>
+                <ImageGallery>
+                    {auctionForm.images.map((imageUrl, index) => (
+                        <div key={index} className="gallery-item" onClick={() => handleImageClick(imageUrl)}>
+                          <img src={imageUrl} alt={`Auction Image ${index + 1}`} />
+                        </div>
+                    ))}
+                </ImageGallery>
+              </CardContainer>
+            )}
             
-            <FormGroup>
-              <Label htmlFor="bidIncrement">Minimum Teklif Artışı (TL)</Label>
-              <Input 
-                type="number" 
-                id="bidIncrement" 
-                defaultValue="100"
-                min="1"
-              />
-            </FormGroup>
-            
-            <Button>Ayarları Kaydet</Button>
+            {/* Modal for viewing full image */}
+            {activeImage && (
+                <div className="gallery-modal" onClick={handleCloseGallery}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}> 
+                        <button className="close-button" onClick={handleCloseGallery}>&times;</button>
+                        <button className="nav-button prev" onClick={handlePrevImage}>&#10094;</button>
+                        <img src={activeImage} alt="Full Size Auction Image" />
+                        <button className="nav-button next" onClick={handleNextImage}>&#10095;</button>
+                    </div>
+                </div>
+            )}
+
+            {/* Bids/Offers Section based on listing type */}
+            {auctionForm.listingType === 'auction' ? (
+              <CardContainer>
+                <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>Teklifler (İhale)</h3>
+                {bids && bids.length > 0 ? (
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableHeader>Teklif Veren</TableHeader>
+                          <TableHeader>E-posta</TableHeader>
+                          <TableHeader>Telefon</TableHeader>
+                          <TableHeader>Teklif Tutarı</TableHeader>
+                          <TableHeader>Teklif Tarihi</TableHeader>
+                          <TableHeader>Durum</TableHeader>
+                        </TableRow>
+                      </TableHead>
+                      <tbody>
+                        {bids.map(bid => (
+                          <TableRow key={bid.id}>
+                            <TableCell>{bid.profiles?.full_name || 'İsimsiz'}</TableCell>
+                            <TableCell>{bid.profiles?.email || '-'}</TableCell>
+                            <TableCell>{bid.profiles?.phone_number || '-'}</TableCell>
+                            <TableCell>{bid.amount?.toLocaleString('tr-TR')} TL</TableCell>
+                            <TableCell>{formatDate(bid.created_at)}</TableCell>
+                            <TableCell>
+                              {bid.isHighestBid ? (
+                                <StatusBadge status={'active'}>En Yüksek</StatusBadge>
+                              ) : (
+                                <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>Daha Düşük</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <EmptyState>
+                    <EmptyStateIcon>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                      </svg>
+                    </EmptyStateIcon>
+                    <EmptyStateTitle>Bu ihale için henüz teklif verilmemiştir.</EmptyStateTitle>
+                  </EmptyState>
+                )}
+              </CardContainer>
+            ) : (
+              <CardContainer>
+                <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>Teklifler (Pazarlık)</h3>
+                {selectedAuctionOffers && selectedAuctionOffers.length > 0 ? (
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableHeader>Teklif Veren</TableHeader>
+                          <TableHeader>E-posta</TableHeader>
+                          <TableHeader>Telefon</TableHeader>
+                          <TableHeader>Teklif Tutarı</TableHeader>
+                          <TableHeader>Teklif Tarihi</TableHeader>
+                          <TableHeader>Durum</TableHeader>
+                          <TableHeader>İşlemler</TableHeader>
+                        </TableRow>
+                      </TableHead>
+                      <tbody>
+                        {selectedAuctionOffers.map(offer => (
+                          <TableRow key={offer.id}>
+                            <TableCell>{offer.profiles?.full_name || 'İsimsiz'}</TableCell>
+                            <TableCell>{offer.profiles?.email || '-'}</TableCell>
+                            <TableCell>{offer.profiles?.phone_number || '-'}</TableCell>
+                            <TableCell>{offer.amount?.toLocaleString('tr-TR')} TL</TableCell>
+                            <TableCell>{formatDate(offer.created_at)}</TableCell>
+                            <TableCell>
+                              <StatusBadge status={
+                                offer.status === 'accepted' ? 'completed' :
+                                offer.status === 'rejected' ? 'error' :
+                                'pending'
+                              }>
+                                {offer.status === 'accepted' ? 'Kabul Edildi' :
+                                 offer.status === 'rejected' ? 'Reddedildi' :
+                                 'Beklemede'}
+                              </StatusBadge>
+                            </TableCell>
+                            <TableCell>
+                              {offer.status === 'pending' && (
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                  <ActionButton
+                                    size="small"
+                                    onClick={() => handleAcceptOffer(offer.id)} // Ensure this function exists
+                                    disabled={actionLoading}
+                                  >
+                                    Kabul Et
+                                  </ActionButton>
+                                  <ActionButton
+                                    size="small"
+                                    variant="danger"
+                                    onClick={() => handleRejectOffer(offer.id)} // Ensure this function exists
+                                    disabled={actionLoading}
+                                  >
+                                    Reddet
+                                  </ActionButton>
+                                </div>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <EmptyState>
+                    <EmptyStateIcon>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                      </svg>
+                    </EmptyStateIcon>
+                    <EmptyStateTitle>Bu ilan için henüz teklif (pazarlık) alınmamıştır.</EmptyStateTitle>
+                  </EmptyState>
+                )}
+              </CardContainer>
+            )}
           </>
         );
       default:
@@ -2847,6 +3666,6 @@ function AdminDashboard() {
       </DashboardGrid>
     </PageContainer>
   );
-}
+} // Added missing closing brace for the function component
 
 export default AdminDashboard; 

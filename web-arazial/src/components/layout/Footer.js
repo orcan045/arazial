@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
+import logoImage from '../../assets/logo.png';
 
 const FooterContainer = styled.footer`
   background: linear-gradient(to bottom, var(--color-primary-dark) 0%, #041124 100%);
@@ -81,11 +82,23 @@ const FooterLogo = styled(Link)`
   margin-bottom: 1.25rem;
   text-decoration: none;
   
-  svg {
-    width: 2.25rem;
-    height: 2.25rem;
+  img {
+    height: 3.5rem;
+    width: 3.5rem;
+    border-radius: 50%;
+    object-fit: cover;
     margin-right: 0.75rem;
-    color: var(--color-gold);
+  }
+  
+  span {
+    color: white;
+    letter-spacing: -0.5px;
+  }
+  
+  @media (max-width: 359px) {
+    span {
+      display: none;
+    }
   }
 `;
 
@@ -291,9 +304,7 @@ const Footer = () => {
         <FooterTop>
           <div>
             <FooterLogo to="/">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
+              <img src={logoImage} alt="Arazialcom Logo" />
               <span>Arazialcom</span>
             </FooterLogo>
             
