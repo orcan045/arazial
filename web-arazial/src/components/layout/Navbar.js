@@ -46,6 +46,9 @@ const NavbarContent = styled.div`
   @media (max-width: 767px) {
     padding: ${props => props.$isScrolled ? '0.75rem 1.5rem' : '1rem 1.5rem'};
     height: ${props => props.$isScrolled ? '60px' : '70px'};
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 1rem;
   }
   
   @media (max-width: 480px) {
@@ -141,6 +144,10 @@ const NavButtonsContainer = styled.div`
   align-items: center;
   gap: 0.5rem;
   
+  @media (max-width: 767px) {
+    order: 2;
+  }
+  
   @media (max-width: 480px) {
     gap: 0.25rem;
   }
@@ -169,6 +176,10 @@ const MobileMenuButton = styled.button`
   
   @media (min-width: 768px) {
     display: none;
+  }
+  
+  @media (max-width: 767px) {
+    order: -1;
   }
   
   svg {
@@ -546,6 +557,12 @@ const Navbar = () => {
   return (
     <NavbarContainer $isFixed={true} $isScrolled={isScrolled}>
       <NavbarContent $isScrolled={isScrolled}>
+        <MobileMenuButton onClick={() => setIsOpen(true)}>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+          </svg>
+        </MobileMenuButton>
+        
         <Logo to="/">
           <LogoIcon>
             <img src={logoImage} alt="Arazialcom Logo" />
@@ -687,12 +704,6 @@ const Navbar = () => {
               </UserMenu>
             </UserMenuContainer>
           )}
-          
-          <MobileMenuButton onClick={() => setIsOpen(true)}>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-            </svg>
-          </MobileMenuButton>
         </NavButtonsContainer>
       </NavbarContent>
       
@@ -762,12 +773,6 @@ const Navbar = () => {
           </>
         ) : (
           <>
-            <MobileNavLink to="/profile">
-              Profilim
-            </MobileNavLink>
-            <MobileNavLink to="/dashboard">
-              Panelim
-            </MobileNavLink>
             <MobileNavLink as="button" onClick={handleSignOut}>
               Çıkış Yap
             </MobileNavLink>
