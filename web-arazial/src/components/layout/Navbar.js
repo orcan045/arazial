@@ -765,19 +765,9 @@ const Navbar = () => {
             <MobileNavLink to="/profile">
               Profilim
             </MobileNavLink>
-            <DisabledMobileNavLink>
-              Ayarlar
-            </DisabledMobileNavLink>
             <MobileNavLink to="/dashboard">
               Panelim
             </MobileNavLink>
-            
-            {isAdmin && (
-              <MobileNavLink to="/admin/dashboard">
-                Admin Paneli
-              </MobileNavLink>
-            )}
-            
             <MobileNavLink as="button" onClick={handleSignOut}>
               Çıkış Yap
             </MobileNavLink>
