@@ -154,13 +154,8 @@ const NavButtonsContainer = styled.div`
   gap: 0.5rem;
   margin-left: auto;
   
-  @media (max-width: 480px) {
-    gap: 0.25rem;
-  }
-  
-  /* Adjust buttons on very small screens */
-  @media (max-width: 359px) {
-    .auth-buttons {
+  .auth-buttons {
+    @media (max-width: 767px) {
       display: none;
     }
   }
@@ -421,6 +416,21 @@ const DisabledMobileNavLink = styled.div`
   cursor: not-allowed;
 `;
 
+const MobileAuthButtons = styled.div`
+  padding: 1.25rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--color-surface-secondary);
+  
+  button {
+    width: 100%;
+    justify-content: center;
+    font-size: 1rem;
+    padding: 0.75rem !important;
+  }
+`;
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -657,9 +667,9 @@ const Navbar = () => {
                 size="small"
                 minWidth="auto"
                 style={{ 
-                  padding: windowWidth < 480 ? '0.4rem 0.75rem' : '0.5rem 1.25rem',
-                  fontSize: windowWidth < 480 ? '0.8rem' : '0.875rem',
-                  minHeight: windowWidth < 480 ? '32px' : '36px'
+                  padding: '0.5rem 1.25rem',
+                  fontSize: '0.875rem',
+                  minHeight: '36px'
                 }}
               >
                 Giriş Yap
@@ -671,9 +681,9 @@ const Navbar = () => {
                 size="small"
                 minWidth="auto"
                 style={{ 
-                  padding: windowWidth < 480 ? '0.4rem 0.75rem' : '0.5rem 1.25rem',
-                  fontSize: windowWidth < 480 ? '0.8rem' : '0.875rem',
-                  minHeight: windowWidth < 480 ? '32px' : '36px'
+                  padding: '0.5rem 1.25rem',
+                  fontSize: '0.875rem',
+                  minHeight: '36px'
                 }}
               >
                 Kayıt Ol
@@ -694,6 +704,27 @@ const Navbar = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </CloseButton>
+        
+        {!user && !loading && (
+          <MobileAuthButtons>
+            <Button 
+              as={Link} 
+              to="/login" 
+              variant="secondary"
+              onClick={() => setIsOpen(false)}
+            >
+              Giriş Yap
+            </Button>
+            <Button 
+              as={Link} 
+              to="/signup" 
+              variant="primary"
+              onClick={() => setIsOpen(false)}
+            >
+              Kayıt Ol
+            </Button>
+          </MobileAuthButtons>
+        )}
         
         <MobileNavLink to="/" className={location.pathname === '/' ? 'active' : ''}>
           Ana Sayfa
@@ -743,16 +774,7 @@ const Navbar = () => {
               </button>
             )}
           </div>
-        ) : !user ? (
-          <>
-            <MobileNavLink to="/login">
-              Giriş Yap
-            </MobileNavLink>
-            <MobileNavLink to="/signup">
-              Kayıt Ol
-            </MobileNavLink>
-          </>
-        ) : (
+        ) : user ? (
           <>
             <MobileNavLink to="/profile">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem' }}>
@@ -781,7 +803,7 @@ const Navbar = () => {
               Çıkış Yap
             </MobileNavLink>
           </>
-        )}
+        ) : null}
       </MobileMenu>
     </NavbarContainer>
   );
