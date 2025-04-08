@@ -154,12 +154,32 @@ const ProtectedRoute = ({ children }) => {
 const AdminRoute = ({ children }) => {
   const { user, isAdmin, loading, reloadUserProfile } = useAuth();
   const [loadingTime, setLoadingTime] = useState(0);
-  const [maxLoadingTime, setMaxLoadingTime] = useState(15); // Auto-retry after 15 seconds
+  const [maxLoadingTime, setMaxLoadingTime] = useState(15);
   const [showLoading, setShowLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
   
   useEffect(() => {
     let timer;
     let loadingDelayTimer;
+    let retryTimer;
+    
+    const checkAdminStatus = async () => {
+      if (!user) return;
+      
+      try {
+        await reloadUserProfile();
+        // Reset retry count on successful load
+        setRetryCount(0);
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        if (retryCount < maxRetries) {
+          setRetryCount(prev => prev + 1);
+          // Exponential backoff for retries
+          retryTimer = setTimeout(checkAdminStatus, Math.pow(2, retryCount) * 1000);
+        }
+      }
+    };
     
     if (loading) {
       // Only show loading spinner if loading takes more than 500ms
@@ -172,7 +192,7 @@ const AdminRoute = ({ children }) => {
           // Auto-retry after maxLoadingTime seconds
           if (prev + 1 >= maxLoadingTime) {
             console.log("Auto-retrying admin profile load after timeout");
-            reloadUserProfile();
+            checkAdminStatus();
             return 0; // Reset timer after auto-retry
           }
           return prev + 1;
@@ -183,15 +203,28 @@ const AdminRoute = ({ children }) => {
       setShowLoading(false);
     }
     
+    // Add visibility change listener
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log("Page became visible, checking admin status");
+        checkAdminStatus();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
     return () => {
       clearInterval(timer);
       clearTimeout(loadingDelayTimer);
+      clearTimeout(retryTimer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [loading, reloadUserProfile, maxLoadingTime]);
+  }, [loading, reloadUserProfile, maxLoadingTime, retryCount, user]);
   
   const handleRetry = () => {
     console.log("Manual retry of admin profile loading");
     setLoadingTime(0);
+    setRetryCount(0);
     reloadUserProfile();
     // Increase timeout for next retry
     setMaxLoadingTime(prev => Math.min(prev + 5, 30));
@@ -200,7 +233,7 @@ const AdminRoute = ({ children }) => {
   if (loading && showLoading) {
     return (
       <LoadingSpinner 
-        message="Yönetici bilgileri kontrol ediliyor..."
+        message={`Yönetici bilgileri kontrol ediliyor... ${retryCount > 0 ? `(Deneme ${retryCount}/${maxRetries})` : ''}`}
         loadingTime={loadingTime}
         retryAction={handleRetry}
       />

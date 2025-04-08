@@ -346,7 +346,10 @@ class AppStateManager {
   // Central visibility state change handler
   async handleVisibilityStateChange() {
     try {
-      // Skip if not visible or not online (will be handled when back online)
+      const wasHidden = !this.isVisible;
+      this.isVisible = document.visibilityState === 'visible';
+      
+      // Skip if not visible or not online
       if (!this.isVisible || !this.isOnline) {
         return;
       }
@@ -354,11 +357,19 @@ class AppStateManager {
       // Notify visibility listeners first (immediate UI updates)
       this.notifyListeners('visibility');
       
-      // Check if we need to refresh auth (more than 5 minutes since last refresh)
+      // If we're coming back from being hidden, always refresh auth
+      // This ensures admin status is immediately revalidated
+      if (wasHidden) {
+        console.log('[AppState] Coming back from background, refreshing auth');
+        await this.refreshAuth();
+        return;
+      }
+      
+      // For normal visibility changes, check if we need to refresh auth
       const now = Date.now();
       const timeSinceLastRefresh = now - this.lastRefreshTime;
       
-      if (timeSinceLastRefresh > 5 * 60 * 1000) {
+      if (timeSinceLastRefresh > 2 * 60 * 1000) { // Reduced to 2 minutes
         console.log('[AppState] Auth refresh needed');
         await this.refreshAuth();
       } else {
@@ -366,7 +377,7 @@ class AppStateManager {
           Math.round(timeSinceLastRefresh / 1000), 'seconds ago');
       }
       
-      // Notify refresh listeners (components that need to refresh their data)
+      // Notify refresh listeners
       this.notifyListeners('refresh');
     } catch (error) {
       console.error('[AppState] Error handling visibility state change:', error);
