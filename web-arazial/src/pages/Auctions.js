@@ -930,32 +930,28 @@ const PaginationEllipsis = styled.span`
   font-weight: 600;
 `;
 
-const MobileFilterButton = styled.button`
+const MobileFilterButton = styled.div`
   display: none;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: white;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 0.65rem 1.25rem;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: var(--color-text);
+  width: 100%;
   
-  svg {
-    width: 1.125rem;
-    height: 1.125rem;
+  @media (max-width: 768px) {
+    display: block;
   }
-  
-  &:hover {
-    background-color: var(--color-background-hover);
-    border-color: var(--color-text-secondary);
+`;
+
+const MobileMultiSelectWrapper = styled(MultiSelectWrapper)`
+  @media (max-width: 768px) {
+    width: 100%;
   }
-  
-  @media (max-width: 1024px) {
-    display: flex;
+`;
+
+const MobileMultiSelectBox = styled(MultiSelectBox)`
+  @media (max-width: 768px) {
+    background-color: white;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    min-height: 44px;
+    padding: 0.5rem 1rem;
   }
 `;
 
@@ -2439,15 +2435,68 @@ const Auctions = () => {
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <MobileFilterButton onClick={() => setMobileFiltersOpen(true)}>
-              <FilterIcon />
-              Filtreler
-              {filters.cities.length > 0 && (
-                <BadgeCount>
-                  {filters.cities.length}
-                </BadgeCount>
-              )}
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', width: '100%' }}>
+            <MobileFilterButton>
+              <MobileMultiSelectWrapper className="mobile-city-dropdown">
+                <MobileMultiSelectBox 
+                  onClick={() => setMobileCityDropdownOpen(!mobileCityDropdownOpen)}
+                >
+                  <SelectedCities>
+                    {filters.cities.length === 0 ? (
+                      <span style={{ color: 'var(--color-text-tertiary)' }}>Şehir Seçiniz</span>
+                    ) : (
+                      filters.cities.map(city => (
+                        <CityTag key={city}>
+                          {city}
+                          <button onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveCity(city);
+                          }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                          </button>
+                        </CityTag>
+                      ))
+                    )}
+                  </SelectedCities>
+                  <DropdownIcon isOpen={mobileCityDropdownOpen}>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </DropdownIcon>
+                </MobileMultiSelectBox>
+                
+                <CityDropdown isOpen={mobileCityDropdownOpen} className="mobile-city-dropdown">
+                  <SearchInput 
+                    placeholder="Şehir ara..." 
+                    value={mobileCitySearch}
+                    onChange={(e) => setMobileCitySearch(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    {filteredMobileCities.map(city => (
+                      <CityOption key={city} onClick={(e) => {
+                        e.stopPropagation();
+                        handleCitySelect(city);
+                      }}>
+                        <input 
+                          type="checkbox" 
+                          checked={filters.cities.includes(city)}
+                          onChange={() => {}} // Handled by the parent click
+                        />
+                        {city}
+                      </CityOption>
+                    ))}
+                    {filteredMobileCities.length === 0 && (
+                      <div style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)' }}>
+                        Sonuç bulunamadı
+                      </div>
+                    )}
+                  </div>
+                </CityDropdown>
+              </MobileMultiSelectWrapper>
             </MobileFilterButton>
             
             <ResultsCount>
