@@ -1085,11 +1085,10 @@ const BidCard = ({
                       <OfferInput 
                         type="number"
                         id="bidAmount"
-                        value={bidAmount}
+                        value={bidAmount || getMinimumBidAmount()}
                         onChange={(e) => setBidAmount(e.target.value)}
                         placeholder={isMobile ? `Min. ${formatPrice(getMinimumBidAmount())}` : `Min. ${formatPrice(getMinimumBidAmount())}`}
                         step="any"
-                        required 
                         disabled={submitLoading || authLoading}
                         style={{ margin: 0, flex: 1 }}
                       />
@@ -1430,7 +1429,8 @@ const AuctionDetail = () => {
       return;
     }
     
-    const amount = parseFloat(bidAmount);
+    // Use the minimum bid amount if no amount is entered
+    const amount = parseFloat(bidAmount) || getMinimumBidAmount();
     const minimumBid = getMinimumBidAmount();
     
     if (isNaN(amount) || amount <= 0) {
