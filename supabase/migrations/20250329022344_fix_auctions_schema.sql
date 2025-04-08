@@ -12,7 +12,7 @@ BEGIN
             start_date TIMESTAMPTZ,
             end_date TIMESTAMPTZ,
             location TEXT,
-            status TEXT DEFAULT 'upcoming'::text,
+            status TEXT DEFAULT 'upcoming'::text CHECK (status IN ('upcoming', 'active', 'ended', 'cancelled')),
             created_by UUID REFERENCES auth.users(id),
             images TEXT[] DEFAULT '{}'::TEXT[],
             created_at TIMESTAMPTZ DEFAULT now(),
@@ -73,6 +73,8 @@ BEGIN
             WHERE table_schema = 'public' AND table_name = 'auctions' AND column_name = 'status'
         ) THEN
             ALTER TABLE public.auctions ADD COLUMN status TEXT DEFAULT 'upcoming'::text;
+            -- Add check constraint for status values
+            ALTER TABLE public.auctions ADD CONSTRAINT auctions_status_check CHECK (status IN ('upcoming', 'active', 'ended', 'cancelled'));
         END IF;
 
         IF NOT EXISTS (

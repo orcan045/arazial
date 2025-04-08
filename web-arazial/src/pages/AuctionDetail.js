@@ -1321,7 +1321,13 @@ const AuctionDetail = () => {
       // 1. Fetch Auction Details
       const { data: auctionData, error: auctionError } = await supabase
         .from('auctions')
-        .select('*, profiles ( full_name, avatar_url )')
+        .select(`
+          *,
+          profiles (
+            full_name,
+            avatar_url
+          )
+        `)
         .eq('id', id)
         .single();
 
@@ -1856,15 +1862,15 @@ const AuctionDetail = () => {
               <PropertyGrid>
                 <PropertyItem>
                   <PropertyLabel>Emlak Tipi</PropertyLabel>
-                  <PropertyValue>{auction.property_type || '-'}</PropertyValue>
+                  <PropertyValue>{auction.emlak_tipi || '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>Alan (m²)</PropertyLabel>
-                  <PropertyValue>{auction.area_sqm ? `${auction.area_sqm} m²` : '-'}</PropertyValue>
+                  <PropertyValue>{auction.area_size ? `${auction.area_size} ${auction.area_unit || 'm²'}` : '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>İmar Durumu</PropertyLabel>
-                  <PropertyValue>{auction.zoning_status || '-'}</PropertyValue>
+                  <PropertyValue>{auction.imar_durumu || '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>Ada No</PropertyLabel>
@@ -1876,7 +1882,7 @@ const AuctionDetail = () => {
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>İlan Sahibi</PropertyLabel>
-                  <PropertyValue>{auction.profiles?.full_name || 'Bilinmiyor'}</PropertyValue>
+                  <PropertyValue>{auction.ilan_sahibi || auction.profiles?.full_name || 'Bilinmiyor'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>İlan Tarihi</PropertyLabel>
@@ -1963,15 +1969,15 @@ const AuctionDetail = () => {
               <PropertyGrid>
                 <PropertyItem>
                   <PropertyLabel>Emlak Tipi</PropertyLabel>
-                  <PropertyValue>{auction.property_type || '-'}</PropertyValue>
+                  <PropertyValue>{auction.emlak_tipi || '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>Alan (m²)</PropertyLabel>
-                  <PropertyValue>{auction.area_sqm ? `${auction.area_sqm} m²` : '-'}</PropertyValue>
+                  <PropertyValue>{auction.area_size ? `${auction.area_size} ${auction.area_unit || 'm²'}` : '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>İmar Durumu</PropertyLabel>
-                  <PropertyValue>{auction.zoning_status || '-'}</PropertyValue>
+                  <PropertyValue>{auction.imar_durumu || '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>Ada No</PropertyLabel>
@@ -1983,7 +1989,7 @@ const AuctionDetail = () => {
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>İlan Sahibi</PropertyLabel>
-                  <PropertyValue>{auction.profiles?.full_name || 'Bilinmiyor'}</PropertyValue>
+                  <PropertyValue>{auction.ilan_sahibi || auction.profiles?.full_name || 'Bilinmiyor'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>İlan Tarihi</PropertyLabel>

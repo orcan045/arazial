@@ -682,13 +682,13 @@ function AdminDashboard() {
   const [selectedAuctionOffers, setSelectedAuctionOffers] = useState([]);
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   
   // Add section-specific loading states
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [auctionsLoading, setAuctionsLoading] = useState(false);
   const [usersLoading, setUsersLoading] = useState(false);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
   
   // Add state for tabs and filters
   const [auctionFilter, setAuctionFilter] = useState('all');
@@ -1405,7 +1405,7 @@ function AdminDashboard() {
           .from('offers')
           .select(`
             *,
-            profiles!offers_user_id_fkey (
+            profiles:user_id (
               id,
               full_name,
               phone_number,
@@ -1732,7 +1732,65 @@ function AdminDashboard() {
       alert('Ödeme durumu güncellenirken bir hata oluştu.');
     }
   };
-  
+
+  const handleAcceptOffer = async (offerId) => {
+    try {
+      setActionLoading(true);
+      
+      // Call the accept_offer RPC function
+      const { data, error } = await supabase.rpc('accept_offer', {
+        offer_id: offerId
+      });
+
+      if (error) throw error;
+
+      // Show success message
+      alert('Teklif başarıyla kabul edildi');
+      
+      // Refresh the offers list
+      if (selectedAuctionId) {
+        await fetchAuctionDetails(selectedAuctionId);
+      }
+      
+    } catch (error) {
+      console.error('Error accepting offer:', error);
+      alert(error.message || 'Teklif kabul edilirken bir hata oluştu');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRejectOffer = async (offerId) => {
+    try {
+      setActionLoading(true);
+      
+      // Update the offer status to rejected
+      const { error } = await supabase
+        .from('offers')
+        .update({ 
+          status: 'rejected',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', offerId);
+
+      if (error) throw error;
+
+      // Show success message
+      alert('Teklif reddedildi');
+      
+      // Refresh the offers list
+      if (selectedAuctionId) {
+        await fetchAuctionDetails(selectedAuctionId);
+      }
+      
+    } catch (error) {
+      console.error('Error rejecting offer:', error);
+      alert(error.message || 'Teklif reddedilirken bir hata oluştu');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const fetchDashboardStats = async () => {
     setLoading(true);
     try {
@@ -3513,10 +3571,11 @@ function AdminDashboard() {
                             </TableCell>
                             <TableCell>
                               {offer.status === 'pending' && (
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <div style={{ display: 'flex', gap: '8px' }}>
                                   <ActionButton
                                     size="small"
-                                    onClick={() => handleAcceptOffer(offer.id)} // Ensure this function exists
+                                    variant="primary"
+                                    onClick={() => handleAcceptOffer(offer.id)}
                                     disabled={actionLoading}
                                   >
                                     Kabul Et
@@ -3524,7 +3583,7 @@ function AdminDashboard() {
                                   <ActionButton
                                     size="small"
                                     variant="danger"
-                                    onClick={() => handleRejectOffer(offer.id)} // Ensure this function exists
+                                    onClick={() => handleRejectOffer(offer.id)}
                                     disabled={actionLoading}
                                   >
                                     Reddet
