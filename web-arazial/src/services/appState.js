@@ -130,8 +130,6 @@ class AppStateManager {
         return;
       }
       
-      console.log('[AppState] Fetching user profile for:', userId);
-      
       // First check if we have a cached profile and it's not too old
       const cachedProfile = localStorage.getItem('user_profile');
       const cachedTime = localStorage.getItem('user_profile_time');
@@ -139,47 +137,58 @@ class AppStateManager {
       
       // Use cache if it exists and is less than 30 minutes old
       if (cachedProfile && cachedTime && (now - parseInt(cachedTime)) < 30 * 60 * 1000) {
-        const profile = JSON.parse(cachedProfile);
-        if (profile.id === userId) {
-          console.log('[AppState] Using cached profile');
-          this.auth.profile = profile;
-          this.auth.isAdmin = profile.role === 'admin';
-          return;
+        try {
+          const profile = JSON.parse(cachedProfile);
+          if (profile.id === userId) {
+            console.log('[AppState] Using cached profile');
+            this.auth.profile = profile;
+            this.auth.isAdmin = profile.role === 'admin';
+            
+            // Only fetch new profile in background if cache is older than 5 minutes
+            if ((now - parseInt(cachedTime)) > 5 * 60 * 1000) {
+              this._backgroundFetchProfile(userId, now).catch(console.error);
+            }
+            return;
+          }
+        } catch (e) {
+          console.error('[AppState] Error parsing cached profile:', e);
         }
       }
       
-      // Fetch profile with timeout protection
-      const fetchPromise = supabase
+      await this._backgroundFetchProfile(userId, now);
+    } catch (error) {
+      console.error('[AppState] Exception fetching profile:', error);
+      // Keep existing profile if we have one, otherwise set default
+      if (!this.auth.profile) {
+        this.auth.profile = { role: 'user' };
+        this.auth.isAdmin = false;
+      }
+    }
+  }
+  
+  // Internal method for fetching profile from server
+  async _backgroundFetchProfile(userId, now) {
+    try {
+      const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
-        
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Profile fetch timed out')), 5000);
-      });
-      
-      // Race between fetch and timeout
-      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
       
       if (error) {
-        console.error('[AppState] Error fetching profile:', error);
-        // Keep existing profile if we have one, otherwise set default
-        if (!this.auth.profile) {
-          this.auth.profile = { role: 'user' };
-          this.auth.isAdmin = false;
-        }
-      } else {
-        this.auth.profile = data;
-        this.auth.isAdmin = data?.role === 'admin';
-        // Cache the profile
-        localStorage.setItem('user_profile', JSON.stringify(data));
-        localStorage.setItem('user_profile_time', now.toString());
-        console.log('[AppState] User profile loaded and cached, isAdmin:', this.auth.isAdmin);
+        throw error;
       }
+
+      this.auth.profile = data;
+      this.auth.isAdmin = data?.role === 'admin';
+      
+      // Cache the profile
+      localStorage.setItem('user_profile', JSON.stringify(data));
+      localStorage.setItem('user_profile_time', now.toString());
+      console.log('[AppState] User profile loaded and cached, isAdmin:', this.auth.isAdmin);
     } catch (error) {
-      console.error('[AppState] Exception fetching profile:', error);
-      // Keep existing profile if we have one, otherwise set default
+      console.error('[AppState] Error fetching profile:', error);
+      // Don't reset existing profile on background fetch error
       if (!this.auth.profile) {
         this.auth.profile = { role: 'user' };
         this.auth.isAdmin = false;

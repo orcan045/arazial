@@ -152,16 +152,7 @@ const ProtectedRoute = ({ children }) => {
 
 // Admin Route Wrapper
 const AdminRoute = ({ children }) => {
-  const { user, isAdmin, loading, reloadUserProfile } = useAuth();
-  
-  useEffect(() => {
-    // Silently check admin status in the background without blocking UI
-    if (user && document.visibilityState === 'visible') {
-      reloadUserProfile().catch(error => {
-        console.error("Background admin status check failed:", error);
-      });
-    }
-  }, [user, reloadUserProfile]);
+  const { user, isAdmin, loading } = useAuth();
 
   // If no user, redirect to login
   if (!user && !loading) {
