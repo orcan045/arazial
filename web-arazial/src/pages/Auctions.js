@@ -930,6 +930,34 @@ const PaginationEllipsis = styled.span`
   font-weight: 600;
 `;
 
+const MultiSelectWrapper = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+const MultiSelectBox = styled.div`
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background-color: var(--color-background);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 50px;
+  box-sizing: border-box;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.15);
+  }
+`;
+
 const MobileFilterButton = styled.div`
   display: none;
   width: 100%;
@@ -1211,34 +1239,6 @@ const DesktopFilterContainer = styled.div`
 
   @media (min-width: 1024px) {
     display: block;
-  }
-`;
-
-const MultiSelectWrapper = styled.div`
-  position: relative;
-  width: 100%;
-`;
-
-const MultiSelectBox = styled.div`
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  font-size: 0.95rem;
-  background-color: var(--color-background);
-  color: var(--color-text);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 50px;
-  box-sizing: border-box;
-  
-  &:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.15);
   }
 `;
 
