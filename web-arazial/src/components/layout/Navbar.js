@@ -134,6 +134,9 @@ const NavLink = styled(Link)`
   font-size: 1rem;
   transition: all 0.2s ease;
   border-radius: var(--border-radius-md);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   
   &:hover {
     color: var(--color-primary);
@@ -144,6 +147,11 @@ const NavLink = styled(Link)`
     color: var(--color-primary);
     font-weight: 600;
     background-color: rgba(15, 52, 96, 0.06);
+  }
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
   }
 `;
 
@@ -191,7 +199,8 @@ const MobileMenuButton = styled.button`
   }
   
   @media (max-width: 767px) {
-    order: -1;
+    order: 1;
+    margin-left: auto;
   }
   
   svg {
@@ -203,21 +212,16 @@ const MobileMenuButton = styled.button`
 const MobileMenu = styled.div`
   position: fixed;
   top: 0;
-  left: 0;
+  right: ${props => props.$isOpen ? '0' : '-100%'};
   width: 100%;
+  max-width: 320px;
   height: 100vh;
-  background-color: var(--color-surface);
-  display: flex;
-  flex-direction: column;
-  padding-top: 5rem;
-  transform: ${props => props.$isOpen ? 'translateX(0)' : 'translateX(-100%)'};
-  transition: transform 0.3s ease;
-  z-index: 900;
-  box-shadow: var(--shadow-lg);
-  
-  @media (min-width: 768px) {
-    display: none;
-  }
+  background-color: white;
+  z-index: 1001;
+  transition: right 0.3s ease;
+  box-shadow: ${props => props.$isOpen ? '-4px 0 25px rgba(0, 0, 0, 0.1)' : 'none'};
+  overflow-y: auto;
+  padding-top: 1rem;
 `;
 
 const MobileNavLink = styled(Link)`
@@ -569,12 +573,6 @@ const Navbar = () => {
   return (
     <NavbarContainer $isFixed={true} $isScrolled={isScrolled}>
       <NavbarContent $isScrolled={isScrolled}>
-        <MobileMenuButton onClick={() => setIsOpen(true)}>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-          </svg>
-        </MobileMenuButton>
-        
         <Logo to="/">
           <LogoIcon>
             <img src={logoImage} alt="Arazialcom Logo" />
@@ -595,6 +593,36 @@ const Navbar = () => {
           <NavLink to="/sss" className={location.pathname === '/sss' ? 'active' : ''}>
             SSS
           </NavLink>
+          {user && (
+            <>
+              <NavLink to="/profile">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Profilim
+              </NavLink>
+              <NavLink to="/dashboard">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Panelim
+              </NavLink>
+              {isAdmin && (
+                <NavLink to="/admin/dashboard">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                  </svg>
+                  Admin Paneli
+                </NavLink>
+              )}
+              <NavLink as="button" onClick={handleSignOut} style={{ border: 'none', background: 'none', cursor: 'pointer' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Çıkış Yap
+              </NavLink>
+            </>
+          )}
         </NavMenu>
         
         <NavButtonsContainer>
@@ -661,61 +689,12 @@ const Navbar = () => {
                 Kayıt Ol
               </Button>
             </>
-          ) : (
-            <UserMenuContainer className="user-menu-container">
-              <UserMenuButton 
-                onClick={toggleUserMenu}
-                $isOpen={isUserMenuOpen}
-              >
-                <img 
-                  src={user.user_metadata?.avatar_url || "https://ui-avatars.com/api/?name=" + user.email?.charAt(0) + "&background=0F3460&color=fff"} 
-                  alt="User avatar" 
-                />
-                <span className="user-name">{user.user_metadata?.full_name || user.email?.split('@')[0]}</span>
-                <span className="dropdown-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z"/>
-                  </svg>
-                </span>
-              </UserMenuButton>
-              
-              <UserMenu $isOpen={isUserMenuOpen}>
-                <UserMenuItem to="/profile">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  Profilim
-                </UserMenuItem>
-                <UserMenuItem to="/dashboard">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                  Panelim
-                </UserMenuItem>
-                
-                {isAdmin && (
-                  <>
-                    <UserMenuDivider />
-                    <UserMenuItem to="/admin/dashboard">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                      </svg>
-                      Admin Paneli
-                      <PremiumBadge>Admin</PremiumBadge>
-                    </UserMenuItem>
-                  </>
-                )}
-                
-                <UserMenuDivider />
-                <UserMenuSignOutButton onClick={handleSignOut}>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  Çıkış Yap
-                </UserMenuSignOutButton>
-              </UserMenu>
-            </UserMenuContainer>
-          )}
+          ) : null}
+          <MobileMenuButton onClick={() => setIsOpen(true)}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+          </MobileMenuButton>
         </NavButtonsContainer>
       </NavbarContent>
       
@@ -785,7 +764,30 @@ const Navbar = () => {
           </>
         ) : (
           <>
-            <MobileNavLink as="button" onClick={handleSignOut}>
+            <MobileNavLink to="/profile">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Profilim
+            </MobileNavLink>
+            <MobileNavLink to="/dashboard">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              Panelim
+            </MobileNavLink>
+            {isAdmin && (
+              <MobileNavLink to="/admin/dashboard">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                Admin Paneli
+              </MobileNavLink>
+            )}
+            <MobileNavLink as="button" onClick={handleSignOut} style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
               Çıkış Yap
             </MobileNavLink>
           </>
