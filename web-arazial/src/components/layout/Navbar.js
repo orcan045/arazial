@@ -46,14 +46,9 @@ const NavbarContent = styled.div`
   @media (max-width: 767px) {
     padding: ${props => props.$isScrolled ? '0.75rem 1.5rem' : '1rem 1.5rem'};
     height: ${props => props.$isScrolled ? '60px' : '70px'};
-    display: grid;
-    grid-template-columns: 48px 1fr auto;
-    gap: 0.5rem;
-    
-    > *:nth-child(2) {
-      justify-self: center;
-      text-align: center;
-    }
+    display: flex;
+    justify-content: flex-start;
+    gap: 1rem;
   }
   
   @media (max-width: 480px) {
@@ -82,9 +77,7 @@ const Logo = styled(Link)`
   
   @media (max-width: 767px) {
     font-size: 1.25rem;
-    justify-content: center;
     margin: 0;
-    padding-left: 0;
   }
   
   @media (max-width: 359px) {
@@ -159,18 +152,15 @@ const NavButtonsContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  
-  @media (max-width: 767px) {
-    order: 2;
-  }
+  margin-left: auto;
   
   @media (max-width: 480px) {
     gap: 0.25rem;
   }
   
-  /* Hide buttons on very small screens, show only hamburger menu */
+  /* Adjust buttons on very small screens */
   @media (max-width: 359px) {
-    > a {
+    .auth-buttons {
       display: none;
     }
   }
@@ -659,7 +649,7 @@ const Navbar = () => {
               )}
             </div>
           ) : !user ? (
-            <>
+            <div className="auth-buttons">
               <Button 
                 as={Link} 
                 to="/login" 
@@ -688,7 +678,7 @@ const Navbar = () => {
               >
                 Kayıt Ol
               </Button>
-            </>
+            </div>
           ) : null}
           <MobileMenuButton onClick={() => setIsOpen(true)}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
