@@ -47,12 +47,12 @@ const NavbarContent = styled.div`
     padding: ${props => props.$isScrolled ? '0.75rem 1.5rem' : '1rem 1.5rem'};
     height: ${props => props.$isScrolled ? '60px' : '70px'};
     display: grid;
-    grid-template-columns: auto 1fr auto;
-    gap: 1rem;
+    grid-template-columns: 48px 1fr auto;
+    gap: 0.5rem;
     
     > *:nth-child(2) {
       justify-self: center;
-      margin-left: -2rem; /* Offset the space taken by menu button */
+      text-align: center;
     }
   }
   
@@ -82,8 +82,9 @@ const Logo = styled(Link)`
   
   @media (max-width: 767px) {
     font-size: 1.25rem;
-    margin: 0 auto;
     justify-content: center;
+    margin: 0;
+    padding-left: 0;
   }
   
   @media (max-width: 359px) {
@@ -176,6 +177,10 @@ const MobileMenuButton = styled.button`
   color: var(--color-text);
   border-radius: 50%;
   transition: background-color 0.2s ease;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
   
   &:hover {
     background-color: rgba(15, 52, 96, 0.06);
