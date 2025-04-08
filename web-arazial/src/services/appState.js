@@ -17,11 +17,14 @@ class AppStateManager {
     this.listeners = new Map();
     this.pendingRefresh = false;
     this.initialSetupComplete = false;
-    this.retryAttempts = 0;
-    this.maxRetryAttempts = 3;
+    
+    // Request configuration
+    this.REQUEST_TIMEOUT = 10000; // 10 seconds
+    this.MAX_RETRIES = 3;
+    this.RETRY_DELAY = 1000; // 1 second
     
     // Maps for different event types
-    this.eventTypes = ['visibility', 'auth', 'network', 'refresh'];
+    this.eventTypes = ['visibility', 'auth', 'network', 'refresh', 'error'];
     this.eventTypes.forEach(type => {
       this.listeners.set(type, new Set());
     });
@@ -31,7 +34,8 @@ class AppStateManager {
       user: null,
       session: null,
       profile: null,
-      isAdmin: false
+      isAdmin: false,
+      error: null
     };
     
     // Initialize handlers
@@ -102,7 +106,55 @@ class AppStateManager {
     this.authSubscription = subscription;
   }
   
-  // Fetch user profile data with retry logic
+  // Utility function to handle timeouts
+  async withTimeout(promise, timeoutMs = this.REQUEST_TIMEOUT) {
+    let timeoutId;
+    
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error('Request timed out'));
+      }, timeoutMs);
+    });
+
+    try {
+      const result = await Promise.race([promise, timeoutPromise]);
+      clearTimeout(timeoutId);
+      return result;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
+  }
+
+  // Utility function to handle retries
+  async withRetry(operation, retries = this.MAX_RETRIES) {
+    let lastError;
+    
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        return await this.withTimeout(operation());
+      } catch (error) {
+        lastError = error;
+        console.warn(`[AppState] Operation failed (attempt ${attempt + 1}/${retries + 1}):`, error);
+        
+        if (error.message === 'Invalid login credentials') {
+          // Don't retry auth errors
+          throw error;
+        }
+        
+        if (attempt < retries) {
+          // Wait before retrying, with exponential backoff
+          await new Promise(resolve => 
+            setTimeout(resolve, this.RETRY_DELAY * Math.pow(2, attempt))
+          );
+        }
+      }
+    }
+    
+    throw lastError;
+  }
+  
+  // Fetch user profile data with improved error handling
   async fetchUserProfile(userId) {
     if (!userId) {
       this.auth.profile = null;
@@ -111,46 +163,59 @@ class AppStateManager {
     }
     
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      const { data, error } = await this.withRetry(() => 
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single()
+      );
       
       if (error) throw error;
       
       this.auth.profile = data;
       this.auth.isAdmin = data?.role === 'admin';
+      this.auth.error = null;
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('[AppState] Error fetching profile:', error);
       this.auth.profile = null;
       this.auth.isAdmin = false;
+      this.auth.error = error;
+      this.notifyListeners('error');
     }
   }
   
-  // Manually refresh authentication state
+  // Manually refresh authentication state with improved error handling
   async refreshAuth() {
     try {
-      const { data, error } = await supabase.auth.getSession();
+      const { data, error } = await this.withRetry(() => 
+        supabase.auth.getSession()
+      );
       
-      if (error || !data.session) {
+      if (error) throw error;
+      
+      if (!data.session) {
         this.auth.user = null;
         this.auth.session = null;
         this.auth.profile = null;
         this.auth.isAdmin = false;
+        this.auth.error = null;
         return;
       }
       
       this.auth.user = data.session.user;
       this.auth.session = data.session;
       await this.fetchUserProfile(data.session.user.id);
+      this.auth.error = null;
       
     } catch (error) {
-      console.error('Error refreshing auth:', error);
+      console.error('[AppState] Error refreshing auth:', error);
       this.auth.user = null;
       this.auth.session = null;
       this.auth.profile = null;
       this.auth.isAdmin = false;
+      this.auth.error = error;
+      this.notifyListeners('error');
     }
     
     this.notifyListeners('auth');
@@ -202,13 +267,14 @@ class AppStateManager {
   // Handle online event
   handleOnline() {
     try {
+      const wasOffline = !this.isOnline;
       this.isOnline = true;
-      console.log('[AppState] Network connection restored');
       
-      // Trigger visibility state change logic to refresh data
-      this.handleVisibilityStateChange();
+      if (wasOffline) {
+        console.log('[AppState] Network connection restored, refreshing state');
+        this.refreshAuth();
+      }
       
-      // Notify network listeners
       this.notifyListeners('network');
     } catch (error) {
       console.error('[AppState] Error in online handler:', error);
@@ -220,8 +286,6 @@ class AppStateManager {
     try {
       this.isOnline = false;
       console.log('[AppState] Network connection lost');
-      
-      // Notify network listeners
       this.notifyListeners('network');
     } catch (error) {
       console.error('[AppState] Error in offline handler:', error);
@@ -335,6 +399,11 @@ class AppStateManager {
     return this.subscribe('refresh', callback);
   }
   
+  // Subscribe to error events
+  onError(callback) {
+    return this.subscribe('error', callback);
+  }
+  
   // Notify all listeners of a specific event type
   notifyListeners(type) {
     const listeners = this.listeners.get(type);
@@ -433,6 +502,11 @@ class AppStateManager {
       // Notify listeners
       this.notifyListeners('auth');
     }
+  }
+  
+  // Get current error state
+  getError() {
+    return this.auth.error;
   }
 }
 
