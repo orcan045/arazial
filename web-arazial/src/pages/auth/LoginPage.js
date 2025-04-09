@@ -148,6 +148,42 @@ const CountryCode = styled.div`
   margin-top: 0;
 `;
 
+const EyeButton = ({ isVisible, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    style={{
+      position: 'absolute',
+      right: '12px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      color: 'var(--color-text-secondary)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '24px',
+      width: '24px',
+      padding: 0,
+      marginTop: '10px'
+    }}
+  >
+    {isVisible ? (
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+      </svg>
+    ) : (
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    )}
+  </button>
+);
+
 const LoginPage = () => {
   const [loginMethod, setLoginMethod] = useState('phone'); // 'email' or 'phone', default to phone
   const [authStep, setAuthStep] = useState('identifier'); // 'identifier', 'password', 'otp', 'new_password'
@@ -155,6 +191,8 @@ const LoginPage = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [otpInputs, setOtpInputs] = useState(['', '', '', '', '', '']);
   const [userExists, setUserExists] = useState(null); // null = unknown, true = exists, false = new user
   const [errors, setErrors] = useState({});
@@ -419,6 +457,16 @@ const LoginPage = () => {
     }
   };
 
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  // Toggle confirm password visibility
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
   // Render form based on authentication step
   const renderForm = () => {
     // Show general error message at the top of any form
@@ -513,15 +561,18 @@ const LoginPage = () => {
           </div>
           
           <AuthForm onSubmit={handlePasswordSubmit}>
-            <Input
-              id="password"
-              label="Şifre"
-              type="password"
-              value={password}
-              onChange={handlePasswordChange}
-              error={errors.password}
-              autoFocus
-            />
+            <div style={{ position: 'relative' }}>
+              <Input
+                id="password"
+                label="Şifre"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={handlePasswordChange}
+                error={errors.password}
+                autoFocus
+              />
+              <EyeButton isVisible={showPassword} onClick={togglePasswordVisibility} />
+            </div>
             
             <div style={{ textAlign: 'right' }}>
               <Link to="/forgot-password" style={{ fontSize: '0.875rem' }}>
@@ -596,23 +647,29 @@ const LoginPage = () => {
             
             <div style={{ marginBottom: '1rem' }}>
               <div style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>Hesap oluşturmak için şifre belirleyin</div>
-              <Input
-                id="password"
-                label="Şifre"
-                type="password"
-                value={password}
-                onChange={handlePasswordChange}
-                error={errors.password}
-              />
+              <div style={{ position: 'relative' }}>
+                <Input
+                  id="password"
+                  label="Şifre"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={handlePasswordChange}
+                  error={errors.password}
+                />
+                <EyeButton isVisible={showPassword} onClick={togglePasswordVisibility} />
+              </div>
               
-              <Input
-                id="confirmPassword"
-                label="Şifre (Tekrar)"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                error={errors.confirmPassword}
-              />
+              <div style={{ position: 'relative' }}>
+                <Input
+                  id="confirmPassword"
+                  label="Şifre (Tekrar)"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  error={errors.confirmPassword}
+                />
+                <EyeButton isVisible={showConfirmPassword} onClick={toggleConfirmPasswordVisibility} />
+              </div>
             </div>
             
             <Button type="submit" fullWidth loading={isLoading}>
@@ -647,24 +704,30 @@ const LoginPage = () => {
           </div>
           
           <AuthForm onSubmit={handleNewEmailUserSubmit}>
-            <Input
-              id="password"
-              label="Şifre"
-              type="password"
-              value={password}
-              onChange={handlePasswordChange}
-              error={errors.password}
-              autoFocus
-            />
+            <div style={{ position: 'relative' }}>
+              <Input
+                id="password"
+                label="Şifre"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={handlePasswordChange}
+                error={errors.password}
+                autoFocus
+              />
+              <EyeButton isVisible={showPassword} onClick={togglePasswordVisibility} />
+            </div>
             
-            <Input
-              id="confirmPassword"
-              label="Şifre (Tekrar)"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              error={errors.confirmPassword}
-            />
+            <div style={{ position: 'relative' }}>
+              <Input
+                id="confirmPassword"
+                label="Şifre (Tekrar)"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                error={errors.confirmPassword}
+              />
+              <EyeButton isVisible={showConfirmPassword} onClick={toggleConfirmPasswordVisibility} />
+            </div>
             
             <Button type="submit" fullWidth loading={isLoading}>
               {isLoading ? 'Hesap Oluşturuluyor...' : 'Hesap Oluştur'}
