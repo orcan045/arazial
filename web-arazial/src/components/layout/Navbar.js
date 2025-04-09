@@ -16,7 +16,7 @@ const NavbarContainer = styled.nav`
   right: 0;
   width: 100%;
   z-index: 1000;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
   backdrop-filter: ${props => props.$isScrolled ? 'blur(10px)' : 'none'};
   
   & + * {
@@ -47,8 +47,7 @@ const NavbarContent = styled.div`
     padding: ${props => props.$isScrolled ? '0.75rem 1.5rem' : '1rem 1.5rem'};
     height: ${props => props.$isScrolled ? '60px' : '70px'};
     display: flex;
-    justify-content: flex-start;
-    gap: 1rem;
+    justify-content: space-between;
   }
   
   @media (max-width: 480px) {
@@ -64,7 +63,8 @@ const Logo = styled(Link)`
   color: var(--color-text);
   font-weight: 700;
   font-size: 1.5rem;
-  transition: transform 0.3s ease;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
   
   &:hover {
     transform: translateY(-1px);
@@ -93,14 +93,14 @@ const LogoIcon = styled.div`
   align-items: center;
   
   img {
-    height: 3.5rem;
-    width: 3.5rem;
+    height: 3rem;
+    width: 3rem;
     border-radius: 50%;
     object-fit: cover;
     
     @media (max-width: 767px) {
-      height: 2.75rem;
-      width: 2.75rem;
+      height: 2.5rem;
+      width: 2.5rem;
     }
   }
   
@@ -115,16 +115,19 @@ const NavMenu = styled.div`
   @media (min-width: 768px) {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.5rem;
+    margin: 0 1rem;
+    flex-grow: 1;
+    justify-content: center;
   }
 `;
 
 const NavLink = styled(Link)`
-  padding: 0.5rem 1rem;
+  padding: 0.625rem 1rem;
   color: var(--color-text);
   text-decoration: none;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 0.9375rem;
   transition: all 0.2s ease;
   border-radius: var(--border-radius-md);
   display: flex;
@@ -143,16 +146,17 @@ const NavLink = styled(Link)`
   }
 
   svg {
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 1.125rem;
+    height: 1.125rem;
   }
 `;
 
 const NavButtonsContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1rem;
   margin-left: auto;
+  flex-shrink: 0;
   
   .auth-buttons {
     @media (max-width: 767px) {
@@ -174,6 +178,7 @@ const MobileMenuButton = styled.button`
   height: 40px;
   align-items: center;
   justify-content: center;
+  margin-left: 0.5rem;
   
   &:hover {
     background-color: rgba(15, 52, 96, 0.06);
@@ -183,14 +188,9 @@ const MobileMenuButton = styled.button`
     display: none;
   }
   
-  @media (max-width: 767px) {
-    order: 1;
-    margin-left: auto;
-  }
-  
   svg {
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 1.375rem;
+    height: 1.375rem;
   }
 `;
 
@@ -209,6 +209,29 @@ const MobileMenu = styled.div`
   padding-top: 1rem;
   display: flex;
   flex-direction: column;
+`;
+
+const CloseButton = styled.button`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  padding: 0.75rem;
+  cursor: pointer;
+  color: var(--color-text);
+  border-radius: 50%;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  
+  &:hover {
+    background-color: rgba(15, 52, 96, 0.06);
+    transform: rotate(90deg);
+  }
+  
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
 `;
 
 const MobileNavLink = styled(Link)`
@@ -252,26 +275,20 @@ const MobileNavLink = styled(Link)`
   }
 `;
 
-const CloseButton = styled.button`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  padding: 0.75rem;
-  cursor: pointer;
-  color: var(--color-text);
-  border-radius: 50%;
-  transition: background-color 0.2s ease, transform 0.2s ease;
+const MobileAuthButtons = styled.div`
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--color-surface-secondary);
+  width: 100%;
   
-  &:hover {
-    background-color: rgba(15, 52, 96, 0.06);
-    transform: rotate(90deg);
-  }
-  
-  svg {
-    width: 1.5rem;
-    height: 1.5rem;
+  button {
+    width: 100%;
+    justify-content: center;
+    font-size: 1rem;
+    padding: 0.875rem !important;
+    height: 48px;
   }
 `;
 
@@ -437,22 +454,6 @@ const DisabledMobileNavLink = styled.div`
   opacity: 0.6;
   cursor: not-allowed;
   width: 100%;
-`;
-
-const MobileAuthButtons = styled.div`
-  padding: 1.25rem 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  border-bottom: 1px solid var(--color-surface-secondary);
-  width: 100%;
-  
-  button {
-    width: 100%;
-    justify-content: center;
-    font-size: 1rem;
-    padding: 0.75rem !important;
-  }
 `;
 
 const Navbar = () => {
@@ -699,11 +700,11 @@ const Navbar = () => {
             <div style={{ 
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              gap: '0.75rem'
             }}>
               <div style={{ 
-                width: '30px', 
-                height: '30px', 
+                width: '28px', 
+                height: '28px', 
                 borderRadius: '50%', 
                 border: '2px solid var(--color-surface-secondary)',
                 borderTopColor: 'var(--color-primary)',
@@ -736,9 +737,10 @@ const Navbar = () => {
                 size="small"
                 minWidth="auto"
                 style={{ 
-                  padding: '0.5rem 1.25rem',
+                  padding: '0.625rem 1.5rem',
                   fontSize: '0.875rem',
-                  minHeight: '36px'
+                  minHeight: '40px',
+                  fontWeight: '500'
                 }}
               >
                 Giriş Yap
@@ -767,7 +769,6 @@ const Navbar = () => {
               to="/login" 
               variant="primary"
               onClick={() => setIsOpen(false)}
-              style={{ width: '100%' }}
             >
               Giriş Yap
             </Button>
@@ -789,17 +790,17 @@ const Navbar = () => {
         
         {loading ? (
           <div style={{ 
-            padding: '1.25rem 2rem',
+            padding: '2rem',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '1rem'
+            gap: '1.25rem'
           }}>
             <div style={{ 
-              width: '30px', 
-              height: '30px', 
+              width: '36px', 
+              height: '36px', 
               borderRadius: '50%', 
-              border: '2px solid var(--color-surface-secondary)',
+              border: '3px solid var(--color-surface-secondary)',
               borderTopColor: 'var(--color-primary)',
               animation: 'navbarSpin 1s linear infinite'
             }} />
@@ -815,7 +816,8 @@ const Navbar = () => {
                   cursor: 'pointer',
                   width: '100%',
                   maxWidth: '200px',
-                  color: 'var(--color-text)'
+                  color: 'var(--color-text)',
+                  fontWeight: '500'
                 }}
               >
                 Oturumu Sıfırla
@@ -825,27 +827,27 @@ const Navbar = () => {
         ) : user ? (
           <>
             <MobileNavLink to="/profile">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.75rem' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
               Profilim
             </MobileNavLink>
             <MobileNavLink to="/dashboard">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.75rem' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
               Panelim
             </MobileNavLink>
             {isAdmin && (
               <MobileNavLink to="/admin/dashboard">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.75rem' }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                 </svg>
                 Admin Paneli
               </MobileNavLink>
             )}
             <MobileNavLink as="button" onClick={handleSignOut} style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.75rem' }}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
               Çıkış Yap
