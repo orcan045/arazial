@@ -165,7 +165,11 @@ export function AuthProvider({ children }) {
   }, []);
   
   // Fetch user profile data
-  const fetchUserProfile = async (userId) => {
+  const fetchUserProfile = async (userId, backgroundOnly = false) => {
+    if (!backgroundOnly) {
+      setLoading(true);
+    }
+    
     try {
       // Skip if no user ID
       if (!userId) {
@@ -206,6 +210,10 @@ export function AuthProvider({ children }) {
       if (!profile) {
         setProfile({ role: 'user' });
         setIsAdmin(false);
+      }
+    } finally {
+      if (!backgroundOnly) {
+        setLoading(false);
       }
     }
   };
@@ -321,26 +329,51 @@ export function AuthProvider({ children }) {
         // Update user state right away to trigger dependent components
         setUser(data.session.user);
         
-        // Fetch profile immediately but don't wait for it
-        fetchUserProfile(data.session.user.id)
+        // IMPORTANT: Fetch admin status synchronously before proceeding
+        try {
+          console.log('[AuthContext] Fetching admin status immediately during login');
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', data.session.user.id)
+            .single();
+            
+          if (profileError) {
+            console.warn('[AuthContext] Error fetching admin status:', profileError);
+          } else if (profileData) {
+            const isUserAdmin = profileData.role === 'admin';
+            console.log('[AuthContext] User admin status determined:', isUserAdmin);
+            setIsAdmin(isUserAdmin);
+            
+            // Cache basic profile info
+            localStorage.setItem('user_profile', JSON.stringify(profileData));
+            localStorage.setItem('user_profile_time', Date.now().toString());
+            
+            // Set full profile in background
+            setProfile(profileData);
+          }
+        } catch (profileFetchError) {
+          console.error('[AuthContext] Critical error fetching admin status:', profileFetchError);
+        }
+        
+        // Set authenticated regardless of profile fetch success
+        setAuthState(AUTH_STATE.AUTHENTICATED);
+        
+        // Complete loading now that we have admin status
+        setLoading(false);
+        localStorage.setItem('auth_signin_complete', Date.now().toString());
+        
+        // Fetch complete profile in background
+        fetchUserProfile(data.session.user.id, true)
           .then(() => {
-            // Set authenticated state after profile is loaded
-            setAuthState(AUTH_STATE.AUTHENTICATED);
             localStorage.setItem('auth_profile_loaded', Date.now().toString());
           })
           .catch(err => {
-            console.error('[AuthContext] Error fetching initial profile:', err);
+            console.error('[AuthContext] Error fetching complete profile:', err);
             localStorage.setItem('auth_profile_error', JSON.stringify({
               time: Date.now(),
               message: err.message
             }));
-            // Still authenticate even if profile fetch fails
-            setAuthState(AUTH_STATE.AUTHENTICATED);
-          })
-          .finally(() => {
-            // Set loading to false after we've at least tried to load profile
-            setLoading(false);
-            localStorage.setItem('auth_signin_complete', Date.now().toString());
           });
         
         // Start background auth refresh but don't block on it

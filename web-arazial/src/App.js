@@ -168,32 +168,25 @@ const ProtectedRoute = ({ children }) => {
 
 // Admin Route Wrapper
 const AdminRoute = ({ children }) => {
-  const { user, isAdmin, loading, isAuthenticated, authState } = useAuth();
+  const { user, isAdmin, loading, isAuthenticated } = useAuth();
 
   // Debug admin authentication
   useEffect(() => {
     console.log('[AdminRoute] Auth state:', { 
       user: user?.email, 
-      authState, 
       isAuthenticated, 
       isAdmin, 
       loading 
     });
-  }, [user, authState, isAuthenticated, isAdmin, loading]);
+  }, [user, isAuthenticated, isAdmin, loading]);
 
-  // If not authenticated, redirect to login
+  // If not authenticated and not loading, redirect to login
   if (!isAuthenticated && !loading) {
     console.log('[AdminRoute] User not authenticated, redirecting to login');
     return <Navigate to="/login" />;
   }
   
-  // If we know they're definitely not admin, redirect
-  if (isAuthenticated && !isAdmin && !loading) {
-    console.log('[AdminRoute] User is not admin, redirecting to dashboard');
-    return <Navigate to="/dashboard" />;
-  }
-  
-  // Show spinner while checking credentials
+  // Show spinner while loading authentication
   if (loading) {
     return (
       <LoadingSpinner 
@@ -201,6 +194,12 @@ const AdminRoute = ({ children }) => {
         loadingTime={0}
       />
     );
+  }
+
+  // If authenticated but not admin, redirect
+  if (isAuthenticated && !isAdmin) {
+    console.log('[AdminRoute] User is not admin, redirecting to dashboard');
+    return <Navigate to="/dashboard" />;
   }
   
   // Otherwise render the admin UI
