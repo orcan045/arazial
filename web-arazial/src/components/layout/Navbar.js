@@ -732,20 +732,6 @@ const Navbar = () => {
               <Button 
                 as={Link} 
                 to="/login" 
-                variant="secondary" 
-                size="small"
-                minWidth="auto"
-                style={{ 
-                  padding: '0.5rem 1.25rem',
-                  fontSize: '0.875rem',
-                  minHeight: '36px'
-                }}
-              >
-                Giriş Yap
-              </Button>
-              <Button 
-                as={Link} 
-                to="/signup" 
                 variant="primary" 
                 size="small"
                 minWidth="auto"
@@ -755,7 +741,7 @@ const Navbar = () => {
                   minHeight: '36px'
                 }}
               >
-                Kayıt Ol
+                Giriş Yap
               </Button>
             </div>
           ) : null}
@@ -779,18 +765,11 @@ const Navbar = () => {
             <Button 
               as={Link} 
               to="/login" 
-              variant="secondary"
-              onClick={() => setIsOpen(false)}
-            >
-              Giriş Yap
-            </Button>
-            <Button 
-              as={Link} 
-              to="/signup" 
               variant="primary"
               onClick={() => setIsOpen(false)}
+              style={{ width: '100%' }}
             >
-              Kayıt Ol
+              Giriş Yap
             </Button>
           </MobileAuthButtons>
         )}
