@@ -417,11 +417,7 @@ const App = () => {
           
           <Route 
             path="/signup" 
-            element={
-              <AuthLayout>
-                <SignupPage />
-              </AuthLayout>
-            } 
+            element={<Navigate to="/login" />} 
           />
           
           <Route 
