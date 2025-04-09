@@ -8,6 +8,7 @@ import 'package:land_auction_app/screens/home_screen.dart';
 import 'package:land_auction_app/theme/app_theme.dart';
 import 'package:land_auction_app/services/lifecycle_service.dart';
 import 'package:land_auction_app/models/app_lifecycle_event.dart';
+import 'package:land_auction_app/widgets/app_logo.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -69,32 +70,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildLogo() {
-    return Column(
-      children: [
-        Icon(
-          Icons.public,
-          size: 52,
-          color: AppTheme.primaryColor,
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'arazial',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
-            color: AppTheme.primaryColor,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Arazi İhale Uygulaması',
-          style: TextStyle(
-            fontSize: 16,
-            color: AppTheme.textSecondaryColor,
-          ),
-        ),
-      ],
+    return const AppLogo(
+      size: 100,
+      showText: true,
     );
   }
 

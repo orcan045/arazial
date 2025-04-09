@@ -2,8 +2,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import GlobalStyles from './styles/GlobalStyles';
 import { useState, useEffect } from 'react';
-import appState, { forceAuthRefresh } from './services/appState';
 import { supabase } from './services/supabase';
+// Import auth utils for backward compatibility
+import { forceAuthRefresh, resetAllAuthStorage } from './services/authUtils';
 
 // Layout Components
 import Layout from './components/layout/Layout';
@@ -24,6 +25,9 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
 import PaymentCallback from './pages/PaymentCallback';
 import FAQ from './pages/FAQ';
+
+// Re-export for backward compatibility
+export { forceAuthRefresh, resetAllAuthStorage };
 
 // Loading spinner component
 const LoadingSpinner = ({ message, loadingTime, retryAction }) => (
@@ -207,23 +211,13 @@ const App = () => {
           
           if (data?.session) {
             console.log("[App] Successfully retrieved session from URL");
-            // Force auth refresh to ensure state is updated
-            forceAuthRefresh()
-              .then(() => {
-                console.log("[App] Auth state refreshed after redirect");
-                // Remove the hash from the URL to avoid issues on refresh
-                window.history.replaceState(null, document.title, window.location.pathname);
-              })
-              .catch(error => {
-                console.error("[App] Error refreshing auth after redirect:", error);
-              })
-              .finally(() => {
-                setHandlingRedirect(false);
-              });
+            // Auth state will be updated by AuthContext's onAuthStateChange listener
+            // Remove the hash from the URL to avoid issues on refresh
+            window.history.replaceState(null, document.title, window.location.pathname);
           } else {
             console.log("[App] No session found in URL");
-            setHandlingRedirect(false);
           }
+          setHandlingRedirect(false);
         })
         .catch(error => {
           clearTimeout(failSafeTimer); // Clear the failsafe timer on error
@@ -240,15 +234,9 @@ const App = () => {
       clearTimeout(failSafeTimer); // Cleanup on unmount
     };
   }, []);
-
-  // Initialize and clean up appState
+  
+  // Initialize auction service
   useEffect(() => {
-    // Ensure appState is initialized first
-    console.log('[App] Initializing appState');
-    
-    // Trigger manual refresh on app load
-    appState.forceRefresh();
-    
     // Dynamic import to prevent circular dependencies
     import('./services/auctionService')
       .then(({ setupBackgroundRefresh }) => {
@@ -260,12 +248,6 @@ const App = () => {
       .catch(error => {
         console.error('[App] Failed to initialize auction service:', error);
       });
-    
-    // Clean up on unmount
-    return () => {
-      console.log('[App] Cleaning up appState');
-      appState.cleanup();
-    };
   }, []);
   
   // Show a loading spinner if we're handling an email confirmation redirect
@@ -449,14 +431,24 @@ const App = () => {
             } 
           />
           
-          <Route path="/payment/:status/:auctionId" element={<PaymentCallback />} />
+          <Route 
+            path="/payment-callback" 
+            element={
+              <ProtectedRoute>
+                <PaymentCallback />
+              </ProtectedRoute>
+            } 
+          />
           
-          {/* Catch-all route redirects to home */}
-          <Route path="*" element={<Navigate to="/" />} />
+          {/* Catch all redirect */}
+          <Route 
+            path="*" 
+            element={<Navigate to="/" />} 
+          />
         </Routes>
       </AuthProvider>
     </Router>
   );
-};
+}
 
 export default App;

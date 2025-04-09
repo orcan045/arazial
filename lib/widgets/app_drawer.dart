@@ -4,6 +4,7 @@ import 'package:land_auction_app/services/auth_service.dart';
 import 'package:land_auction_app/screens/my_bids_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:land_auction_app/theme/app_theme.dart';
+import 'package:land_auction_app/widgets/app_logo.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -46,16 +47,7 @@ class AppDrawer extends StatelessWidget {
                         title: 'Profil',
                         onTap: () {
                           Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Profil ekranı henüz uygulanmamış'),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: AppTheme.primaryColor,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          );
+                          Navigator.of(context).pushNamed('/profile');
                         },
                       ),
                       _buildMenuItem(
@@ -107,14 +99,14 @@ class AppDrawer extends StatelessWidget {
                         Navigator.of(context).pop();
                         showAboutDialog(
                           context: context,
-                          applicationName: 'Arazi İhale Uygulaması',
+                          applicationName: 'Arazialcom',
                           applicationVersion: '1.0.0',
                           applicationIcon: Icon(
                             Icons.public,
                             color: AppTheme.primaryColor,
                             size: 32,
                           ),
-                          applicationLegalese: '© 2023 Arazi İhale Uygulaması',
+                          applicationLegalese: '© 2023 Arazialcom',
                         );
                       },
                     ),
@@ -132,7 +124,7 @@ class AppDrawer extends StatelessWidget {
               child: Opacity(
                 opacity: 0.7,
                 child: Text(
-                  'arazial v1.0.0',
+                  'Arazialcom v1.0.0',
                   style: TextStyle(
                     color: AppTheme.textSecondaryColor,
                     fontSize: 12,
@@ -186,21 +178,7 @@ class AppDrawer extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.public,
-                color: AppTheme.primaryColor,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'arazial',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.primaryColor,
-                  letterSpacing: 0.5,
-                ),
-              ),
+              const AppLogoHorizontal(size: 42),
             ],
           ),
           const SizedBox(height: 20),

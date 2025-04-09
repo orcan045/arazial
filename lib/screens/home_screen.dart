@@ -3,12 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart' as provider;
 import 'package:land_auction_app/models/auction.dart';
 import 'package:land_auction_app/providers/auction_provider.dart';
+import 'package:land_auction_app/providers/filter_provider.dart';
 import 'package:land_auction_app/screens/auction_detail_screen.dart';
 import 'package:land_auction_app/widgets/auction_card.dart';
 import 'package:land_auction_app/widgets/app_drawer.dart';
 import 'package:land_auction_app/theme/app_theme.dart';
 import 'dart:ui';
 import 'package:intl/intl.dart';
+import 'package:land_auction_app/widgets/app_logo.dart';
+import 'package:land_auction_app/widgets/city_dropdown.dart';
 import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
@@ -70,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     });
     
     _loadingTimer = Timer(const Duration(seconds: 5), () {
-      if (mounted) {
+      if (mounted && _showTopLoadingIndicator) {
         setState(() {
           _showTopLoadingIndicator = false;
         });
@@ -100,61 +103,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildLogo() {
-    final theme = Theme.of(context);
-    
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Logo - more luxury real estate icon
-        Icon(
-          Icons.real_estate_agent_rounded,
-          color: theme.colorScheme.primary,
-          size: 28,
-        ),
-        const SizedBox(width: 10),
-        RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: 'ARAZI',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 20,
-                  color: theme.colorScheme.primary,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              TextSpan(
-                text: 'AL',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 20,
-                  color: theme.colorScheme.tertiary,
-                  letterSpacing: 0.8,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+    return const AppLogoHorizontal(
+      size: 36,
+      showText: true,
     );
-  }
-  
-  String _formatLastUpdated(DateTime? lastUpdated) {
-    if (lastUpdated == null) {
-      return '';
-    }
-    
-    final now = DateTime.now();
-    final difference = now.difference(lastUpdated);
-    
-    if (difference.inSeconds < 60) {
-      return 'Şimdi güncellendi';
-    } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes} dk önce güncellendi';
-    } else {
-      return DateFormat('HH:mm').format(lastUpdated) + ' güncellendi';
-    }
   }
 
   @override
@@ -169,6 +121,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         shadowColor: Colors.black.withOpacity(0.05),
         backgroundColor: theme.colorScheme.surface,
         title: _buildLogo(),
+        toolbarHeight: 70,
         leading: Builder(
           builder: (context) => IconButton(
             icon: Icon(
@@ -181,28 +134,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             },
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.search_rounded,
-              color: theme.colorScheme.primary,
-              size: 26,
-            ),
-            splashRadius: 24,
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Arama özelliği yakında eklenecek'),
-                  behavior: SnackBarBehavior.floating,
-                  backgroundColor: theme.colorScheme.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
+        actions: [],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(54),
           child: Container(
@@ -465,32 +397,89 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               children: [
                 Column(
                   children: [
-                    // Last updated indicator with improved styling
-                    if (auctionProvider.lastFetchTime != null)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.only(top: 12, bottom: 8),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface,
-                          border: Border(
-                            bottom: BorderSide(
-                              color: theme.colorScheme.onBackground.withOpacity(0.05),
-                              width: 1,
+                    // Add city filter bar here
+                    provider.Consumer<FilterProvider>(
+                      builder: (context, filterProvider, _) {
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface,
+                            border: Border(
+                              bottom: BorderSide(
+                                color: theme.colorScheme.onBackground.withOpacity(0.05),
+                                width: 1,
+                              ),
                             ),
                           ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            _formatLastUpdated(auctionProvider.lastFetchTime),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: theme.colorScheme.onBackground.withOpacity(0.4),
-                              letterSpacing: 0.2,
-                            ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.location_city_outlined,
+                                size: 18,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    _showCityFilterDialog(context, filterProvider);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.surface,
+                                      border: Border.all(
+                                        color: theme.colorScheme.onBackground.withOpacity(0.15),
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            filterProvider.selectedCity ?? 'Şehir Seçin',
+                                            style: TextStyle(
+                                              color: filterProvider.selectedCity != null
+                                                  ? theme.colorScheme.primary
+                                                  : theme.colorScheme.onBackground.withOpacity(0.7),
+                                              fontWeight: filterProvider.selectedCity != null
+                                                  ? FontWeight.w600
+                                                  : FontWeight.normal,
+                                            ),
+                                          ),
+                                        ),
+                                        Icon(
+                                          Icons.arrow_drop_down,
+                                          color: theme.colorScheme.onBackground.withOpacity(0.7),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              if (filterProvider.selectedCity != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 8),
+                                  child: IconButton(
+                                    icon: Icon(
+                                      Icons.close,
+                                      size: 20,
+                                      color: theme.colorScheme.onBackground.withOpacity(0.7),
+                                    ),
+                                    onPressed: filterProvider.clearCity,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(
+                                      minWidth: 32,
+                                      minHeight: 32,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                        ),
-                      ),
+                        );
+                      },
+                    ),
                     Expanded(
                       child: TabBarView(
                         controller: _tabController,
@@ -582,7 +571,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget _buildAuctionsList(List<Auction> auctions, String type) {
     final theme = Theme.of(context);
     
-    if (auctions.isEmpty) {
+    // Apply city filter
+    final filterProvider = provider.Provider.of<FilterProvider>(context);
+    final filteredAuctions = filterProvider.filterAuctions(auctions);
+    
+    if (filteredAuctions.isEmpty) {
       // More business-like empty state with appropriate messaging
       return Center(
         child: Container(
@@ -622,11 +615,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
               const SizedBox(height: 16),
               Text(
-                type == 'active' 
-                  ? 'Aktif İlan Bulunamadı'
-                  : type == 'auction'
-                    ? 'Açık Arttırma Bulunamadı'
-                    : 'Pazarlık İlanı Bulunamadı',
+                filterProvider.selectedCity != null
+                  ? '${filterProvider.selectedCity} için ${type == 'active' 
+                      ? 'Aktif İlan Bulunamadı'
+                      : type == 'auction'
+                        ? 'Açık Arttırma Bulunamadı'
+                        : 'Pazarlık İlanı Bulunamadı'}'
+                  : type == 'active' 
+                    ? 'Aktif İlan Bulunamadı'
+                    : type == 'auction'
+                      ? 'Açık Arttırma Bulunamadı'
+                      : 'Pazarlık İlanı Bulunamadı',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
@@ -635,11 +634,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
               const SizedBox(height: 12),
               Text(
-                type == 'active' 
-                  ? 'Şu anda aktif bir ilan bulunmamaktadır.'
-                  : type == 'auction'
-                    ? 'Açık arttırma tipi ilan bulunamadı.'
-                    : 'Pazarlıklı ilan bulunamadı.',
+                filterProvider.selectedCity != null
+                  ? 'Seçili şehirde hiçbir ilan bulunamadı.'
+                  : type == 'active' 
+                    ? 'Şu anda aktif bir ilan bulunmamaktadır.'
+                    : type == 'auction'
+                      ? 'Açık arttırma tipi ilan bulunamadı.'
+                      : 'Pazarlıklı ilan bulunamadı.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.5),
                 ),
@@ -652,9 +653,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Yenile'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: theme.colorScheme.primary,
                   side: BorderSide(color: theme.colorScheme.primary),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ],
@@ -663,29 +665,36 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       );
     }
     
-    // Grid view for better layout on larger screens
-    final screenWidth = MediaQuery.of(context).size.width;
-    final useTwoColumns = screenWidth > 600;
-    
-    return Container(
-      color: theme.colorScheme.background,
-      child: useTwoColumns 
-        ? GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.85,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-            ),
-            itemCount: auctions.length,
-            itemBuilder: _buildAuctionItem,
-          )
-        : ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: auctions.length,
-            itemBuilder: _buildAuctionItem,
-          ),
+    return Scrollbar(
+      child: RefreshIndicator(
+        onRefresh: _onRefresh,
+        color: theme.colorScheme.primary,
+        backgroundColor: theme.colorScheme.surface,
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: filteredAuctions.length,
+          itemBuilder: (context, index) {
+            final auction = filteredAuctions[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: AuctionCard(
+                auction: auction,
+                onTap: () => _openAuctionDetail(auction.id),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+  
+  void _openAuctionDetail(String auctionId) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => AuctionDetailScreen(
+          auctionId: auctionId,
+        ),
+      ),
     );
   }
   
@@ -718,6 +727,140 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               auctionId: auctionsList[i].id,
             ),
           ),
+        );
+      },
+    );
+  }
+
+  void _showCityFilterDialog(BuildContext context, FilterProvider filterProvider) {
+    final List<String> turkishCities = [
+      'Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray', 'Amasya', 'Ankara', 'Antalya', 'Ardahan', 'Artvin',
+      'Aydın', 'Balıkesir', 'Bartın', 'Batman', 'Bayburt', 'Bilecik', 'Bingöl', 'Bitlis', 'Bolu', 'Burdur',
+      'Bursa', 'Çanakkale', 'Çankırı', 'Çorum', 'Denizli', 'Diyarbakır', 'Düzce', 'Edirne', 'Elazığ', 'Erzincan',
+      'Erzurum', 'Eskişehir', 'Gaziantep', 'Giresun', 'Gümüşhane', 'Hakkari', 'Hatay', 'Iğdır', 'Isparta', 'İstanbul',
+      'İzmir', 'Kahramanmaraş', 'Karabük', 'Karaman', 'Kars', 'Kastamonu', 'Kayseri', 'Kırıkkale', 'Kırklareli', 'Kırşehir',
+      'Kilis', 'Kocaeli', 'Konya', 'Kütahya', 'Malatya', 'Manisa', 'Mardin', 'Mersin', 'Muğla', 'Muş',
+      'Nevşehir', 'Niğde', 'Ordu', 'Osmaniye', 'Rize', 'Sakarya', 'Samsun', 'Siirt', 'Sinop', 'Sivas',
+      'Şanlıurfa', 'Şırnak', 'Tekirdağ', 'Tokat', 'Trabzon', 'Tunceli', 'Uşak', 'Van', 'Yalova', 'Yozgat', 'Zonguldak'
+    ];
+
+    // Keep track of filtered cities
+    List<String> filteredCities = List.from(turkishCities);
+    String searchQuery = '';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  const Icon(Icons.location_city_outlined),
+                  const SizedBox(width: 8),
+                  const Text('Şehir Seçin'),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.of(context).pop(),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
+                  ),
+                ],
+              ),
+              contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              content: Container(
+                width: double.maxFinite,
+                constraints: const BoxConstraints(
+                  maxHeight: 400,
+                  maxWidth: 400,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Şehir ara...',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          searchQuery = value;
+                          if (value.isEmpty) {
+                            filteredCities = List.from(turkishCities);
+                          } else {
+                            filteredCities = turkishCities
+                                .where((city) => city.toLowerCase().contains(value.toLowerCase()))
+                                .toList();
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    if (filterProvider.selectedCity != null) 
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          children: [
+                            const Text('Seçili: '),
+                            Chip(
+                              label: Text(filterProvider.selectedCity!),
+                              onDeleted: () {
+                                filterProvider.clearCity();
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    Expanded(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: filteredCities.length,
+                        itemBuilder: (context, index) {
+                          final city = filteredCities[index];
+                          final isSelected = filterProvider.selectedCity == city;
+                          
+                          return ListTile(
+                            dense: true,
+                            title: Text(city),
+                            selected: isSelected,
+                            selectedTileColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                            selectedColor: Theme.of(context).colorScheme.primary,
+                            leading: isSelected ? const Icon(Icons.check) : null,
+                            onTap: () {
+                              filterProvider.setSelectedCity(city);
+                              Navigator.of(context).pop();
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    filterProvider.clearCity();
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Tümü'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Kapat'),
+                ),
+              ],
+            );
+          },
         );
       },
     );

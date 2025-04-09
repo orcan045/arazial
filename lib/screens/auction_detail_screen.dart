@@ -157,7 +157,7 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              _getAuctionLocation(auction),
+                              auction.fullLocation,
                               style: theme.textTheme.bodyLarge,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -175,12 +175,54 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            '${auction.areaSize ?? 0} ${auction.areaUnit ?? 'm²'}',
+                            auction.formattedArea,
                             style: theme.textTheme.bodyLarge,
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
+
+                      // Add zoning information if available
+                      if (auction.zoningInfo.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.map_outlined,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                auction.zoningInfo,
+                                style: theme.textTheme.bodyLarge,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Add owner info if available
+                      if (auction.ownerInfo != null && auction.ownerInfo!.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.person_outline,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Satıcı: ${auction.ownerInfo}',
+                                style: theme.textTheme.bodyLarge,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                      ],
 
                       // Description
                       Text(
@@ -254,6 +296,91 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                       
                       const SizedBox(height: 16),
 
+                      // Property Details Section (New)
+                      Text(
+                        'Emlak Detayları',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      
+                      // Property Grid
+                      GridView.count(
+                        crossAxisCount: 2,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        childAspectRatio: 2.8,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                        children: [
+                          // Property Type
+                          _buildPropertyGridItem(
+                            'Emlak Tipi',
+                            'ARSA',
+                            theme,
+                          ),
+                          
+                          // Area
+                          _buildPropertyGridItem(
+                            'Alan (m²)',
+                            auction.formattedArea.isEmpty ? '-' : auction.formattedArea,
+                            theme,
+                          ),
+                          
+                          // Zoning
+                          _buildPropertyGridItem(
+                            'İmar Durumu',
+                            auction.zoning ?? '-',
+                            theme,
+                          ),
+                          
+                          // Ada No
+                          _buildPropertyGridItem(
+                            'Ada No',
+                            auction.adaNo ?? '-',
+                            theme,
+                          ),
+                          
+                          // Parsel No
+                          _buildPropertyGridItem(
+                            'Parsel No',
+                            auction.parselNo ?? '-',
+                            theme,
+                          ),
+                          
+                          // Listing Owner
+                          _buildPropertyGridItem(
+                            'İlan Sahibi',
+                            auction.ownerInfo ?? 'Bilinmiyor',
+                            theme,
+                          ),
+                          
+                          // Listing Date
+                          _buildPropertyGridItem(
+                            'İlan Tarihi',
+                            DateFormat('dd MMM yyyy, HH:mm').format(auction.createdAt),
+                            theme,
+                          ),
+                          
+                          // Start Time (for auctions)
+                          _buildPropertyGridItem(
+                            'Başlangıç Zamanı',
+                            DateFormat('dd MMM yyyy, HH:mm').format(auction.startTime),
+                            theme,
+                          ),
+                          
+                          // End Time (for auctions)
+                          _buildPropertyGridItem(
+                            'Bitiş Zamanı',
+                            DateFormat('dd MMM yyyy, HH:mm').format(auction.endTime),
+                            theme,
+                          ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 16),
+
                       // Countdown for auctions
                       if (!isOfferListing && auction.isActive) 
                         AuctionCountdown(auction: auction),
@@ -284,48 +411,60 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
 
           // Different button based on listing type
           return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: auction.isOfferType
-                ? ElevatedButton(
-                    onPressed: () {
-                      // Scroll to the offer form section
-                      // This assumes the SingleChildScrollView has a ScrollController
-                      Scrollable.ensureVisible(
-                        context,
-                        duration: const Duration(milliseconds: 500),
-                        curve: Curves.easeInOut,
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+            child: auction.isOfferType
+                ? Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Scroll to the offer form section
+                        // This assumes the SingleChildScrollView has a ScrollController
+                        Scrollable.ensureVisible(
+                          context,
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                    ),
-                    child: const Text(
-                      'PAZARLIĞA BAŞLA',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
+                      child: const Text(
+                        'PAZARLIĞA BAŞLA',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
                       ),
                     ),
                   )
-                : PlaceBidButton(
-                    auction: auction,
-                    onBidPlaced: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Teklifiniz başarıyla kaydedildi.'),
-                          backgroundColor: Colors.green,
+                : Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, -2),
                         ),
-                      );
-                    },
+                      ],
+                    ),
+                    child: PlaceBidButton(
+                      auction: auction,
+                      onBidPlaced: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Teklifiniz başarıyla kaydedildi.'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      },
+                    ),
                   ),
-            ),
           );
         },
       ),
@@ -444,7 +583,7 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
   }
 
   String _getAuctionLocation(Auction auction) {
-    return auction.location ?? 'Konum belirtilmemiş';
+    return auction.fullLocation;
   }
 
   String _getAuctionDescription(Auction auction) {
@@ -512,9 +651,6 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
         ),
         
         const SizedBox(height: 16),
-        
-        // Bid form for active auctions
-        if (auction.isActive) BidForm(auction: auction),
       ],
     );
   }
@@ -946,5 +1082,24 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
         SnackBar(content: Text('Bir hata oluştu: $e')),
       );
     }
+  }
+
+  Widget _buildPropertyGridItem(String label, String value, ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: theme.textTheme.bodyMedium,
+        ),
+      ],
+    );
   }
 } 

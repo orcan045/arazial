@@ -18,7 +18,7 @@ export const supabase = createClient(
       detectSessionInUrl: true
     },
     global: {
-      // Add timeout and retry settings for better reliability
+      // Add timeout settings for better reliability
       fetch: (url, options = {}) => {
         // Set a reasonable timeout for all fetch requests (10 seconds)
         options.timeout = options.timeout || 10000;
@@ -33,21 +33,5 @@ export const supabase = createClient(
     }
   }
 );
-
-// Register a global handler for network status changes to improve reconnection
-if (typeof window !== 'undefined') {
-  // Monitor online/offline status
-  window.addEventListener('online', () => {
-    console.log('Network connection restored');
-    // Trigger a session refresh when connection is restored
-    supabase.auth.getSession().catch(err => {
-      console.warn('Failed to refresh session after reconnect:', err);
-    });
-  });
-  
-  window.addEventListener('offline', () => {
-    console.warn('Network connection lost');
-  });
-}
 
 export default supabase;

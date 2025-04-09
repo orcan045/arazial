@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
-import { resetAllAuthStorage } from '../../services/appState';
+import { resetAllAuthStorage } from '../../services/authUtils';
 import logoImage from '../../assets/logo.png';
 
 const NavbarContainer = styled.nav`
@@ -461,7 +461,7 @@ const Navbar = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [showResetButton, setShowResetButton] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const { user, signOut, isAdmin, loading, reloadUserProfile } = useAuth();
+  const { user, signOut, isAdmin, loading, reloadUserProfile, refreshAuth } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -545,11 +545,12 @@ const Navbar = () => {
         console.error("Error during forced sign out:", error);
       }
       
-      // Force reset all auth storage
-      resetAllAuthStorage();
+      // Clear any local storage related to auth
+      localStorage.removeItem('user_profile');
+      localStorage.removeItem('user_profile_time');
       
-      // Force reload user profile
-      await reloadUserProfile();
+      // Force refresh auth
+      await refreshAuth();
       
       // Redirect to home page
       navigate('/');

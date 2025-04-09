@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:land_auction_app/models/app_lifecycle_event.dart';
 import 'package:land_auction_app/services/lifecycle_service.dart';
+import 'package:land_auction_app/models/profile.dart';
+import 'dart:io';
 
 class AuthService {
   final SupabaseClient _supabase;
@@ -174,36 +176,179 @@ class AuthService {
   }
 
   // Get user profile
-  Future<Map<String, dynamic>?> getUserProfile() async {
+  Future<Profile?> getUserProfile() async {
     if (currentUser == null) return null;
     
-    final response = await _supabase
-        .from('profiles')
-        .select()
-        .eq('id', currentUser!.id)
-        .single();
-    
-    return response;
+    try {
+      final response = await _supabase
+          .from('profiles')
+          .select()
+          .eq('id', currentUser!.id)
+          .single();
+      
+      if (response != null) {
+        return Profile.fromJson(response);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error fetching profile: $e');
+      return null;
+    }
   }
 
   // Update user profile
-  Future<void> updateProfile({
+  Future<Map<String, dynamic>> updateProfile({
     String? fullName,
     String? phoneNumber,
     String? avatarUrl,
+    String? address,
+    String? city,
+    String? postalCode,
   }) async {
-    if (currentUser == null) return;
+    if (currentUser == null) {
+      return {
+        'success': false,
+        'error': 'No authenticated user'
+      };
+    }
 
-    final updates = {
-      if (fullName != null) 'full_name': fullName,
-      if (phoneNumber != null) 'phone_number': phoneNumber,
-      if (avatarUrl != null) 'avatar_url': avatarUrl,
-    };
+    try {
+      // Ensure all profile columns exist in the database
+      await _supabase.rpc('ensure_profile_columns');
 
-    await _supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', currentUser!.id);
+      final updates = {
+        if (fullName != null) 'full_name': fullName,
+        if (phoneNumber != null) 'phone_number': phoneNumber,
+        if (avatarUrl != null) 'avatar_url': avatarUrl,
+        if (address != null) 'address': address,
+        if (city != null) 'city': city,
+        if (postalCode != null) 'postal_code': postalCode,
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      await _supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', currentUser!.id);
+      
+      return {
+        'success': true
+      };
+    } catch (e) {
+      debugPrint('Error updating profile: $e');
+      return {
+        'success': false,
+        'error': e.toString()
+      };
+    }
+  }
+  
+  // Upload a profile image
+  Future<Map<String, dynamic>> uploadProfileImage(File imageFile) async {
+    if (currentUser == null) {
+      return {
+        'success': false,
+        'error': 'No authenticated user'
+      };
+    }
+
+    try {
+      // Generate a unique file path
+      final fileExt = imageFile.path.split('.').last;
+      final fileName = '${currentUser!.id}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      final filePath = 'avatars/$fileName';
+      
+      // Upload the file
+      await _supabase
+          .storage
+          .from('profile-images')
+          .upload(filePath, imageFile);
+      
+      // Get the public URL
+      final imageUrl = _supabase
+          .storage
+          .from('profile-images')
+          .getPublicUrl(filePath);
+      
+      // Update the user profile with the new avatar URL
+      await updateProfile(avatarUrl: imageUrl);
+      
+      return {
+        'success': true,
+        'avatarUrl': imageUrl
+      };
+    } catch (e) {
+      debugPrint('Error uploading profile image: $e');
+      return {
+        'success': false,
+        'error': e.toString()
+      };
+    }
+  }
+
+  // Get user's bids
+  Future<List<Map<String, dynamic>>> getUserBids() async {
+    if (currentUser == null) return [];
+    
+    try {
+      final response = await _supabase
+          .from('bids')
+          .select('''
+            id,
+            amount,
+            created_at,
+            auction_id,
+            auctions:auction_id (
+              id, 
+              title, 
+              status,
+              start_price,
+              final_price,
+              start_time,
+              end_time
+            )
+          ''')
+          .eq('user_id', currentUser!.id)
+          .order('created_at', ascending: false);
+      
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      debugPrint('Error fetching user bids: $e');
+      return [];
+    }
+  }
+
+  // Get user's offers
+  Future<List<Map<String, dynamic>>> getUserOffers() async {
+    if (currentUser == null) return [];
+    
+    try {
+      final response = await _supabase
+          .from('offers')
+          .select('''
+            id,
+            amount,
+            status,
+            created_at,
+            auction_id,
+            auctions:auction_id (
+              id, 
+              title, 
+              status,
+              start_price,
+              final_price,
+              start_time,
+              end_time
+            )
+          ''')
+          .eq('user_id', currentUser!.id)
+          .order('created_at', ascending: false);
+      
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      debugPrint('Error fetching user offers: $e');
+      return [];
+    }
   }
   
   // Clean up resources

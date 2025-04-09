@@ -144,7 +144,7 @@ app.post('/api/payment/create', async (req, res) => {
          payment_page_url: response.data.payment_page_url
        });
     } else {
-       let errorMessage = 'Vallet API returned an error or unexpected response.';
+       let errorMessage = 'Vallet API yanıtında bir hata oluştu.';
        let errorDetails = response.data;
        if (typeof response.data === 'object' && response.data !== null && response.data.errorMessage) {
            errorMessage = response.data.errorMessage;
@@ -183,7 +183,7 @@ app.post('/api/payment/create', async (req, res) => {
 
     res.status(500).json({
       status: 'error',
-      errorMessage: 'Failed to communicate with Vallet API.',
+      errorMessage: 'Vallet API ile iletişim kurulamadı.',
       details: error.response ? error.response.data : error.message
     });
   }

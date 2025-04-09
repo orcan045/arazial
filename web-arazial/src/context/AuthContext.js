@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
-import appState, { forceAuthRefresh } from '../services/appState';
 
 // Create auth context
 const AuthContext = createContext();
@@ -26,49 +25,184 @@ export function AuthProvider({ children }) {
       if (loading) {
         console.error('Auth context loading timeout reached, forcing reset');
         setLoading(false);
-        setError('Authentication timeout. Please refresh the page.');
+        setError('Oturum süresi doldu. Lütfen sayfayı yenileyin.');
       }
     }, 15000); // 15 seconds max
     
     return () => clearTimeout(loadingTimeout);
   }, [loading]);
   
-  // Subscribe to auth changes from centralized appState
+  // Initialize auth state and subscribe to auth changes
   useEffect(() => {
-    // Update our local state whenever appState auth changes
-    const handleAuthChange = () => {
-      // Set user from appState
-      setUser(appState.getUser());
-      
-      // Set profile from appState
-      const userProfile = appState.getUserProfile();
-      setProfile(userProfile);
-      
-      // Set admin status
-      setIsAdmin(appState.isUserAdmin());
-      
-      // Update loading state
-      setLoading(appState.isLoading());
-    };
+    let authSubscription;
     
-    // Initial state update
-    handleAuthChange();
+    async function setupAuthListener() {
+      try {
+        setLoading(true);
+        
+        // Get initial session
+        const { data } = await supabase.auth.getSession();
+        if (data?.session) {
+          setUser(data.session.user);
+          await fetchUserProfile(data.session.user.id);
+        } else {
+          setUser(null);
+          setProfile(null);
+          setIsAdmin(false);
+        }
+        
+        // Subscribe to auth changes
+        authSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log('Auth state changed:', event);
+          
+          try {
+            if (session?.user) {
+              setUser(session.user);
+              await fetchUserProfile(session.user.id);
+            } else {
+              setUser(null);
+              setProfile(null);
+              setIsAdmin(false);
+            }
+          } catch (error) {
+            console.error('Error handling auth change:', error);
+          } finally {
+            setLoading(false);
+          }
+        });
+      } catch (error) {
+        console.error('Error setting up auth:', error);
+        setError('Oturum bilgileri yüklenirken bir hata oluştu.');
+      } finally {
+        setLoading(false);
+      }
+    }
     
-    // Subscribe to auth changes in appState
-    const unsubscribe = appState.onAuthChange(handleAuthChange);
+    setupAuthListener();
     
-    // Additional subscription for visibility/refresh changes
-    const refreshUnsubscribe = appState.onRefresh(() => {
-      // This just updates the loading state when refreshes happen
-      setLoading(appState.isLoading());
-    });
-    
-    // Cleanup
+    // Cleanup subscription
     return () => {
-      unsubscribe();
-      refreshUnsubscribe();
+      if (authSubscription) {
+        authSubscription.subscription.unsubscribe();
+      }
     };
   }, []);
+  
+  // Fetch user profile data
+  const fetchUserProfile = async (userId) => {
+    try {
+      // Skip if no user ID
+      if (!userId) {
+        setProfile(null);
+        setIsAdmin(false);
+        return;
+      }
+      
+      // First check if we have a cached profile and it's not too old
+      const cachedProfile = localStorage.getItem('user_profile');
+      const cachedTime = localStorage.getItem('user_profile_time');
+      const now = Date.now();
+      
+      // Use cache if it exists and is less than 30 minutes old
+      if (cachedProfile && cachedTime && (now - parseInt(cachedTime)) < 30 * 60 * 1000) {
+        try {
+          const profile = JSON.parse(cachedProfile);
+          if (profile.id === userId) {
+            console.log('Using cached profile');
+            setProfile(profile);
+            setIsAdmin(profile.role === 'admin');
+            
+            // Only fetch new profile in background if cache is older than 5 minutes
+            if ((now - parseInt(cachedTime)) > 5 * 60 * 1000) {
+              backgroundFetchProfile(userId, now).catch(console.error);
+            }
+            return;
+          }
+        } catch (e) {
+          console.error('Error parsing cached profile:', e);
+        }
+      }
+      
+      await backgroundFetchProfile(userId, now);
+    } catch (error) {
+      console.error('Exception fetching profile:', error);
+      // Keep existing profile if we have one, otherwise set default
+      if (!profile) {
+        setProfile({ role: 'user' });
+        setIsAdmin(false);
+      }
+    }
+  };
+  
+  // Internal method for fetching profile from server
+  const backgroundFetchProfile = async (userId, now) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+
+      setProfile(data);
+      setIsAdmin(data?.role === 'admin');
+      
+      // Cache the profile
+      localStorage.setItem('user_profile', JSON.stringify(data));
+      localStorage.setItem('user_profile_time', now.toString());
+      console.log('User profile loaded and cached, isAdmin:', data?.role === 'admin');
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      // Don't reset existing profile on background fetch error
+      if (!profile) {
+        setProfile({ role: 'user' });
+        setIsAdmin(false);
+      }
+    }
+  };
+  
+  // Force reload of user profile
+  const reloadUserProfile = async () => {
+    setLoading(true);
+    
+    try {
+      if (user?.id) {
+        await fetchUserProfile(user.id);
+      }
+    } catch (error) {
+      console.error('Error reloading user profile:', error);
+      setError('Profil yüklenirken bir hata oluştu, lütfen tekrar deneyin.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Force refresh auth session
+  const refreshAuth = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      
+      if (data?.session) {
+        setUser(data.session.user);
+        await fetchUserProfile(data.session.user.id);
+      } else {
+        setUser(null);
+        setProfile(null);
+        setIsAdmin(false);
+      }
+      return data;
+    } catch (error) {
+      console.error('Error refreshing auth:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Sign in function
   const signIn = async (email, password) => {
@@ -82,10 +216,6 @@ export function AuthProvider({ children }) {
       });
       
       if (error) throw error;
-      
-      // Force immediate auth state refresh
-      await forceAuthRefresh();
-      
       return data;
     } catch (error) {
       console.error('Sign in error:', error);
@@ -136,24 +266,16 @@ export function AuthProvider({ children }) {
       
       if (error) {
         console.error('Sign out Supabase error:', error);
-        // We still want to force auth refresh even on error
       }
       
-      // Always force refresh auth state, even if there was an error
-      await forceAuthRefresh();
+      // Clear any cached profile data
+      localStorage.removeItem('user_profile');
+      localStorage.removeItem('user_profile_time');
       
       return { success: true };
     } catch (error) {
       console.error('Sign out error:', error);
       setError(error.message);
-      
-      // Try force refresh even on error
-      try {
-        await forceAuthRefresh();
-      } catch (refreshError) {
-        console.error('Error refreshing after sign out error:', refreshError);
-      }
-      
       throw error;
     } finally {
       setLoading(false);
@@ -196,21 +318,6 @@ export function AuthProvider({ children }) {
     }
   };
   
-  // Force reload of user profile
-  const reloadUserProfile = async () => {
-    setLoading(true);
-    
-    try {
-      // Use appState to refresh auth
-      await appState.refreshAuth();
-    } catch (error) {
-      console.error('Error reloading user profile:', error);
-      setError('Profil yüklenirken bir hata oluştu, lütfen tekrar deneyin.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
   // Only log in development
   if (process.env.NODE_ENV === 'development') {
     console.log('Auth state:', { 
@@ -232,7 +339,8 @@ export function AuthProvider({ children }) {
     signOut,
     resetPassword,
     updatePassword,
-    reloadUserProfile
+    reloadUserProfile,
+    refreshAuth
   };
   
   return (

@@ -50,12 +50,21 @@ class AuctionService {
       debugPrint('Fetching fresh auctions data from Supabase');
       
       try {
-        // Make the API call with a timeout
+        // Make the API call with a timeout and include all necessary fields
+        // This matches the web app's query structure
         final response = await _supabase
           .from('auctions')
-          .select('*')
-          .order('created_at')
-          .timeout(const Duration(seconds: 5));
+          .select('''
+            *,
+            bids (
+              id, amount, created_at, user_id
+            ),
+            offers (
+              id, amount, status, created_at, user_id
+            )
+          ''')
+          .order('created_at', ascending: false)
+          .timeout(const Duration(seconds: 10));
           
         debugPrint('Received response with ${response.length} auctions');
         
@@ -64,20 +73,36 @@ class AuctionService {
           final processedAuctions = response.map((auction) {
             try {
               _ensureValidAuctionFields(auction);
-              return auction;
+              
+              // Process field names to ensure consistency with both snake_case and camelCase
+              // This helps with handling data from different sources (API, cache, etc.)
+              final processedAuction = {
+                ...auction,
+                'startPrice': auction['start_price'],
+                'minIncrement': auction['min_increment'],
+                'startTime': auction['start_time'],
+                'endTime': auction['end_time'],
+                'finalPrice': auction['final_price'],
+                'createdAt': auction['created_at'],
+                'updatedAt': auction['updated_at'],
+                'winnerId': auction['winner_id'],
+                'listingType': auction['listing_type'],
+                'offerIncrement': auction['offer_increment'],
+                'areaSize': auction['area_sqm'],
+                'areaUnit': auction['area_unit'] ?? 'm²',
+                'adaNo': auction['ada_no'],
+                'parselNo': auction['parsel_no'],
+                'neighborhoodName': auction['neighborhood_name'],
+                'isFeatured': auction['is_featured'],
+                'userId': auction['user_id'],
+                'isPublished': auction['is_published'],
+              };
+              
+              return processedAuction;
             } catch (e) {
               debugPrint('Error processing auction: $e');
-              // Return a minimal valid auction to avoid crashing
-              return {
-                'id': auction['id'] ?? 'unknown-id',
-                'start_price': auction['start_price'] ?? auction['starting_price'] ?? 0,
-                'min_increment': auction['min_increment'] ?? 0,
-                'start_time': auction['start_time'] ?? auction['start_date'] ?? now.toIso8601String(),
-                'end_time': auction['end_time'] ?? auction['end_date'] ?? now.add(const Duration(days: 1)).toIso8601String(),
-                'status': auction['status'] ?? 'unknown',
-                'created_at': auction['created_at'] ?? now.toIso8601String(),
-                'updated_at': auction['updated_at'] ?? now.toIso8601String(),
-              };
+              // Return the original auction data to avoid crashing
+              return auction;
             }
           }).toList();
           
@@ -190,15 +215,10 @@ class AuctionService {
       auction['updated_at'] = now.toIso8601String();
     }
     
-    // Log any other fields that might be useful
-    final otherFields = auction.keys.where(
-      (key) => !['id', 'land_id', 'start_price', 'min_increment', 'start_time', 
-                 'end_time', 'status', 'winner_id', 'final_price', 'created_at', 
-                 'updated_at', 'land_listings'].contains(key)
-    );
-    
-    if (otherFields.isNotEmpty) {
-      debugPrint('Additional fields in auction ${auction['id']}: ${otherFields.join(', ')}');
+    // Set default listing type if missing
+    if (auction['listing_type'] == null) {
+      debugPrint('Warning: Adding default listing_type for auction ${auction['id']}');
+      auction['listing_type'] = 'auction';
     }
   }
   
@@ -218,23 +238,28 @@ class AuctionService {
       // Extract the actual list of auctions regardless of format
       if (rawData is List) {
         // Direct list of auctions
-        debugPrint('Data is a direct List of auctions');
         auctionsList = List<Map<String, dynamic>>.from(
-          rawData.map((item) => item as Map<String, dynamic>)
+          rawData.map((item) => item is Map<String, dynamic> ? item : Map<String, dynamic>.from(item as Map))
         );
       } else if (rawData is Map<String, dynamic>) {
         // Map structure that might contain auctions
-        debugPrint('Data is a Map structure, extracting auctions list');
         // Try to find a list within the map
         if (rawData.containsKey('auctions') && rawData['auctions'] is List) {
           auctionsList = List<Map<String, dynamic>>.from(
-            (rawData['auctions'] as List).map((item) => item as Map<String, dynamic>)
+            (rawData['auctions'] as List).map((item) => item is Map<String, dynamic> ? item : Map<String, dynamic>.from(item as Map))
+          );
+        } else if (rawData.containsKey('all') && rawData['all'] is List) {
+          // If using the 'all' key (from the cache structure)
+          auctionsList = List<Map<String, dynamic>>.from(
+            (rawData['all'] as List).map((item) => item is Map<String, dynamic> ? item : Map<String, dynamic>.from(item as Map))
           );
         } else {
           // Just use all the map values that are maps themselves as individual auctions
           final possibleAuctions = rawData.entries
-              .where((entry) => entry.value is Map<String, dynamic>)
-              .map((entry) => entry.value as Map<String, dynamic>)
+              .where((entry) => entry.value is Map)
+              .map((entry) => entry.value is Map<String, dynamic> 
+                  ? entry.value as Map<String, dynamic> 
+                  : Map<String, dynamic>.from(entry.value as Map))
               .toList();
               
           if (possibleAuctions.isNotEmpty) {
@@ -251,66 +276,30 @@ class AuctionService {
       
       final now = DateTime.now();
       
-      // 1. First, filter active auctions
-      final active = auctionsList.where((auction) {
-        try {
-          final startTime = DateTime.parse(auction['start_time']);
-          final endTime = DateTime.parse(auction['end_time']);
-          final status = auction['status'];
-          
-          // Either explicitly marked as active
-          if (status == 'active') return true;
-          
-          // OR current time is within auction window AND not marked as upcoming/ended
-          return status != 'upcoming' && status != 'ended' &&
-                 now.isAfter(startTime) && now.isBefore(endTime);
-        } catch (e) {
-          debugPrint('Error processing auction for active filter: $e');
-          return false;
-        }
-      }).toList();
+      // Parse auctions into proper model objects to use the isActive, isUpcoming, hasEnded properties
+      final auctionObjects = auctionsList.map((data) => Auction.fromJson(data)).toList();
       
-      // 2. Then upcoming auctions
-      final activeIds = active.map((a) => a['id']).toSet();
-      final upcoming = auctionsList.where((auction) {
-        try {
-          // Skip if already in active tab
-          if (activeIds.contains(auction['id'])) return false;
-          
-          final startTime = DateTime.parse(auction['start_time']);
-          final status = auction['status'];
-          
-          // Either explicitly marked as upcoming
-          if (status == 'upcoming') return true;
-          
-          // OR start time is in the future AND not marked as ended
-          return status != 'ended' && now.isBefore(startTime);
-        } catch (e) {
-          debugPrint('Error processing auction for upcoming filter: $e');
-          return false;
-        }
-      }).toList();
+      // Filter auctions by status
+      final List<Map<String, dynamic>> active = [];
+      final List<Map<String, dynamic>> upcoming = [];
+      final List<Map<String, dynamic>> past = [];
       
-      // 3. Finally, past auctions
-      final upcomingIds = upcoming.map((a) => a['id']).toSet();
-      final past = auctionsList.where((auction) {
-        try {
-          // Skip if already in active or upcoming tabs
-          if (activeIds.contains(auction['id']) || upcomingIds.contains(auction['id'])) return false;
-          
-          final endTime = DateTime.parse(auction['end_time']);
-          final status = auction['status'];
-          
-          // Either explicitly marked as ended
-          if (status == 'ended') return true;
-          
-          // OR current time is after end time
-          return now.isAfter(endTime);
-        } catch (e) {
-          debugPrint('Error processing auction for past filter: $e');
-          return false;
+      for (var i = 0; i < auctionObjects.length; i++) {
+        final auction = auctionObjects[i];
+        final original = auctionsList[i];
+        
+        // Use the model's helper methods to determine status
+        if (auction.isActive) {
+          active.add(original);
+        } else if (auction.isUpcoming) {
+          upcoming.add(original);
+        } else if (auction.hasEnded) {
+          past.add(original);
+        } else {
+          // Default: auctions with unknown status go to active
+          active.add(original);
         }
-      }).toList();
+      }
       
       debugPrint('Filtered auctions: ${active.length} active, ${upcoming.length} upcoming, ${past.length} past');
       
@@ -318,16 +307,138 @@ class AuctionService {
         'active': active,
         'upcoming': upcoming,
         'past': past,
-        'error': null,
-        'timestamp': result['timestamp']
+        'timestamp': result['timestamp'] ?? now,
       };
-    } catch (error) {
-      debugPrint('Error getting filtered auctions: $error');
+    } catch (e) {
+      debugPrint('Error filtering auctions: $e');
       return {
         'active': [],
         'upcoming': [],
         'past': [],
-        'error': error.toString()
+        'error': e.toString(),
+        'timestamp': DateTime.now(),
+      };
+    }
+  }
+  
+  /// Fetch a single auction by ID
+  Future<Map<String, dynamic>> fetchAuctionById(String id) async {
+    try {
+      debugPrint('Fetching auction $id');
+      
+      final response = await _supabase
+        .from('auctions')
+        .select('''
+          *,
+          bids (
+            id, amount, created_at, user_id, 
+            profiles:user_id (
+              username, full_name, avatar_url, email
+            )
+          ),
+          offers (
+            id, amount, status, message, created_at, updated_at, user_id,
+            profiles:user_id (
+              username, full_name, avatar_url, email
+            )
+          )
+        ''')
+        .eq('id', id)
+        .single()
+        .timeout(const Duration(seconds: 5));
+        
+      if (response != null) {
+        _ensureValidAuctionFields(response);
+        
+        // Process field names to ensure consistency
+        final processedAuction = {
+          ...response,
+          'startPrice': response['start_price'],
+          'minIncrement': response['min_increment'],
+          'startTime': response['start_time'],
+          'endTime': response['end_time'],
+          'finalPrice': response['final_price'],
+          'createdAt': response['created_at'],
+          'updatedAt': response['updated_at'],
+          'winnerId': response['winner_id'],
+          'listingType': response['listing_type'],
+          'offerIncrement': response['offer_increment'],
+          'areaSize': response['area_sqm'],
+          'areaUnit': response['area_unit'] ?? 'm²',
+          'adaNo': response['ada_no'],
+          'parselNo': response['parsel_no'],
+          'neighborhoodName': response['neighborhood_name'],
+          'isFeatured': response['is_featured'],
+          'userId': response['user_id'],
+          'isPublished': response['is_published'],
+        };
+        
+        return {
+          'data': processedAuction,
+          'error': null
+        };
+      } else {
+        throw Exception('Auction not found');
+      }
+    } catch (e) {
+      debugPrint('Error fetching auction by ID: $e');
+      return {
+        'data': null,
+        'error': e.toString()
+      };
+    }
+  }
+  
+  /// Submit a bid for an auction
+  Future<Map<String, dynamic>> submitBid(String auctionId, double amount, String userId) async {
+    try {
+      final response = await _supabase
+        .from('bids')
+        .insert({
+          'auction_id': auctionId,
+          'amount': amount,
+          'user_id': userId
+        })
+        .select()
+        .single();
+        
+      return {
+        'data': response,
+        'error': null
+      };
+    } catch (e) {
+      debugPrint('Error submitting bid: $e');
+      return {
+        'data': null,
+        'error': e.toString()
+      };
+    }
+  }
+  
+  /// Submit an offer for a negotiation-type listing
+  Future<Map<String, dynamic>> submitOffer(String auctionId, double amount, String userId, String? message) async {
+    try {
+      final response = await _supabase
+        .from('offers')
+        .insert({
+          'auction_id': auctionId,
+          'amount': amount,
+          'user_id': userId,
+          'status': 'pending',
+          'message': message,
+        })
+        .select()
+        .single();
+        
+      return {
+        'data': response,
+        'error': null
+      };
+    } catch (e) {
+      debugPrint('Error submitting offer: $e');
+      return {
+        'data': null,
+        'error': e.toString()
       };
     }
   }

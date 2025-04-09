@@ -43,6 +43,19 @@ class Auction {
   final String? areaUnit;
   final ListingType listingType;
   final double? offerIncrement;
+  
+  // Additional fields from web app
+  final String? city;
+  final String? district;
+  final String? adaNo;
+  final String? parselNo;
+  final String? neighborhoodName;
+  final String? zoning;
+  final String? ownerInfo;
+  final bool? isFeatured;
+  final String? userId;
+  final bool? isPublished;
+  final List<String>? documents;
 
   Auction({
     required this.id,
@@ -63,6 +76,18 @@ class Auction {
     this.areaUnit,
     this.listingType = ListingType.auction,
     this.offerIncrement,
+    // Additional fields
+    this.city,
+    this.district,
+    this.adaNo,
+    this.parselNo,
+    this.neighborhoodName,
+    this.zoning,
+    this.ownerInfo,
+    this.isFeatured,
+    this.userId,
+    this.isPublished,
+    this.documents,
   });
 
   // Check if auction is currently active
@@ -118,7 +143,9 @@ class Auction {
 
   // Factory constructor to create Auction from JSON data
   factory Auction.fromJson(Map<String, dynamic> json) {
-    print('Parsing auction JSON: ${json['id']}');
+    if (kDebugMode) {
+      print('Parsing auction JSON: ${json['id']}');
+    }
     
     // Process images
     List<String> imagesList = [];
@@ -134,24 +161,56 @@ class Auction {
               imagesList = List<String>.from(decoded);
             }
           } catch (e) {
-            print('Error parsing images JSON: $e');
+            if (kDebugMode) {
+              print('Error parsing images JSON: $e');
+            }
           }
         }
       } catch (e) {
-        print('Error processing images: $e');
+        if (kDebugMode) {
+          print('Error processing images: $e');
+        }
       }
     }
     
-    // Parse timestamps
+    // Process documents
+    List<String>? documentsList;
+    if (json['documents'] != null) {
+      try {
+        if (json['documents'] is List) {
+          documentsList = List<String>.from(json['documents']);
+        } else if (json['documents'] is String) {
+          // Try to parse as JSON if it's a string
+          try {
+            final decoded = jsonDecode(json['documents']);
+            if (decoded is List) {
+              documentsList = List<String>.from(decoded);
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              print('Error parsing documents JSON: $e');
+            }
+          }
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error processing documents: $e');
+        }
+      }
+    }
+    
+    // Parse timestamps - handle both snake_case and camelCase field names
     DateTime startTime, endTime, createdAt, updatedAt;
     
     try {
-      startTime = DateTime.parse(json['start_time']);
-      endTime = DateTime.parse(json['end_time']);
-      createdAt = DateTime.parse(json['created_at']);
-      updatedAt = DateTime.parse(json['updated_at']);
+      startTime = DateTime.parse(json['start_time'] ?? json['startTime'] ?? '');
+      endTime = DateTime.parse(json['end_time'] ?? json['endTime'] ?? '');
+      createdAt = DateTime.parse(json['created_at'] ?? json['createdAt'] ?? '');
+      updatedAt = DateTime.parse(json['updated_at'] ?? json['updatedAt'] ?? '');
     } catch (e) {
-      print('Error parsing dates: $e');
+      if (kDebugMode) {
+        print('Error parsing dates: $e');
+      }
       // Fallback to current time if parsing fails
       final now = DateTime.now();
       startTime = now;
@@ -161,48 +220,55 @@ class Auction {
     }
     
     // Parse listing type
-    final listingTypeStr = json['listing_type'] as String?;
+    final listingTypeStr = json['listing_type'] ?? json['listingType'] as String?;
     final listingType = ListingTypeExtension.fromString(listingTypeStr);
     
+    // Parse numeric values with safe conversion
+    double parseNumeric(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is int) return value.toDouble();
+      if (value is double) return value;
+      if (value is String) return double.tryParse(value) ?? 0.0;
+      return 0.0;
+    }
+    
     return Auction(
-      id: json['id'],
-      startPrice: json['start_price'] != null 
-        ? (json['start_price'] is int 
-            ? json['start_price'].toDouble() 
-            : json['start_price'])
-        : 0.0,
-      minIncrement: json['min_increment'] != null 
-        ? (json['min_increment'] is int 
-            ? json['min_increment'].toDouble() 
-            : json['min_increment'])
-        : 0.0,
+      id: json['id']?.toString() ?? '',
+      startPrice: parseNumeric(json['start_price'] ?? json['startPrice']),
+      minIncrement: parseNumeric(json['min_increment'] ?? json['minIncrement']),
       startTime: startTime,
       endTime: endTime,
-      status: json['status'] ?? 'pending',
-      winnerId: json['winner_id'],
-      finalPrice: json['final_price'] != null 
-        ? (json['final_price'] is int 
-            ? json['final_price'].toDouble() 
-            : json['final_price'])
+      status: (json['status'] ?? 'pending').toString(),
+      winnerId: json['winner_id']?.toString() ?? json['winnerId']?.toString(),
+      finalPrice: json['final_price'] != null || json['finalPrice'] != null 
+        ? parseNumeric(json['final_price'] ?? json['finalPrice'])
         : null,
       createdAt: createdAt,
       updatedAt: updatedAt,
       images: imagesList,
-      title: json['title'],
-      description: json['description'],
-      location: json['location'],
-      areaSize: json['area_sqm'] != null 
-        ? (json['area_sqm'] is int 
-            ? json['area_sqm'].toDouble() 
-            : json['area_sqm'])
+      title: json['title']?.toString(),
+      description: json['description']?.toString(),
+      location: json['location']?.toString(),
+      areaSize: json['area_sqm'] != null || json['areaSqm'] != null || json['area_size'] != null
+        ? parseNumeric(json['area_sqm'] ?? json['areaSqm'] ?? json['area_size'] ?? json['areaSize'])
         : null,
-      areaUnit: json['area_unit'],
+      areaUnit: json['area_unit']?.toString() ?? json['areaUnit']?.toString(),
       listingType: listingType,
-      offerIncrement: json['offer_increment'] != null 
-        ? (json['offer_increment'] is int 
-            ? json['offer_increment'].toDouble() 
-            : json['offer_increment'])
+      offerIncrement: json['offer_increment'] != null || json['offerIncrement'] != null
+        ? parseNumeric(json['offer_increment'] ?? json['offerIncrement'])
         : null,
+      // Additional fields
+      city: json['city']?.toString(),
+      district: json['district']?.toString(),
+      adaNo: json['ada_no']?.toString(),
+      parselNo: json['parsel_no']?.toString(),
+      neighborhoodName: json['neighborhood_name']?.toString() ?? json['neighborhoodName']?.toString(),
+      zoning: json['zoning']?.toString(),
+      ownerInfo: json['owner_info']?.toString() ?? json['ownerInfo']?.toString(),
+      isFeatured: json['is_featured'] is bool ? json['is_featured'] : (json['isFeatured'] is bool ? json['isFeatured'] : false),
+      userId: json['user_id']?.toString() ?? json['userId']?.toString(),
+      isPublished: json['is_published'] is bool ? json['is_published'] : (json['isPublished'] is bool ? json['isPublished'] : true),
+      documents: documentsList,
     );
   }
 
@@ -226,6 +292,18 @@ class Auction {
       'area_unit': areaUnit,
       'listing_type': listingType.value,
       'offer_increment': offerIncrement,
+      // Additional fields
+      'city': city,
+      'district': district,
+      'ada_no': adaNo,
+      'parsel_no': parselNo,
+      'neighborhood_name': neighborhoodName,
+      'zoning': zoning,
+      'owner_info': ownerInfo,
+      'is_featured': isFeatured,
+      'user_id': userId,
+      'is_published': isPublished,
+      'documents': documents,
     };
   }
 
@@ -249,6 +327,18 @@ class Auction {
     String? areaUnit,
     ListingType? listingType,
     double? offerIncrement,
+    // Additional fields
+    String? city,
+    String? district,
+    String? adaNo,
+    String? parselNo,
+    String? neighborhoodName,
+    String? zoning,
+    String? ownerInfo,
+    bool? isFeatured,
+    String? userId,
+    bool? isPublished,
+    List<String>? documents,
   }) {
     return Auction(
       id: id ?? this.id,
@@ -269,6 +359,18 @@ class Auction {
       areaUnit: areaUnit ?? this.areaUnit,
       listingType: listingType ?? this.listingType,
       offerIncrement: offerIncrement ?? this.offerIncrement,
+      // Additional fields
+      city: city ?? this.city,
+      district: district ?? this.district,
+      adaNo: adaNo ?? this.adaNo,
+      parselNo: parselNo ?? this.parselNo,
+      neighborhoodName: neighborhoodName ?? this.neighborhoodName,
+      zoning: zoning ?? this.zoning,
+      ownerInfo: ownerInfo ?? this.ownerInfo,
+      isFeatured: isFeatured ?? this.isFeatured,
+      userId: userId ?? this.userId,
+      isPublished: isPublished ?? this.isPublished,
+      documents: documents ?? this.documents,
     );
   }
 
@@ -276,10 +378,9 @@ class Auction {
   String get listingTypeDisplay {
     switch (listingType) {
       case ListingType.offer:
-        return 'Pazarlık';
+        return 'Pazarlıklı Satış';
       case ListingType.auction:
-      default:
-        return 'İhale';
+        return 'Açık Arttırma';
     }
   }
   
@@ -288,4 +389,40 @@ class Auction {
   
   /// Returns true if this is a standard auction-type listing
   bool get isAuctionType => listingType == ListingType.auction;
+  
+  /// Get formatted location with full details
+  String get fullLocation {
+    final parts = <String>[];
+    if (neighborhoodName != null && neighborhoodName!.isNotEmpty) {
+      parts.add(neighborhoodName!);
+    }
+    if (district != null && district!.isNotEmpty) {
+      parts.add(district!);
+    }
+    if (city != null && city!.isNotEmpty) {
+      parts.add(city!);
+    }
+    return parts.isNotEmpty ? parts.join(', ') : (location ?? 'Konum belirtilmemiş');
+  }
+  
+  /// Get formatted area display
+  String get formattedArea {
+    if (areaSize == null) return '';
+    return '${areaSize} ${areaUnit ?? 'm²'}';
+  }
+  
+  /// Get formatted zoning info
+  String get zoningInfo {
+    final parts = <String>[];
+    if (zoning != null && zoning!.isNotEmpty) {
+      parts.add('İmar: $zoning');
+    }
+    if (adaNo != null && adaNo!.isNotEmpty) {
+      parts.add('Ada No: $adaNo');
+    }
+    if (parselNo != null && parselNo!.isNotEmpty) {
+      parts.add('Parsel No: $parselNo');
+    }
+    return parts.join(' | ');
+  }
 } 

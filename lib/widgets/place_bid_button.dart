@@ -79,99 +79,112 @@ class _PlaceBidButtonState extends State<PlaceBidButton> {
       );
     }
 
-    return ElevatedButton(
-      onPressed: _isSubmitting ? null : _showBidDialog,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      child: _isSubmitting
-          ? const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 2,
-              ),
-            )
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.gavel),
-                const SizedBox(width: 8),
-                Text(
-                  'TEKLİF VER (${currencyFormat.format(widget.auction.minimumNextBid)})',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+    // Show input field directly in the bottom bar
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Minimum bid info
+              Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: theme.colorScheme.primary,
+                    size: 16,
                   ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Minimum teklif: ${currencyFormat.format(widget.auction.minimumNextBid)}',
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Bid input field
+              TextField(
+                controller: _bidController,
+                decoration: InputDecoration(
+                  labelText: 'Teklif Tutarı',
+                  prefixText: '₺ ',
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  enabled: !_isSubmitting,
                 ),
-              ],
-            ),
-    );
-  }
-
-  void _showBidDialog() {
-    final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(
-      locale: 'tr_TR',
-      symbol: '₺',
-      decimalDigits: 0,
-    );
-
-    // Reset the bid amount to minimum
-    _bidController.text = widget.auction.minimumNextBid.toString();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Teklif Ver'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Minimum teklif tutarı: ${currencyFormat.format(widget.auction.minimumNextBid)}',
-              style: TextStyle(
-                color: theme.colorScheme.primary,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(fontSize: 16),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  // Custom formatter for currency
+                  TextInputFormatter.withFunction((oldValue, newValue) {
+                    if (newValue.text.isEmpty) {
+                      return newValue;
+                    }
+                    final number = int.tryParse(newValue.text.replaceAll('.', ''));
+                    if (number != null) {
+                      final formattedValue = NumberFormat.decimalPattern('tr_TR').format(number);
+                      return TextEditingValue(
+                        text: formattedValue,
+                        selection: TextSelection.collapsed(offset: formattedValue.length),
+                      );
+                    }
+                    return oldValue;
+                  }),
+                ],
               ),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _bidController,
-              decoration: InputDecoration(
-                labelText: 'Teklif Tutarı',
-                prefixText: '₺ ',
-                border: const OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-              autofocus: true,
-            ),
-          ],
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('İPTAL'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _submitBid();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isSubmitting ? null : _submitBid,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.gavel),
+                        SizedBox(width: 8),
+                        Text(
+                          'TEKLİF VER',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
             ),
-            child: const Text('TEKLİF VER'),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
