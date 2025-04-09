@@ -105,16 +105,6 @@ const FormFooter = styled.div`
   }
 `;
 
-const DebugButton = styled.button`
-  background: #f0f0f0;
-  border: 1px dashed #999;
-  padding: 4px 8px;
-  margin-top: 8px;
-  font-size: 10px;
-  cursor: pointer;
-  display: ${process.env.NODE_ENV === 'development' ? 'block' : 'none'};
-`;
-
 const LoginTabs = styled.div`
   display: flex;
   margin-bottom: 1.5rem;
@@ -141,18 +131,21 @@ const LoginTab = styled.button`
 const PhoneInputContainer = styled.div`
   display: flex;
   gap: 0.5rem;
+  align-items: flex-start;
 `;
 
 const CountryCode = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-md);
+  height: 42px;
+  padding: 0 1rem;
+  border: 1.2px solid var(--color-border);
+  border-radius: 10px;
   font-size: 0.875rem;
   color: var(--color-text);
   background-color: var(--color-bg-secondary);
+  margin-top: 0;
 `;
 
 const LoginPage = () => {
@@ -426,12 +419,6 @@ const LoginPage = () => {
     }
   };
 
-  // Add a debug function to force navigation
-  const forceDebugNavigation = () => {
-    console.log('[LoginPage] 🔧 DEBUG: Forcing navigation to home page');
-    navigate('/', { replace: true });
-  };
-
   // Render form based on authentication step
   const renderForm = () => {
     // Show general error message at the top of any form
@@ -486,7 +473,7 @@ const LoginPage = () => {
                     error={errors.phoneNumber}
                     hideLabel
                     autoFocus
-                    style={{ flexGrow: 1 }}
+                    style={{ flexGrow: 1, marginBottom: 0 }}
                   />
                 </PhoneInputContainer>
                 {errors.phoneNumber && (
@@ -586,9 +573,21 @@ const LoginPage = () => {
                       width: '3rem',
                       height: '3rem',
                       textAlign: 'center',
-                      fontSize: '1.25rem',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: '0.375rem',
+                      fontSize: '1.5rem',
+                      fontWeight: '600',
+                      border: '2px solid var(--color-primary, #0f3460)',
+                      borderRadius: '10px',
+                      backgroundColor: 'white',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                      color: 'var(--color-text, #333)',
+                      outline: 'none',
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.boxShadow = '0 0 0 3px rgba(15, 52, 96, 0.2)';
+                      e.target.style.borderColor = 'var(--color-primary, #0f3460)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
                     }}
                   />
                 ))}
@@ -1229,11 +1228,6 @@ const LoginPage = () => {
       {error && <ErrorMessage>{error}</ErrorMessage>}
       
       {renderForm()}
-      
-      {/* Debug button - only visible in development */}
-      <DebugButton onClick={forceDebugNavigation}>
-        DEBUG: Force Navigate to Home
-      </DebugButton>
     </AuthContainer>
   );
 };
