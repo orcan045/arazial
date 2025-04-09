@@ -222,6 +222,7 @@ const CloseButton = styled.button`
   color: var(--color-text);
   border-radius: 50%;
   transition: background-color 0.2s ease, transform 0.2s ease;
+  z-index: 10;
   
   &:hover {
     background-color: rgba(15, 52, 96, 0.06);
@@ -289,6 +290,45 @@ const MobileAuthButtons = styled.div`
     font-size: 1rem;
     padding: 0.875rem !important;
     height: 48px;
+  }
+`;
+
+const MobileHeader = styled.div`
+  padding: 1.5rem 2rem 1.25rem;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--color-surface-secondary);
+  margin-bottom: 0.5rem;
+  
+  img {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    margin-right: 1rem;
+  }
+  
+  span {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+    
+    strong {
+      color: var(--color-primary);
+    }
+  }
+`;
+
+const MobileNavSection = styled.div`
+  margin: 0.5rem 0;
+  
+  h3 {
+    padding: 0.75rem 2rem;
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin: 0;
   }
 `;
 
@@ -762,6 +802,11 @@ const Navbar = () => {
           </svg>
         </CloseButton>
         
+        <MobileHeader>
+          <img src={logoImage} alt="Arazialcom Logo" />
+          <span>Arazial<strong>com</strong></span>
+        </MobileHeader>
+        
         {!user && !loading && (
           <MobileAuthButtons>
             <Button 
@@ -775,18 +820,33 @@ const Navbar = () => {
           </MobileAuthButtons>
         )}
         
-        <MobileNavLink to="/" className={location.pathname === '/' ? 'active' : ''}>
-          Ana Sayfa
-        </MobileNavLink>
-        <MobileNavLink to="/about" className={location.pathname === '/about' ? 'active' : ''}>
-          Hakkımızda
-        </MobileNavLink>
-        <MobileNavLink to="/contact" className={location.pathname === '/contact' ? 'active' : ''}>
-          İletişim
-        </MobileNavLink>
-        <MobileNavLink to="/sss" className={location.pathname === '/sss' ? 'active' : ''}>
-          SSS
-        </MobileNavLink>
+        <MobileNavSection>
+          <h3>Menü</h3>
+          <MobileNavLink to="/" className={location.pathname === '/' ? 'active' : ''} onClick={() => setIsOpen(false)}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            Ana Sayfa
+          </MobileNavLink>
+          <MobileNavLink to="/about" className={location.pathname === '/about' ? 'active' : ''} onClick={() => setIsOpen(false)}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Hakkımızda
+          </MobileNavLink>
+          <MobileNavLink to="/contact" className={location.pathname === '/contact' ? 'active' : ''} onClick={() => setIsOpen(false)}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            İletişim
+          </MobileNavLink>
+          <MobileNavLink to="/sss" className={location.pathname === '/sss' ? 'active' : ''} onClick={() => setIsOpen(false)}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            SSS
+          </MobileNavLink>
+        </MobileNavSection>
         
         {loading ? (
           <div style={{ 
@@ -825,34 +885,35 @@ const Navbar = () => {
             )}
           </div>
         ) : user ? (
-          <>
-            <MobileNavLink to="/profile">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.75rem' }}>
+          <MobileNavSection>
+            <h3>Hesabım</h3>
+            <MobileNavLink to="/profile" onClick={() => setIsOpen(false)}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
               Profilim
             </MobileNavLink>
-            <MobileNavLink to="/dashboard">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.75rem' }}>
+            <MobileNavLink to="/dashboard" onClick={() => setIsOpen(false)}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
               Panelim
             </MobileNavLink>
             {isAdmin && (
-              <MobileNavLink to="/admin/dashboard">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.75rem' }}>
+              <MobileNavLink to="/admin/dashboard" onClick={() => setIsOpen(false)}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                 </svg>
                 Admin Paneli
               </MobileNavLink>
             )}
-            <MobileNavLink as="button" onClick={handleSignOut} style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer' }}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.75rem' }}>
+            <MobileNavLink as="button" onClick={() => { handleSignOut(); setIsOpen(false); }} style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
               Çıkış Yap
             </MobileNavLink>
-          </>
+          </MobileNavSection>
         ) : null}
       </MobileMenu>
     </NavbarContainer>
