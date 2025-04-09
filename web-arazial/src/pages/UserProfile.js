@@ -186,6 +186,13 @@ const UserProfile = () => {
       try {
         setLoading(true);
         
+        if (!user?.id) {
+          console.error('No user ID available for profile fetch');
+          return;
+        }
+        
+        console.log('[UserProfile] Fetching profile data for user:', user.id);
+        
         // Fetch user profile data
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
@@ -193,7 +200,14 @@ const UserProfile = () => {
           .eq('id', user.id)
           .single();
           
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('[UserProfile] Error fetching profile:', profileError);
+          throw profileError;
+        }
+        
+        if (!profileData) {
+          console.warn('[UserProfile] No profile data found, may need to create one');
+        }
         
         // Fetch user bids
         const { data: bidsData, error: bidsError } = await supabase
@@ -211,10 +225,14 @@ const UserProfile = () => {
           .eq('bidder_id', user.id)
           .order('created_at', { ascending: false });
           
-        if (bidsError) throw bidsError;
+        if (bidsError) {
+          console.error('[UserProfile] Error fetching bids:', bidsError);
+          throw bidsError;
+        }
         
+        console.log('[UserProfile] Successfully loaded profile data');
         setProfile(profileData);
-        setBids(bidsData);
+        setBids(bidsData || []);
         
         // Check if columns exist in the profileData and set default values if not
         setFormData({

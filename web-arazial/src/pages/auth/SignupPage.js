@@ -209,9 +209,15 @@ const SignupPage = () => {
     setIsLoading(true);
     
     try {
+      console.log('[SignupPage] Attempting to register with email:', email);
       const { data, error: signUpError } = await signUp(email, password);
       
       if (signUpError) throw signUpError;
+      
+      console.log('[SignupPage] Registration successful:', data?.user ? 'User created' : 'Unknown state');
+      
+      // Store signup timestamp for debugging
+      localStorage.setItem('auth_last_signup', Date.now().toString());
       
       setSuccess(true);
       setUserData(data);
@@ -219,12 +225,18 @@ const SignupPage = () => {
       // Check if auto-confirmation is enabled (user is available immediately)
       if (data?.user && data.user.confirmed_at) {
         try {
+          console.log('[SignupPage] Auto-confirmation detected, signing in automatically');
           // Attempt to sign in - Auth context will handle the refresh
           await signIn(email, password);
+          
+          // Store login timestamp
+          localStorage.setItem('auth_last_login', Date.now().toString());
+          
+          console.log('[SignupPage] Auto-login successful, navigating to home');
           // Navigate to home page immediately
           navigate('/');
         } catch (signInError) {
-          console.error('Auto-login error:', signInError);
+          console.error('[SignupPage] Auto-login error:', signInError);
           // If auto-login fails, redirect to login page after delay
           setTimeout(() => {
             navigate('/login');
@@ -233,10 +245,10 @@ const SignupPage = () => {
       } else {
         // For email confirmation flow, show a message and don't auto-redirect
         // User needs to check their email first
-        console.log("Email confirmation required, waiting for user to check email");
+        console.log("[SignupPage] Email confirmation required, waiting for user to check email");
       }
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('[SignupPage] Signup error:', error);
     } finally {
       setIsLoading(false);
     }

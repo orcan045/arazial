@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import appState from './appState';
 
 // Cache constants
 const CACHE_KEY = 'auctions_cache';
@@ -10,6 +9,8 @@ const BACKGROUND_REFRESH_INTERVAL = 30 * 1000; // 30 seconds
 // Background refresh timer reference
 let backgroundRefreshTimer = null;
 let lastRefreshTime = 0;
+// Track visibility without depending on appState
+let isPageVisible = typeof document !== 'undefined' ? document.visibilityState === 'visible' : true;
 
 /**
  * Set up background refresh of auction data
@@ -22,11 +23,27 @@ export const setupBackgroundRefresh = () => {
   
   console.log('[AuctionService] Setting up background refresh');
   
+  // Set up visibility change listener
+  const handleVisibilityChange = () => {
+    isPageVisible = document.visibilityState === 'visible';
+    
+    // If becoming visible and it's been a while since last refresh, trigger a refresh
+    if (isPageVisible && Date.now() - lastRefreshTime > 60 * 1000) {
+      console.log('[AuctionService] Page became visible, triggering refresh');
+      fetchAuctions(true, false).catch(console.error);
+    }
+  };
+  
+  // Add visibility change listener
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+  }
+  
   // Set up interval for background data refresh
   backgroundRefreshTimer = setInterval(async () => {
     try {
       // Only refresh if tab is visible and it's been long enough since last refresh
-      if (appState.isVisible && Date.now() - lastRefreshTime > BACKGROUND_REFRESH_INTERVAL) {
+      if (isPageVisible && Date.now() - lastRefreshTime > BACKGROUND_REFRESH_INTERVAL) {
         console.log('[AuctionService] Background refresh triggered');
         await fetchAuctions(true, false); // Force refresh but silent
       }
@@ -35,25 +52,14 @@ export const setupBackgroundRefresh = () => {
     }
   }, BACKGROUND_REFRESH_INTERVAL);
   
-  // Subscribe to app refresh events
-  const unsubscribeRefresh = appState.onRefresh(async () => {
-    try {
-      console.log('[AuctionService] Refresh event triggered');
-      // If it's been more than 1 minute since last refresh, force a refresh
-      if (Date.now() - lastRefreshTime > 60 * 1000) {
-        await fetchAuctions(true);
-      }
-    } catch (error) {
-      console.error('[AuctionService] Refresh event error:', error);
-    }
-  });
-  
   // Return cleanup function
   return () => {
     if (backgroundRefreshTimer) {
       clearInterval(backgroundRefreshTimer);
     }
-    unsubscribeRefresh();
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }
     console.log('[AuctionService] Background refresh cleaned up');
   };
 };

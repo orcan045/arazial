@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { forceAuthRefresh } from '../../services/appState';
+import { forceAuthRefresh } from '../../services/authUtils';
 import { supabase } from '../../services/supabase';
 
 // Define default colors to avoid undefined theme issues
@@ -163,6 +163,9 @@ const PhoneSignup = () => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [timer, setTimer] = useState(0);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verificationError, setVerificationError] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
   
   const navigate = useNavigate();
   const { signIn } = useAuth();
@@ -198,18 +201,20 @@ const PhoneSignup = () => {
     
     try {
       // Add debug logging
-      console.log('Formatted phone number:', formatted);
+      console.log('Sending OTP to phone number:', formatted);
+      
+      // Make sure the phoneNumber is set explicitly in the request body
+      const requestBody = { phoneNumber: formatted };
+      console.log('Request payload:', JSON.stringify(requestBody));
       
       // Call the Supabase Edge Function
       const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/send-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({
-          phone_number: formatted
-        }),
+        body: JSON.stringify(requestBody)
       });
       
       const data = await response.json();
@@ -269,80 +274,226 @@ const PhoneSignup = () => {
     }
   };
   
-  // Handle OTP verification
+  // Handle OTP verification when in OTP step - just move to password step
+  const handleOtpSubmit = (e) => {
+    e.preventDefault();
+    
+    // Check if OTP is complete
+    if (otpInputs.join('').length !== 6) {
+      setError('Lütfen 6 haneli doğrulama kodunu tam olarak girin.');
+      return;
+    }
+    
+    // Move to password step
+    setStep('password');
+  };
+  
+  // Handle full verification and signup when in password step
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
-    setError('');
-    
-    const otp = otpInputs.join('');
-    if (otp.length !== 6) {
-      setError('Lütfen 6 haneli doğrulama kodunu girin');
-      return;
-    }
-    
-    if (step === 'otp') {
-      setStep('password');
-      return;
-    }
-    
-    if (password !== confirmPassword) {
-      setError('Şifreler eşleşmiyor');
-      return;
-    }
-    
-    if (password.length < 6) {
-      setError('Şifre en az 6 karakter olmalıdır');
-      return;
-    }
-    
-    setLoading(true);
     
     try {
-      // Call the Supabase Edge Function
-      const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/verify-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          phoneNumber: formattedPhoneNumber,
-          otp,
-          password,
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Doğrulama kodunu kontrol ederken bir hata oluştu');
+      setVerifyLoading(true);
+      setVerificationError('');
+
+      // Check password match
+      if (password !== confirmPassword) {
+        setVerificationError('Şifreler eşleşmiyor');
+        setVerifyLoading(false);
+        return;
       }
+
+      // Check password length
+      if (password.length < 6) {
+        setVerificationError('Şifre en az 6 karakter olmalıdır');
+        setVerifyLoading(false);
+        return;
+      }
+
+      // IMPORTANT: Use the EXACT same format as when sending OTP
+      // Don't add the "+" here - the database stores it without the +
+      const formattedPhone = formattedPhoneNumber;
+      console.log('Verifying with phone number:', formattedPhone);
       
-      setSuccess(data.message || 'Telefon numaranız doğrulandı');
+      // Save a timestamp so we can debug timing issues
+      localStorage.setItem('otp_verify_started', Date.now().toString());
       
-      // Attempt to sign in
+      // Create the email from phone number for consistent login
+      const phoneBasedEmail = `${formattedPhone}@phone.arazial.com`;
+      console.log('Will sign in with email:', phoneBasedEmail);
+
+      // Try to check for the OTP existence first using a direct database query
+      // This will help debug the phone number format issue
       try {
-        // Use the email created from phone number
-        const email = `${formattedPhoneNumber}@phone.arazial.com`;
-        await signIn(email, password);
+        console.log('Checking if OTP exists for phone number:', formattedPhone);
         
-        // Force refresh auth state
-        await forceAuthRefresh();
-        
-        // Navigate to home
-        navigate('/');
-      } catch (signInError) {
-        console.error('Sign in error:', signInError);
-        // If auto-login fails, redirect to login page after delay
-        setTimeout(() => {
-          navigate('/login');
-        }, 3000);
+        // Add specific debugging for the OTP verification
+        const { data: otpData, error: otpCheckError } = await supabase
+          .from('phone_auth_codes')
+          .select('id, code, verified')
+          .eq('phone_number', formattedPhone)
+          .limit(1);
+          
+        if (otpCheckError) {
+          console.error('Error checking OTP:', otpCheckError);
+        } else if (!otpData || otpData.length === 0) {
+          console.warn('No OTP found for this phone number in database. Double-check format.');
+          // Try different format variations
+          console.log('Trying with phone format variations');
+          
+          // Try with + prefix (some systems might store it with +)
+          const { data: otpDataWithPlus } = await supabase
+            .from('phone_auth_codes')
+            .select('id, phone_number, code')
+            .eq('phone_number', `+${formattedPhone}`)
+            .limit(1);
+            
+          if (otpDataWithPlus && otpDataWithPlus.length > 0) {
+            console.log('Found OTP with + prefix:', otpDataWithPlus[0]);
+            // Use this format for verification
+            formattedPhone = `+${formattedPhone}`;
+          }
+        } else {
+          console.log('Found OTP in database:', otpData[0]);
+        }
+      } catch (otpCheckError) {
+        console.error('Error checking OTP existence:', otpCheckError);
+      }
+
+      const { data, error } = await supabase.functions.invoke('verify-otp', {
+        body: {
+          phoneNumber: formattedPhone,
+          otp: otpInputs.join(''),
+          password: password,
+        },
+      });
+
+      if (error) {
+        console.error('Error verifying OTP:', error);
+        setVerificationError('Doğrulama başarısız: ' + error.message);
+        setVerifyLoading(false);
+        return;
       }
       
+      // Log success for debugging
+      console.log('OTP verification successful:', data);
+      localStorage.setItem('otp_verify_success', Date.now().toString());
+      
+      // Set success state and prepare for redirect even before login attempts
+      setVerifyLoading(false);
+      setIsSuccess(true);
+      
+      // Schedule redirect to happen regardless of login attempts
+      const redirectTimer = setTimeout(() => {
+        console.log('Executing forced redirect after successful OTP verification');
+        window.location.href = '/';
+      }, 2000);
+      
+      // Try to sign in directly with the phone-derived email and password
+      try {
+        console.log('Attempting to sign in with:', { email: phoneBasedEmail });
+        // Save the phone-based email for debugging
+        localStorage.setItem('phone_signup_email', phoneBasedEmail);
+        
+        // Capture success value to track if any login method worked
+        let loginSuccess = false;
+        
+        try {
+          // First try the context signIn method with correct parameters
+          console.log('Trying context signIn with:', phoneBasedEmail);
+          const signInResult = await signIn(phoneBasedEmail, password);
+          console.log('Context signIn result:', signInResult);
+          
+          if (signInResult?.session?.user) {
+            loginSuccess = true;
+            console.log('Context signIn successful');
+          }
+        } catch (contextSignInError) {
+          console.error('Context signIn error:', contextSignInError);
+        }
+        
+        // If the first method failed, try direct Supabase signin
+        if (!loginSuccess) {
+          try {
+            console.log('Trying direct Supabase signIn with:', phoneBasedEmail);
+            const { data: directSignIn, error: directSignInError } = await supabase.auth.signInWithPassword({
+              email: phoneBasedEmail,
+              password,
+            });
+            
+            if (directSignInError) {
+              console.error('Direct sign-in error:', directSignInError);
+            } else if (directSignIn?.session) {
+              loginSuccess = true;
+              console.log('Direct sign-in successful:', directSignIn);
+            }
+          } catch (directSignInError) {
+            console.error('Direct sign-in exception:', directSignInError);
+          }
+        }
+        
+        // If both methods failed, try with a different email format
+        if (!loginSuccess) {
+          // Try with + prefix
+          const alternateEmail = `+${formattedPhone}@phone.arazial.com`;
+          try {
+            console.log('Trying with alternate email format:', alternateEmail);
+            const { data: altSignIn, error: altSignInError } = await supabase.auth.signInWithPassword({
+              email: alternateEmail,
+              password,
+            });
+            
+            if (!altSignInError && altSignIn?.session) {
+              loginSuccess = true;
+              console.log('Alternate email sign-in successful');
+            }
+          } catch (altSignInError) {
+            console.error('Alternate sign-in error:', altSignInError);
+          }
+        }
+        
+        // Last resort - try to use the session from the verify-otp response
+        if (!loginSuccess && data?.session?.session?.access_token) {
+          try {
+            console.log('Trying to use session from verify-otp response');
+            await supabase.auth.setSession({
+              access_token: data.session.session.access_token,
+              refresh_token: data.session.session.refresh_token,
+            });
+            loginSuccess = true;
+          } catch (setSessionError) {
+            console.error('Error setting session from verify-otp response:', setSessionError);
+          }
+        }
+      } catch (signInError) {
+        console.error('Error in sign-in process:', signInError);
+      }
+      
+      // Force an auth refresh as an additional security measure
+      try {
+        await forceAuthRefresh();
+        localStorage.setItem('force_auth_refresh_after_signup', Date.now().toString());
+      } catch (refreshError) {
+        console.error('Error refreshing auth after signup:', refreshError);
+      }
+
+      // Cancel the automatic redirect timer if we got this far
+      clearTimeout(redirectTimer);
+      
+      // These are likely already set, but ensure they're set
+      setVerifyLoading(false);
+      setIsSuccess(true);
+      
+      // Redirect after a short delay to allow state updates
+      setTimeout(() => {
+        // Use direct window location instead of navigate for more reliable redirect
+        console.log('Executing redirect to home page after auth refresh');
+        window.location.href = '/';
+      }, 1000);
     } catch (error) {
-      console.error('Error verifying OTP:', error);
-      setError(error.message || 'Doğrulama kodunu kontrol ederken bir hata oluştu');
-    } finally {
-      setLoading(false);
+      console.error('Error in OTP verification process:', error);
+      setVerificationError('Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.');
+      setVerifyLoading(false);
     }
   };
   
@@ -379,7 +530,7 @@ const PhoneSignup = () => {
   );
   
   const renderOtpStep = () => (
-    <Form onSubmit={handleVerifyOTP}>
+    <Form onSubmit={handleOtpSubmit}>
       <InfoText>
         {formattedPhoneNumber.replace('90', '+90 ')} numarasına gönderilen 6 haneli doğrulama kodunu girin.
       </InfoText>
@@ -423,6 +574,9 @@ const PhoneSignup = () => {
   
   const renderPasswordStep = () => (
     <Form onSubmit={handleVerifyOTP}>
+      {verificationError && <ErrorText>{verificationError}</ErrorText>}
+      {isSuccess && <SuccessText>Hesabınız başarıyla oluşturuldu!</SuccessText>}
+      
       <InfoText>
         Hesabınız için lütfen bir şifre belirleyin.
       </InfoText>
@@ -449,8 +603,8 @@ const PhoneSignup = () => {
         Şifreniz en az 6 karakter olmalıdır.
       </InfoText>
       
-      <Button type="submit" disabled={loading || !password || !confirmPassword}>
-        {loading ? 'Kaydediliyor...' : 'Kayıt Ol'}
+      <Button type="submit" disabled={verifyLoading || !password || !confirmPassword}>
+        {verifyLoading ? 'Kaydediliyor...' : 'Kayıt Ol'}
       </Button>
     </Form>
   );

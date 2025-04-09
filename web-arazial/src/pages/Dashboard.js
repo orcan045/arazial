@@ -4,7 +4,6 @@ import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { getFilteredAuctions, fetchAuctions } from '../services/auctionService';
 import { supabase } from '../services/supabase';
-import appState from '../services/appState';
 import CountdownTimer from '../components/CountdownTimer';
 
 const DashboardContainer = styled.div`
@@ -293,16 +292,9 @@ const Dashboard = () => {
     loadUserBids();
     loadUserStats();
     
-    // Subscribe to refresh events from the central system
-    const unsubscribe = appState.onRefresh(() => {
-      console.log("[Dashboard] Received refresh notification");
-      loadUserBids();
-      loadUserStats();
-    });
-    
     // Clean up subscription when component unmounts
     return () => {
-      unsubscribe();
+      // No need to unsubscribe as appState is removed
     };
   }, [user, authLoading, navigate]);
   

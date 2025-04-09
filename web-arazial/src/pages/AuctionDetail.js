@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
-import appState from '../services/appState';
 import CountdownTimer from '../components/CountdownTimer';
 import Button from '../components/ui/Button';
 
@@ -1291,7 +1290,7 @@ const BidCard = ({
 const AuctionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, loading: authLoading, profile } = useAuth();
+  const { user, loading: authLoading, profile, isAuthenticated } = useAuth();
   const [auction, setAuction] = useState(null);
   const [bids, setBids] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1308,6 +1307,15 @@ const AuctionDetail = () => {
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Debug auth state for AuctionDetail
+  useEffect(() => {
+    console.log('[AuctionDetail] Auth state:', { 
+      userId: user?.id,
+      isAuthenticated,
+      authLoading
+    });
+  }, [user, isAuthenticated, authLoading]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -1392,13 +1400,15 @@ const AuctionDetail = () => {
 
   // Refresh data when app becomes visible again
   useEffect(() => {
-    const unsubscribe = appState.onVisibilityChange((isVisible) => {
-      if (isVisible) {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
         console.log('Tab became visible, refreshing auction details...');
         fetchData();
       }
-    });
-    return () => unsubscribe();
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [fetchData]);
 
   const refreshBids = async () => {
@@ -1420,7 +1430,7 @@ const AuctionDetail = () => {
   const handleSubmitBid = async (e) => {
     console.log("--- Executing handleSubmitBid ---");
     e.preventDefault();
-    if (!user) {
+    if (!isAuthenticated) {
       setBidError('Teklif vermek için giriş yapmalısınız.');
       return;
     }
@@ -1453,6 +1463,10 @@ const AuctionDetail = () => {
     setBidError(null);
     
     try {
+      if (!user?.id) {
+        throw new Error('Kullanıcı bilgisi bulunamadı. Lütfen sayfayı yenileyip tekrar deneyin.');
+      }
+      
       const { error: insertError } = await supabase.from('bids').insert({
         auction_id: auction.id,
         bidder_id: user.id,
@@ -1693,6 +1707,28 @@ const AuctionDetail = () => {
       }
     }
   }, [loading, auction]);
+
+  // Setup auto-refresh when the page becomes visible
+  useEffect(() => {
+    // Immediately fetch bids
+    refreshBids();
+    
+    // Set up visibility change handler for auto-refreshing bids
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log("[AuctionDetail] Page became visible, refreshing bids");
+        refreshBids();
+      }
+    };
+    
+    // Add visibility change listener
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [id]);
 
   if (loading && !auction) {
       return <PageContainer><LoadingSpinner message="İlan yükleniyor..." /></PageContainer>;

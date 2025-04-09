@@ -53,11 +53,12 @@ const Input = ({
   label,
   error,
   className,
+  hideLabel = false,
   ...props
 }) => {
   return (
     <InputWrapper className={className}>
-      {label && <Label htmlFor={id}>{label}</Label>}
+      {label && !hideLabel && <Label htmlFor={id}>{label}</Label>}
       <StyledInput id={id} error={error} {...props} />
       {error && <ErrorMessage>{error}</ErrorMessage>}
     </InputWrapper>

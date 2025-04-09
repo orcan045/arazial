@@ -40,7 +40,9 @@ serve(async (req) => {
     let body;
     try {
       body = await req.json();
-      console.log('Request body:', body);
+      console.log('Request body (full):', JSON.stringify(body));
+      console.log('Request body keys:', Object.keys(body));
+      console.log('Request body type:', typeof body);
     } catch (e) {
       console.error('Error parsing request body:', e);
       return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
@@ -50,10 +52,11 @@ serve(async (req) => {
     }
 
     const { phoneNumber } = body;
-    console.log('Processing phone number:', phoneNumber);
+    console.log('Extracted phone number:', phoneNumber);
+    console.log('Phone number type:', typeof phoneNumber);
     
     if (!phoneNumber) {
-      console.log('Missing phone number in request');
+      console.log('Missing phone number in request, body was:', JSON.stringify(body));
       return new Response(JSON.stringify({ error: 'Phone number is required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -127,66 +130,82 @@ serve(async (req) => {
     // Prepare SMS message
     const message = `Arazial doğrulama kodunuz: ${otp}. Bu kod 10 dakika geçerlidir.`;
 
-    // Get Verimor credentials from environment variables
-    console.log('Getting Verimor credentials...');
-    const verimorUsername = Deno.env.get('VERIMOR_USERNAME');
-    const verimorPassword = Deno.env.get('VERIMOR_PASSWORD');
-    const verimorSourceAddr = Deno.env.get('VERIMOR_SOURCE_ADDR') || 'ARAZIAL';
+    // Get proxy server credentials from environment variables
+    console.log('Getting proxy server credentials...');
+    const proxyUrl = Deno.env.get('VERIMOR_PROXY_URL');
+    const proxyApiKey = Deno.env.get('VERIMOR_PROXY_API_KEY');
 
-    if (!verimorUsername || !verimorPassword) {
-      console.error('Missing Verimor credentials:', {
-        hasUsername: !!verimorUsername,
-        hasPassword: !!verimorPassword,
-        sourceAddr: verimorSourceAddr
+    if (!proxyUrl || !proxyApiKey) {
+      console.error('Missing proxy server configuration:', {
+        hasProxyUrl: !!proxyUrl,
+        hasApiKey: !!proxyApiKey
       });
-      return new Response(JSON.stringify({ error: 'SMS service configuration error' }), {
+      return new Response(JSON.stringify({ error: 'SMS proxy service configuration error' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Send SMS via Verimor API
-    console.log('Sending SMS via Verimor API...');
-    const verimorPayload = {
-      username: verimorUsername,
-      password: verimorPassword,
-      source_addr: verimorSourceAddr,
-      messages: [
-        {
-          msg: message,
-          dest: phoneNumber,
-        }
-      ]
+    // Send SMS via Proxy Server
+    console.log('Sending SMS via Proxy Server...');
+    const proxyPayload = {
+      phoneNumber: phoneNumber,
+      message: message
     };
-    console.log('Verimor request payload:', {
-      ...verimorPayload,
-      password: '***' // Hide password in logs
+    console.log('Proxy request payload:', {
+      ...proxyPayload
     });
 
-    const verimorResponse = await fetch('https://sms.verimor.com.tr/v2/send.json', {
+    // Ensure the proxy URL is properly formatted to avoid double slashes
+    let formattedProxyUrl = proxyUrl;
+    if (proxyUrl.endsWith('/')) {
+      formattedProxyUrl = proxyUrl.slice(0, -1);
+    }
+    
+    console.log('Using proxy URL:', `${formattedProxyUrl}/api/send-otp`);
+
+    const proxyResponse = await fetch(`${formattedProxyUrl}/api/send-otp`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-api-key': proxyApiKey
       },
-      body: JSON.stringify(verimorPayload)
+      body: JSON.stringify(proxyPayload)
     });
 
-    const verimorData = await verimorResponse.text();
-    console.log('Verimor API response:', {
-      status: verimorResponse.status,
-      statusText: verimorResponse.statusText,
-      data: verimorData
-    });
-    
-    if (!verimorResponse.ok) {
-      console.error('Verimor API error:', {
-        status: verimorResponse.status,
-        statusText: verimorResponse.statusText,
-        data: verimorData,
-        headers: Object.fromEntries(verimorResponse.headers.entries())
+    // Handle the proxy response
+    let proxyData;
+    let responseText;
+    try {
+      responseText = await proxyResponse.text();
+      try {
+        proxyData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Error parsing response as JSON:', parseError);
+        proxyData = { success: false, error: `Invalid JSON response: ${responseText}` };
+      }
+      
+      console.log('Proxy API response:', {
+        status: proxyResponse.status,
+        statusText: proxyResponse.statusText,
+        data: proxyData
       });
-      return new Response(JSON.stringify({ error: `SMS sending failed: ${verimorData}` }), {
-        status: verimorResponse.status,
+    } catch (e) {
+      console.error('Error reading proxy response:', e);
+      proxyData = { success: false, error: `Failed to read proxy response: ${e.message}` };
+    }
+    
+    if (!proxyResponse.ok || !proxyData.success) {
+      console.error('Proxy API error:', {
+        status: proxyResponse.status,
+        statusText: proxyResponse.statusText,
+        data: proxyData,
+        headers: Object.fromEntries(proxyResponse.headers.entries())
+      });
+      return new Response(JSON.stringify({ 
+        error: `SMS sending failed: ${proxyData.error || 'Unknown proxy error'}` 
+      }), {
+        status: proxyResponse.status || 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -196,7 +215,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({ 
       success: true, 
       message: 'OTP sent successfully',
-      campaignId: verimorData
+      campaignId: proxyData.campaignId
     }), {
       status: 200,
       headers: { 

@@ -87,10 +87,20 @@ const LoadingSpinner = ({ message, loadingTime, retryAction }) => (
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
-  const { user, loading, reloadUserProfile } = useAuth();
+  const { user, loading, reloadUserProfile, isAuthenticated, authState } = useAuth();
   const [loadingTime, setLoadingTime] = useState(0);
   const [maxLoadingTime, setMaxLoadingTime] = useState(15); // Auto-retry after 15 seconds
   const [showLoading, setShowLoading] = useState(false);
+  
+  // Debug authentication state - remove this after fixing the issue
+  useEffect(() => {
+    console.log('[ProtectedRoute] Auth state:', { 
+      user: user?.email, 
+      authState, 
+      isAuthenticated, 
+      loading 
+    });
+  }, [user, authState, isAuthenticated, loading]);
   
   useEffect(() => {
     let timer;
@@ -142,7 +152,9 @@ const ProtectedRoute = ({ children }) => {
     );
   }
   
-  if (!user && !loading) {
+  // Check if user is not authenticated and not loading
+  if (!isAuthenticated && !loading) {
+    console.log('[ProtectedRoute] User not authenticated, redirecting to login');
     return <Navigate to="/login" />;
   }
   
@@ -156,17 +168,39 @@ const ProtectedRoute = ({ children }) => {
 
 // Admin Route Wrapper
 const AdminRoute = ({ children }) => {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isAdmin, loading, isAuthenticated, authState } = useAuth();
 
-  // If no user, redirect to login
-  if (!user && !loading) {
+  // Debug admin authentication
+  useEffect(() => {
+    console.log('[AdminRoute] Auth state:', { 
+      user: user?.email, 
+      authState, 
+      isAuthenticated, 
+      isAdmin, 
+      loading 
+    });
+  }, [user, authState, isAuthenticated, isAdmin, loading]);
+
+  // If not authenticated, redirect to login
+  if (!isAuthenticated && !loading) {
+    console.log('[AdminRoute] User not authenticated, redirecting to login');
     return <Navigate to="/login" />;
   }
   
   // If we know they're definitely not admin, redirect
-  if (!isAdmin && !loading) {
-    console.log("User is not admin, redirecting to dashboard");
+  if (isAuthenticated && !isAdmin && !loading) {
+    console.log('[AdminRoute] User is not admin, redirecting to dashboard');
     return <Navigate to="/dashboard" />;
+  }
+  
+  // Show spinner while checking credentials
+  if (loading) {
+    return (
+      <LoadingSpinner 
+        message="Yetki kontrolü yapılıyor..."
+        loadingTime={0}
+      />
+    );
   }
   
   // Otherwise render the admin UI
@@ -204,6 +238,9 @@ const App = () => {
     if (window.location.hash && window.location.hash.includes('access_token')) {
       console.log("[App] Detected auth redirect, handling session");
       
+      // Store timestamp of email confirmation redirect
+      localStorage.setItem('auth_redirect_detected', Date.now().toString());
+      
       // Handle the session from the URL
       supabase.auth.getSession()
         .then(({ data }) => {
@@ -211,17 +248,43 @@ const App = () => {
           
           if (data?.session) {
             console.log("[App] Successfully retrieved session from URL");
-            // Auth state will be updated by AuthContext's onAuthStateChange listener
-            // Remove the hash from the URL to avoid issues on refresh
-            window.history.replaceState(null, document.title, window.location.pathname);
+            
+            // Store user ID for debugging
+            if (data.session.user) {
+              localStorage.setItem('auth_redirect_user_id', data.session.user.id);
+            }
+            
+            // Ensure all auth systems are updated
+            forceAuthRefresh()
+              .then(() => {
+                console.log("[App] Auth refresh completed after redirect");
+                localStorage.setItem('auth_redirect_success', Date.now().toString());
+              })
+              .catch(refreshError => {
+                console.error("[App] Error refreshing auth state:", refreshError);
+                localStorage.setItem('auth_redirect_error', JSON.stringify({
+                  time: Date.now(),
+                  message: refreshError.message
+                }));
+              })
+              .finally(() => {
+                // Always clean up the URL and finish redirect handling
+                window.history.replaceState(null, document.title, window.location.pathname);
+                setHandlingRedirect(false);
+              });
           } else {
             console.log("[App] No session found in URL");
+            localStorage.setItem('auth_redirect_no_session', Date.now().toString());
+            setHandlingRedirect(false);
           }
-          setHandlingRedirect(false);
         })
         .catch(error => {
           clearTimeout(failSafeTimer); // Clear the failsafe timer on error
           console.error("[App] Error handling auth redirect:", error);
+          localStorage.setItem('auth_redirect_critical_error', JSON.stringify({
+            time: Date.now(),
+            message: error.message
+          }));
           setHandlingRedirect(false);
         });
     } else {

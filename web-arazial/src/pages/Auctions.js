@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { fetchAuctions, fetchNegotiations } from '../services/auctionService';
 import { supabase } from '../services/supabase';
-import appState from '../services/appState';
+import { useAuth } from '../context/AuthContext';
 import CountdownTimer from '../components/CountdownTimer';
 import Button from '../components/ui/Button';
 
@@ -1600,26 +1600,29 @@ const Auctions = () => {
     });
   };
   
-  // Function to apply filters and sorting
+  // Function to apply filters and sort
   const applyFiltersAndSort = (listingsList) => {
-    if (!listingsList) return;
+    if (!listingsList || !Array.isArray(listingsList)) {
+      console.error('Invalid listingsList in applyFiltersAndSort:', listingsList);
+      setFilteredListings([]);
+      return;
+    }
     
     setIsFiltering(true);
     
-    setTimeout(() => {
-      // First filter by status if it's an auction
+    try {
+      // First, filter by status if needed
       let filtered = [...listingsList];
       
       if (listingType === 'auction') {
         filtered = filterAuctionsByStatus(filtered, auctionStatus);
       }
-
-      // Filter by cities - match any of the selected cities
+      
+      // Then apply location filters
       if (filters.cities && filters.cities.length > 0) {
         filtered = filtered.filter(listing => {
+          // Check if listing location contains any of the selected cities
           if (!listing.location) return false;
-          
-          // Check if any of the selected cities match
           return filters.cities.some(city => 
             listing.location.toLowerCase().includes(city.toLowerCase())
           );
@@ -1627,12 +1630,52 @@ const Auctions = () => {
       }
       
       // Apply sorting
-      filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
+      if (sortOption === 'priceAsc') {
+        filtered.sort((a, b) => {
+          const aPrice = a.start_price || a.startPrice || 0;
+          const bPrice = b.start_price || b.startPrice || 0;
+          return aPrice - bPrice;
+        });
+      } else if (sortOption === 'priceDesc') {
+        filtered.sort((a, b) => {
+          const aPrice = a.start_price || a.startPrice || 0;
+          const bPrice = b.start_price || b.startPrice || 0;
+          return bPrice - aPrice;
+        });
+      } else if (sortOption === 'newest') {
+        filtered.sort((a, b) => 
+          new Date(b.created_at) - new Date(a.created_at)
+        );
+      } else if (sortOption === 'endingSoon' && listingType === 'auction') {
+        const now = new Date();
+        filtered.sort((a, b) => {
+          const aEndTime = new Date(a.end_time || a.endTime);
+          const bEndTime = new Date(b.end_time || b.endTime);
+          
+          // Only sort active auctions by end time
+          const aIsActive = now <= aEndTime;
+          const bIsActive = now <= bEndTime;
+          
+          if (aIsActive && bIsActive) {
+            return aEndTime - bEndTime;
+          } else if (aIsActive) {
+            return -1;
+          } else if (bIsActive) {
+            return 1;
+          } else {
+            // Default to newest for non-active auctions
+            return new Date(b.created_at) - new Date(a.created_at);
+          }
+        });
+      }
+      
       setFilteredListings(filtered);
-      setCurrentPage(1);
+      setCurrentPage(1); // Reset to first page after filtering
+    } catch (error) {
+      console.error('Error applying filters:', error);
+    } finally {
       setIsFiltering(false);
-    }, 400);
+    }
   };
   
   // Functions to handle city selection
@@ -1712,22 +1755,33 @@ const Auctions = () => {
     return Math.ceil(filteredListings.length / itemsPerPage);
   };
   
-  // Add event listeners for page visibility changes
+  // Inside the Auctions component
   useEffect(() => {
-    // Initial data load
+    // Load auctions on mount
     loadListings();
     
-    // Subscribe to refresh events from the central system
-    const unsubscribe = appState.onRefresh(() => {
-      console.log("[Auctions] Received refresh notification");
-      loadListings();
-    });
-    
-    // Clean up subscription when component unmounts
-    return () => {
-      unsubscribe();
+    // Set up visibility change handler
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        const lastRefreshTime = parseInt(localStorage.getItem('auctions_last_refresh') || '0', 10);
+        const now = Date.now();
+        
+        // If it's been more than a minute since last refresh when tab becomes visible
+        if (now - lastRefreshTime > 60 * 1000) {
+          console.log('[Auctions] Page became visible, refreshing data');
+          loadListings(true);
+        }
+      }
     };
-  }, [listingType]);
+    
+    // Add event listener for visibility changes
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
   
   // Effect to update filtered auctions when active tab or filters change
   useEffect(() => {
@@ -1747,6 +1801,108 @@ const Auctions = () => {
     loadListings(true); // Force refresh when switching types
   }, [listingType]);
   
+  // Render filter panel for the horizontal layout
+  const renderFilterPanel = () => {
+    return (
+      <FiltersPanel>
+        <div style={{ flex: 1, maxWidth: '600px' }}>
+          <FilterGroup style={{ marginBottom: 0 }}>
+            <FilterLabel htmlFor="city-select">Şehir Seçiniz</FilterLabel>
+            <MultiSelectWrapper className="city-dropdown">
+              <MultiSelectBox 
+                onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
+              >
+                <SelectedCities>
+                  {filters.cities.length === 0 ? (
+                    <span style={{ color: 'var(--color-text-tertiary)' }}>Tüm Şehirler</span>
+                  ) : (
+                    filters.cities.map(city => (
+                      <CityTag key={city}>
+                        {city}
+                        <button onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveCity(city);
+                        }}>
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
+                      </CityTag>
+                    ))
+                  )}
+                </SelectedCities>
+                <DropdownIcon isOpen={cityDropdownOpen}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </DropdownIcon>
+              </MultiSelectBox>
+              
+              <CityDropdown isOpen={cityDropdownOpen} className="city-dropdown">
+                <SearchInput 
+                  placeholder="Şehir ara..." 
+                  value={citySearch}
+                  onChange={(e) => setCitySearch(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                  {filteredCities.map(city => (
+                    <CityOption key={city} onClick={(e) => {
+                      e.stopPropagation();
+                      handleCitySelect(city);
+                    }}>
+                      <input 
+                        type="checkbox" 
+                        checked={filters.cities.includes(city)}
+                        onChange={() => {}} // Handled by the parent click
+                      />
+                      {city}
+                    </CityOption>
+                  ))}
+                  {filteredCities.length === 0 && (
+                    <div style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)' }}>
+                      Sonuç bulunamadı
+                    </div>
+                  )}
+                </div>
+              </CityDropdown>
+            </MultiSelectWrapper>
+          </FilterGroup>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+          <ApplyFiltersButton 
+            onClick={applyFilters} 
+            variant="primary" 
+            style={{ 
+              marginTop: 0, 
+              width: 'auto', 
+              minWidth: '150px', 
+              height: '50px'
+            }}
+          >
+            Filtreleri Uygula
+          </ApplyFiltersButton>
+          
+          {filters.cities.length > 0 && (
+            <ClearFiltersButton 
+              onClick={clearFilters} 
+              style={{ 
+                marginTop: 0, 
+                marginBottom: '9px',
+                padding: '0.75rem',
+                height: 'auto'
+              }}
+            >
+              Temizle
+            </ClearFiltersButton>
+          )}
+        </div>
+      </FiltersPanel>
+    );
+  };
+
   // Handle tab switch
   const handleTabSwitch = (tab) => {
     setListingType(tab);
@@ -2024,14 +2180,12 @@ const Auctions = () => {
     }
     
     if (viewMode === 'grid') {
-    return (
+      return (
         <>
-      <AuctionsGrid>
+          <AuctionsGrid>
             {getPaginatedListings().map(auction => (
               <GridItemWrapper key={auction.id}>
-                <AuctionCard onClick={() => handleAuctionClick(auction.id)}>
-                  {renderAuctionCard(auction)}
-                </AuctionCard>
+                {renderAuctionCard(auction)}
               </GridItemWrapper>
             ))}
           </AuctionsGrid>
@@ -2049,7 +2203,7 @@ const Auctions = () => {
       );
     }
   };
-  
+
   // Render pagination
   const renderPagination = () => {
     const totalPages = getTotalPages();
@@ -2150,129 +2304,7 @@ const Auctions = () => {
       </Pagination>
     );
   };
-  
-  // Render filter panel for the horizontal layout
-  const renderFilterPanel = () => {
-    return (
-      <FiltersPanel>
-        <div style={{ flex: 1, maxWidth: '600px' }}>
-          <FilterGroup style={{ marginBottom: 0 }}>
-            <FilterLabel htmlFor="city-select">Şehir Seçiniz</FilterLabel>
-            <MultiSelectWrapper className="city-dropdown">
-              <MultiSelectBox 
-                onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
-              >
-                <SelectedCities>
-                  {filters.cities.length === 0 ? (
-                    <span style={{ color: 'var(--color-text-tertiary)' }}>Tüm Şehirler</span>
-                  ) : (
-                    filters.cities.map(city => (
-                      <CityTag key={city}>
-                        {city}
-                        <button onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveCity(city);
-                        }}>
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                          </svg>
-                        </button>
-                      </CityTag>
-                    ))
-                  )}
-                </SelectedCities>
-                <DropdownIcon isOpen={cityDropdownOpen}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </DropdownIcon>
-              </MultiSelectBox>
-              
-              <CityDropdown isOpen={cityDropdownOpen} className="city-dropdown">
-                <SearchInput 
-                  placeholder="Şehir ara..." 
-                  value={citySearch}
-                  onChange={(e) => setCitySearch(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                  {filteredCities.map(city => (
-                    <CityOption key={city} onClick={(e) => {
-                      e.stopPropagation();
-                      handleCitySelect(city);
-                    }}>
-                      <input 
-                        type="checkbox" 
-                        checked={filters.cities.includes(city)}
-                        onChange={() => {}} // Handled by the parent click
-                      />
-                      {city}
-                    </CityOption>
-                  ))}
-                  {filteredCities.length === 0 && (
-                    <div style={{ padding: '0.75rem 1rem', color: 'var(--color-text-secondary)' }}>
-                      Sonuç bulunamadı
-                    </div>
-                  )}
-                </div>
-              </CityDropdown>
-            </MultiSelectWrapper>
-          </FilterGroup>
-        </div>
-        
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
-          <ApplyFiltersButton 
-            onClick={applyFilters} 
-            variant="primary" 
-            style={{ 
-              marginTop: 0, 
-              width: 'auto', 
-              minWidth: '150px', 
-              height: '50px'
-            }}
-          >
-            Filtreleri Uygula
-          </ApplyFiltersButton>
-          
-          {filters.cities.length > 0 && (
-            <ClearFiltersButton 
-              onClick={clearFilters} 
-              style={{ 
-                marginTop: 0, 
-                marginBottom: '9px',
-                padding: '0.75rem',
-                height: 'auto'
-              }}
-            >
-              Temizle
-            </ClearFiltersButton>
-          )}
-        </div>
-      </FiltersPanel>
-    );
-  };
 
-  // Close city dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      // Don't close if we're clicking inside any city dropdown component
-      if (event.target.closest('.city-dropdown') || event.target.closest('.mobile-city-dropdown')) {
-        return;
-      }
-      
-      // Only close dropdowns if we clicked outside
-      setCityDropdownOpen(false);
-      setMobileCityDropdownOpen(false);
-    };
-    
-    document.addEventListener('mousedown', handleClickOutside);
-    
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-  
   // Render auction in list view
   const renderAuctionListItem = (auction) => {
     // Determine if we're in the "new" tab and what type this listing is
@@ -2363,7 +2395,27 @@ const Auctions = () => {
       </AuctionListItem>
     );
   };
-  
+
+  // Close city dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Don't close if we're clicking inside any city dropdown component
+      if (event.target.closest('.city-dropdown') || event.target.closest('.mobile-city-dropdown')) {
+        return;
+      }
+      
+      // Only close dropdowns if we clicked outside
+      setCityDropdownOpen(false);
+      setMobileCityDropdownOpen(false);
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <PageContainer>
       <PageHeader>

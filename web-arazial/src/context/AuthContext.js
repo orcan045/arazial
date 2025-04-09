@@ -1,5 +1,24 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../services/supabase';
+import { forceAuthRefresh } from '../services/authUtils';
+
+// Debug flag - set to true to enable auth context logs
+const DEBUG = process.env.NODE_ENV === 'development' && true;
+
+// Simple debug logger that only logs when DEBUG is true
+const debug = (message, ...args) => {
+  if (DEBUG) {
+    console.log(message, ...args);
+  }
+};
+
+// Auth state tracking
+const AUTH_STATE = {
+  LOADING: 'loading',      // Initial loading state
+  AUTHENTICATED: 'authenticated',  // User is logged in
+  UNAUTHENTICATED: 'unauthenticated', // User is not logged in
+  ERROR: 'error'       // Error occurred
+};
 
 // Create auth context
 const AuthContext = createContext();
@@ -17,6 +36,10 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [authState, setAuthState] = useState(AUTH_STATE.LOADING);
+  
+  // Track last logged state to prevent duplicate logs
+  const [lastLoggedState, setLastLoggedState] = useState(null);
   
   // Loading timeout - prevents perpetual loading states
   useEffect(() => {
@@ -32,6 +55,16 @@ export function AuthProvider({ children }) {
     return () => clearTimeout(loadingTimeout);
   }, [loading]);
   
+  // Debug authentication state directly
+  useEffect(() => {
+    console.log('[AuthContext] Auth state changed:', {
+      state: authState,
+      user: user?.email, 
+      isAdmin, 
+      loading
+    });
+  }, [authState, user, isAdmin, loading]);
+  
   // Initialize auth state and subscribe to auth changes
   useEffect(() => {
     let authSubscription;
@@ -39,40 +72,62 @@ export function AuthProvider({ children }) {
     async function setupAuthListener() {
       try {
         setLoading(true);
+        setAuthState(AUTH_STATE.LOADING);
+        debug('[AuthContext] Setting up auth listener');
         
         // Get initial session
         const { data } = await supabase.auth.getSession();
         if (data?.session) {
+          debug('[AuthContext] Found initial session, user ID:', data.session.user.id);
           setUser(data.session.user);
           await fetchUserProfile(data.session.user.id);
+          setAuthState(AUTH_STATE.AUTHENTICATED);
         } else {
+          debug('[AuthContext] No initial session found');
           setUser(null);
           setProfile(null);
           setIsAdmin(false);
+          setAuthState(AUTH_STATE.UNAUTHENTICATED);
         }
         
         // Subscribe to auth changes
-        authSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
-          console.log('Auth state changed:', event);
+        const subscription = supabase.auth.onAuthStateChange(async (event, session) => {
+          debug('[AuthContext] Auth state changed:', event, session ? `User: ${session.user.id}` : 'No session');
           
           try {
             if (session?.user) {
               setUser(session.user);
               await fetchUserProfile(session.user.id);
+              setAuthState(AUTH_STATE.AUTHENTICATED);
+              
+              // Special handling for confirmed email event
+              if (event === 'EMAIL_CONFIRMED') {
+                debug('[AuthContext] Email confirmed, updating auth state');
+                // Store confirmation time for debugging
+                localStorage.setItem('auth_email_confirmed', Date.now().toString());
+                // Force a session refresh to ensure everything is up to date
+                await forceAuthRefresh();
+              }
             } else {
               setUser(null);
               setProfile(null);
               setIsAdmin(false);
+              setAuthState(AUTH_STATE.UNAUTHENTICATED);
             }
           } catch (error) {
-            console.error('Error handling auth change:', error);
+            console.error('[AuthContext] Error handling auth change:', error);
+            setAuthState(AUTH_STATE.ERROR);
           } finally {
             setLoading(false);
           }
         });
+        
+        // Store the subscription object properly
+        authSubscription = subscription;
       } catch (error) {
-        console.error('Error setting up auth:', error);
+        console.error('[AuthContext] Error setting up auth:', error);
         setError('Oturum bilgileri yüklenirken bir hata oluştu.');
+        setAuthState(AUTH_STATE.ERROR);
       } finally {
         setLoading(false);
       }
@@ -83,7 +138,28 @@ export function AuthProvider({ children }) {
     // Cleanup subscription
     return () => {
       if (authSubscription) {
-        authSubscription.subscription.unsubscribe();
+        debug('[AuthContext] Cleaning up auth subscription');
+        try {
+          // The current Supabase client returns { data: { subscription } } structure
+          if (authSubscription.subscription) {
+            authSubscription.subscription.unsubscribe();
+          } 
+          // Handle direct subscription object
+          else if (typeof authSubscription.unsubscribe === 'function') {
+            authSubscription.unsubscribe();
+          }
+          // If it's some other structure, try to unsubscribe safely
+          else {
+            console.log('[AuthContext] Unknown subscription format, attempting to clean up');
+            for (let key in authSubscription) {
+              if (authSubscription[key] && typeof authSubscription[key].unsubscribe === 'function') {
+                authSubscription[key].unsubscribe();
+              }
+            }
+          }
+        } catch (err) {
+          console.error('[AuthContext] Error unsubscribing from auth:', err);
+        }
       }
     };
   }, []);
@@ -108,7 +184,7 @@ export function AuthProvider({ children }) {
         try {
           const profile = JSON.parse(cachedProfile);
           if (profile.id === userId) {
-            console.log('Using cached profile');
+            debug('Using cached profile');
             setProfile(profile);
             setIsAdmin(profile.role === 'admin');
             
@@ -153,7 +229,7 @@ export function AuthProvider({ children }) {
       // Cache the profile
       localStorage.setItem('user_profile', JSON.stringify(data));
       localStorage.setItem('user_profile_time', now.toString());
-      console.log('User profile loaded and cached, isAdmin:', data?.role === 'admin');
+      debug('User profile loaded and cached, isAdmin:', data?.role === 'admin');
     } catch (error) {
       console.error('Error fetching profile:', error);
       // Don't reset existing profile on background fetch error
@@ -208,21 +284,103 @@ export function AuthProvider({ children }) {
   const signIn = async (email, password) => {
     setLoading(true);
     setError(null);
+    setAuthState(AUTH_STATE.LOADING);
+    
+    // Store timestamp for diagnostics
+    const signInStartTime = Date.now();
+    localStorage.setItem('auth_signin_started', signInStartTime.toString());
     
     try {
+      console.log('[AuthContext] signIn: Attempting login with email', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (error) throw error;
+      // Log timing for diagnostics
+      const signInResponseTime = Date.now();
+      localStorage.setItem('auth_signin_response_time', (signInResponseTime - signInStartTime).toString());
+      
+      if (error) {
+        console.error('[AuthContext] signIn: Login error:', error);
+        localStorage.setItem('auth_signin_error', JSON.stringify({
+          time: Date.now(),
+          message: error.message,
+          code: error.code
+        }));
+        throw error;
+      }
+      
+      console.log('[AuthContext] signIn: Login successful, session found:', !!data?.session);
+      localStorage.setItem('auth_signin_success', Date.now().toString());
+      
+      if (data?.session) {
+        // Store successful session info for diagnostics
+        localStorage.setItem('auth_signin_session_user_id', data.session.user.id);
+        
+        // Update user state right away to trigger dependent components
+        setUser(data.session.user);
+        
+        // Fetch profile immediately but don't wait for it
+        fetchUserProfile(data.session.user.id)
+          .then(() => {
+            // Set authenticated state after profile is loaded
+            setAuthState(AUTH_STATE.AUTHENTICATED);
+            localStorage.setItem('auth_profile_loaded', Date.now().toString());
+          })
+          .catch(err => {
+            console.error('[AuthContext] Error fetching initial profile:', err);
+            localStorage.setItem('auth_profile_error', JSON.stringify({
+              time: Date.now(),
+              message: err.message
+            }));
+            // Still authenticate even if profile fetch fails
+            setAuthState(AUTH_STATE.AUTHENTICATED);
+          })
+          .finally(() => {
+            // Set loading to false after we've at least tried to load profile
+            setLoading(false);
+            localStorage.setItem('auth_signin_complete', Date.now().toString());
+          });
+        
+        // Start background auth refresh but don't block on it
+        setTimeout(() => {
+          forceAuthRefresh()
+            .then(() => {
+              localStorage.setItem('auth_refresh_after_signin', Date.now().toString());
+            })
+            .catch(err => {
+              console.error('[AuthContext] Error during auth refresh after signin:', err);
+              localStorage.setItem('auth_refresh_after_signin_error', JSON.stringify({
+                time: Date.now(),
+                message: err.message
+              }));
+            });
+        }, 0);
+      } else {
+        // No session, set unauthenticated
+        console.warn('[AuthContext] signIn: Login returned success but no session data');
+        localStorage.setItem('auth_signin_no_session', Date.now().toString());
+        setAuthState(AUTH_STATE.UNAUTHENTICATED);
+        setLoading(false);
+      }
+      
+      // Return the complete data object for proper redirection
       return data;
     } catch (error) {
-      console.error('Sign in error:', error);
+      console.error('[AuthContext] Sign in error:', error);
       setError(error.message);
-      throw error;
-    } finally {
+      setAuthState(AUTH_STATE.ERROR);
       setLoading(false);
+      
+      // Store detailed error info
+      localStorage.setItem('auth_signin_critical_error', JSON.stringify({
+        time: Date.now(),
+        message: error.message,
+        stack: error.stack
+      }));
+      
+      throw error;
     }
   };
   
@@ -239,6 +397,11 @@ export function AuthProvider({ children }) {
       
       if (error) throw error;
       
+      // Force auth refresh if auto-confirmation is enabled
+      if (data?.user && data.user.confirmed_at) {
+        await forceAuthRefresh();
+      }
+      
       return { data };
     } catch (error) {
       console.error('Sign up error:', error);
@@ -249,30 +412,46 @@ export function AuthProvider({ children }) {
     }
   };
   
-  // Sign out function with better error handling
+  // Sign out function
   const signOut = async () => {
+    setLoading(true);
     setError(null);
     
     try {
-      setLoading(true);
-      
-      // First, clear local state to ensure UI updates immediately
+      // First update local state to ensure UI responsiveness
       setUser(null);
       setProfile(null);
       setIsAdmin(false);
       
-      // Then try to sign out from Supabase
+      // Then perform the actual signOut operation
       const { error } = await supabase.auth.signOut();
       
-      if (error) {
-        console.error('Sign out Supabase error:', error);
-      }
+      if (error) throw error;
       
-      // Clear any cached profile data
+      // Clear any auth-related local storage
       localStorage.removeItem('user_profile');
       localStorage.removeItem('user_profile_time');
+      localStorage.removeItem('auth_last_login');
+      localStorage.removeItem('phone_login_success');
+      localStorage.removeItem('phone_login_attempt');
       
-      return { success: true };
+      // Force auth refresh to ensure all systems recognize the logout
+      try {
+        await forceAuthRefresh();
+      } catch (refreshError) {
+        console.warn('Non-critical error during auth refresh after signout:', refreshError);
+        // Continue with signout even if refresh fails
+      }
+      
+      // Signal successful logout
+      const logoutEvent = new CustomEvent('auth-logout-complete', {
+        detail: { success: true, time: Date.now() }
+      });
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(logoutEvent);
+      }
+      
+      return true;
     } catch (error) {
       console.error('Sign out error:', error);
       setError(error.message);
@@ -318,14 +497,25 @@ export function AuthProvider({ children }) {
     }
   };
   
-  // Only log in development
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Auth state:', { 
-      user: user?.email, 
-      isAdmin, 
-      loading
-    });
-  }
+  // Only log in development and only when state changes
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      const currentState = JSON.stringify({ 
+        user: user?.email, 
+        isAdmin, 
+        loading
+      });
+      
+      if (lastLoggedState !== currentState) {
+        console.log('Auth state:', { 
+          user: user?.email, 
+          isAdmin, 
+          loading
+        });
+        setLastLoggedState(currentState);
+      }
+    }
+  }, [user, isAdmin, loading, lastLoggedState]);
   
   // Value object to provide to context consumers
   const value = {
@@ -334,6 +524,8 @@ export function AuthProvider({ children }) {
     loading,
     error,
     isAdmin,
+    authState,
+    isAuthenticated: authState === AUTH_STATE.AUTHENTICATED,
     signIn,
     signUp,
     signOut,
