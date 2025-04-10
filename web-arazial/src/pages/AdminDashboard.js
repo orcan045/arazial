@@ -92,13 +92,11 @@ const SidebarButton = styled.button`
 const ContentArea = styled.div`
   background-color: white;
   border-radius: var(--border-radius-lg);
-  padding: 1rem;
+  padding: 2rem;
   box-shadow: var(--shadow-sm);
-  overflow-x: auto;
-  
-  @media (min-width: 768px) {
-    padding: 2rem;
-  }
+  height: 1000px; /* Just make it huge so it never collapses */
+  position: relative;
+  overflow-y: auto;
 `;
 
 const SectionTitle = styled.h2`
@@ -570,21 +568,36 @@ const LoadingOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0.85);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 10;
   border-radius: var(--border-radius-md);
+  backdrop-filter: blur(2px);
+  
+  & > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    
+    span {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      font-weight: 500;
+    }
+  }
 `;
 
 const Spinner = styled.div`
-  width: 2rem;
-  height: 2rem;
-  border: 3px solid var(--color-background);
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid rgba(15, 52, 96, 0.1);
   border-top: 3px solid var(--color-primary);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: spin 0.8s linear infinite;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
   
   @keyframes spin {
     0% { transform: rotate(0deg); }
@@ -664,10 +677,24 @@ const imarDurumuOptions = [
   { value: 'TARIMSAL', label: 'Tarımsal' }
 ];
 
+// Add ContentLoadingOverlay styled component
+const ContentLoadingOverlay = styled.div`
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+`;
+
 function AdminDashboard() {
   const navigate = useNavigate();
   const { user, isAdmin: authIsAdmin, loading: authLoading, userRole } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [contentLoading, setContentLoading] = useState(false);
   const [activeSection, setActiveSection] = useState('auctions');
   const [auctions, setAuctions] = useState([]);
   const [users, setUsers] = useState([]);
@@ -683,12 +710,6 @@ function AdminDashboard() {
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
-  
-  // Add section-specific loading states
-  const [dashboardLoading, setDashboardLoading] = useState(false);
-  const [auctionsLoading, setAuctionsLoading] = useState(false);
-  const [usersLoading, setUsersLoading] = useState(false);
-  const [paymentsLoading, setPaymentsLoading] = useState(false);
   
   // Add state for tabs and filters
   const [auctionFilter, setAuctionFilter] = useState('all');
@@ -731,36 +752,63 @@ function AdminDashboard() {
   const [deposits, setDeposits] = useState([]);
   const [depositStats, setDepositStats] = useState(null);
   
+  // Track which sections have been loaded
+  const [loadedSections, setLoadedSections] = useState({});
+  
+  // Ultra simplified initialization
   useEffect(() => {
-    // Wait for auth state to be fully loaded
-    if (authLoading) {
-      console.log("Auth is still loading, waiting...");
+    if (authLoading) return;
+    
+    if (!user || !authIsAdmin) {
+      navigate(user ? '/dashboard' : '/login');
       return;
     }
     
-    console.log("Auth loaded, checking admin status:", { user: !!user, userRole, authIsAdmin });
+    // Load once and be done
+    setContentLoading(true);
+    setTimeout(() => {
+      fetchAuctions();
+      setLoading(false);
+      setContentLoading(false);
+    }, 300);
+  }, [user, authIsAdmin, authLoading, navigate]);
+  
+  // Ultra simplified section change - just show loading
+  const handleSectionChange = (section) => {
+    if (section === activeSection) return;
     
-    // Redirect non-admin users
-    if (!user) {
-      console.log("No user, redirecting to login");
-      navigate('/login');
-      return;
+    setContentLoading(true);
+    setActiveSection(section);
+    
+    setTimeout(() => {
+      fetchSectionData(section);
+      setContentLoading(false);
+    }, 300);
+  };
+  
+  // Simplified fetch - just a switch with no state changes
+  const fetchSectionData = (section) => {
+    switch (section) {
+      case 'dashboard':
+        fetchDashboardStats();
+        break;
+      case 'auctions':
+      case 'create-auction':
+      case 'auction-details':
+      case 'edit-auction':
+        fetchAuctions();
+        break;
+      case 'users':
+      case 'create-user':
+      case 'user-details':
+        fetchUsers();
+        break;
+      case 'payments':
+      case 'create-payment':
+        fetchPayments();
+        break;
     }
-    
-    if (!authIsAdmin) {
-      console.log("User is not admin, redirecting to dashboard");
-      navigate('/dashboard');
-      return;
-    }
-    
-    // Initialize storage bucket for auction images if needed
-    initializeStorage();
-    
-    // Load initial data for auctions
-    console.log("User is admin, loading auctions data");
-    fetchSectionData('auctions');
-    setLoading(false);
-  }, [user, userRole, authIsAdmin, authLoading, navigate]);
+  };
   
   // Function to initialize storage bucket
   const initializeStorage = async () => {
@@ -785,8 +833,6 @@ function AdminDashboard() {
   // Function to fetch auctions from the database or service
   const fetchAuctions = async () => {
     try {
-      setAuctionsLoading(true);
-      
       // Use the imported fetchAuctions function from auctionService
       const { data: auctionData, error: auctionError } = await fetchAuctionsService(true);
       
@@ -834,49 +880,8 @@ function AdminDashboard() {
       });
       
       setStatusCounts(counts);
-      setAuctionsLoading(false);
     } catch (error) {
       console.error('Error in fetchAuctions function:', error);
-      setAuctionsLoading(false);
-    }
-  };
-  
-  const fetchSectionData = async (section) => {
-    switch (section) {
-      case 'dashboard':
-        setDashboardLoading(true);
-        await fetchDashboardStats();
-        setDashboardLoading(false);
-        break;
-      case 'auctions':
-      case 'create-auction':
-      case 'auction-details':
-        setAuctionsLoading(true);
-        await fetchAuctions();
-        setAuctionsLoading(false);
-        break;
-      case 'users':
-      case 'create-user':
-      case 'user-details':
-        setUsersLoading(true);
-        await fetchUsers();
-        setUsersLoading(false);
-        break;
-      case 'payments':
-        setPaymentsLoading(true);
-        await fetchPayments();
-        setPaymentsLoading(false);
-        break;
-      default:
-        break;
-    }
-  };
-  
-  const handleSectionChange = (section) => {
-    setActiveSection(section);
-    
-    if (authIsAdmin) {
-      fetchSectionData(section);
     }
   };
   
@@ -1957,7 +1962,7 @@ function AdminDashboard() {
               <StatCard 
                 title="Toplam İhale"
                 value={auctions.length}
-                loading={dashboardLoading}
+                loading={loading}
                 icon={
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -1968,7 +1973,7 @@ function AdminDashboard() {
               <StatCard 
                 title="Aktif İhale"
                 value={auctions.filter(a => a.status === 'active').length}
-                loading={dashboardLoading}
+                loading={loading}
                 icon={
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10" />
@@ -1980,7 +1985,7 @@ function AdminDashboard() {
               <StatCard 
                 title="Toplam Kullanıcı"
                 value={users.length}
-                loading={dashboardLoading}
+                loading={loading}
                 icon={
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -1994,7 +1999,7 @@ function AdminDashboard() {
               <StatCard 
                 title="Toplam Ödeme"
                 value={`${payments.reduce((sum, payment) => sum + (payment.amount || 0), 0).toLocaleString('tr-TR')} TL`}
-                loading={dashboardLoading}
+                loading={loading}
                 icon={
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="2" y="5" width="20" height="14" rx="2" />
@@ -2006,9 +2011,12 @@ function AdminDashboard() {
             
             <GridContainer columns="2fr 1fr">
               <CardContainer>
-                {dashboardLoading && (
+                {loading && (
                   <LoadingOverlay>
-                    <div>Yükleniyor...</div>
+                    <div>
+                      <Spinner />
+                      <span>Yükleniyor...</span>
+                    </div>
                   </LoadingOverlay>
                 )}
                 <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>Son İhaleler</h3>
@@ -2119,9 +2127,12 @@ function AdminDashboard() {
               </CardContainer>
               
               <CardContainer>
-                {dashboardLoading && (
+                {loading && (
                   <LoadingOverlay>
-                    <div>Yükleniyor...</div>
+                    <div>
+                      <Spinner />
+                      <span>Yükleniyor...</span>
+                    </div>
                   </LoadingOverlay>
                 )}
                 <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>İhale Durumu</h3>
@@ -2176,9 +2187,12 @@ function AdminDashboard() {
             </GridContainer>
             
             <CardContainer>
-              {dashboardLoading && (
+              {loading && (
                 <LoadingOverlay>
-                  <div>Yükleniyor...</div>
+                  <div>
+                    <Spinner />
+                    <span>Yükleniyor...</span>
+                  </div>
                 </LoadingOverlay>
               )}
               <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>Son Kullanıcılar</h3>
@@ -2296,9 +2310,12 @@ function AdminDashboard() {
             </div>
             
             <CardContainer>
-              {auctionsLoading && (
+              {loading && (
                 <LoadingOverlay>
-                  <div>İlanlar yükleniyor...</div>
+                  <div>
+                    <Spinner />
+                    <span>İlanlar yükleniyor...</span>
+                  </div>
                 </LoadingOverlay>
               )}
               
@@ -2684,7 +2701,19 @@ function AdminDashboard() {
                   />
                 </label>
                 
-                {uploading && <p>Yükleniyor...</p>}
+                {uploading && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0' }}>
+                    <div style={{ 
+                      width: '1.25rem', 
+                      height: '1.25rem', 
+                      border: '2px solid rgba(15, 52, 96, 0.1)', 
+                      borderTop: '2px solid var(--color-primary)', 
+                      borderRadius: '50%',
+                      animation: 'spin 0.8s linear infinite'
+                    }}></div>
+                    <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Resimler yükleniyor...</span>
+                  </div>
+                )}
                 
                 {images.length > 0 && (
                   <>
@@ -3016,7 +3045,19 @@ function AdminDashboard() {
                   />
                 </label>
                 
-                {uploading && <p>Yükleniyor...</p>}
+                {uploading && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0' }}>
+                    <div style={{ 
+                      width: '1.25rem', 
+                      height: '1.25rem', 
+                      border: '2px solid rgba(15, 52, 96, 0.1)', 
+                      borderTop: '2px solid var(--color-primary)', 
+                      borderRadius: '50%',
+                      animation: 'spin 0.8s linear infinite'
+                    }}></div>
+                    <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>Resimler yükleniyor...</span>
+                  </div>
+                )}
                 
                 {images.length > 0 && (
                   <>
@@ -3112,9 +3153,12 @@ function AdminDashboard() {
             </div>
             
             <CardContainer>
-              {usersLoading && (
+              {loading && (
                 <LoadingOverlay>
-                  <div>Kullanıcılar yükleniyor...</div>
+                  <div>
+                    <Spinner />
+                    <span>Kullanıcılar yükleniyor...</span>
+                  </div>
                 </LoadingOverlay>
               )}
               
@@ -3257,9 +3301,12 @@ function AdminDashboard() {
             </div>
             
             <CardContainer>
-              {paymentsLoading && (
+              {loading && (
                 <LoadingOverlay>
-                  <div>Ödemeler yükleniyor...</div>
+                  <div>
+                    <Spinner />
+                    <span>Ödemeler yükleniyor...</span>
+                  </div>
                 </LoadingOverlay>
               )}
               
@@ -3571,16 +3618,8 @@ function AdminDashboard() {
   
   // Render loading state while auth is being checked
   if (authLoading || loading) {
-    return (
-      <PageContainer>
-        <PageHeader>
-          <PageTitle>Admin Dashboard</PageTitle>
-        </PageHeader>
-        <div style={{ textAlign: 'center', padding: '5rem 0' }}>
-          <p>Yükleniyor...</p>
-        </div>
-      </PageContainer>
-    );
+    // Return null to not render anything, let the AdminRoute spinner handle it
+    return null;
   }
   
   // Render content only if user is admin
@@ -3655,6 +3694,11 @@ function AdminDashboard() {
         </Sidebar>
         
         <ContentArea>
+          {contentLoading && (
+            <ContentLoadingOverlay>
+              <Spinner />
+            </ContentLoadingOverlay>
+          )}
           {!authIsAdmin ? (
             <div style={{ textAlign: 'center', padding: '2rem' }}>
               <h2>Erişim Reddedildi</h2>

@@ -575,7 +575,12 @@ const LoginPage = () => {
             </div>
             
             <div style={{ textAlign: 'right' }}>
-              <Link to="/forgot-password" style={{ fontSize: '0.875rem' }}>
+              <Link 
+                to={loginMethod === 'email' 
+                  ? `/forgot-password?email=${encodeURIComponent(email)}` 
+                  : `/forgot-password?phone=${encodeURIComponent(phoneNumber)}`} 
+                style={{ fontSize: '0.875rem' }}
+              >
                 Şifrenizi mi unuttunuz?
               </Link>
             </div>

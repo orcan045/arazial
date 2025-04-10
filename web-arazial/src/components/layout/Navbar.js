@@ -616,21 +616,6 @@ const Navbar = () => {
     try {
       setIsUserMenuOpen(false);
       
-      // Create a signout loading indicator
-      const logoutIndicator = document.createElement('div');
-      logoutIndicator.style.position = 'fixed';
-      logoutIndicator.style.top = '20px';
-      logoutIndicator.style.right = '20px';
-      logoutIndicator.style.padding = '8px 16px';
-      logoutIndicator.style.background = 'var(--color-primary-light)';
-      logoutIndicator.style.color = 'var(--color-primary)';
-      logoutIndicator.style.borderRadius = 'var(--border-radius-md)';
-      logoutIndicator.style.zIndex = '9999';
-      logoutIndicator.style.fontWeight = '500';
-      logoutIndicator.style.fontSize = '14px';
-      logoutIndicator.textContent = 'Çıkış yapılıyor...';
-      document.body.appendChild(logoutIndicator);
-      
       // Wait for signout to complete or timeout after 3 seconds
       const signoutPromise = signOut();
       const timeoutPromise = new Promise((_, reject) => 
@@ -639,21 +624,9 @@ const Navbar = () => {
       
       await Promise.race([signoutPromise, timeoutPromise]);
       
-      // Listen for auth logout complete event
-      const handleLogoutComplete = () => {
-        // Remove the loading indicator
-        if (document.body.contains(logoutIndicator)) {
-          document.body.removeChild(logoutIndicator);
-        }
-        // Navigate to home page
-        navigate('/', { replace: true });
-        // Remove the event listener
-        window.removeEventListener('auth-logout-complete', handleLogoutComplete);
-      };
+      // Navigate to home page
+      navigate('/', { replace: true });
       
-      // Add event listener and set a timeout for navigation anyway
-      window.addEventListener('auth-logout-complete', handleLogoutComplete);
-      setTimeout(handleLogoutComplete, 500); // Ensure navigation happens even if event doesn't fire
     } catch (error) {
       console.error('Logout error:', error);
       // Force manual signout if automatic signout fails

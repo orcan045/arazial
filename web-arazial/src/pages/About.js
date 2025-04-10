@@ -94,11 +94,15 @@ const About = () => {
       
       <Section>
         <Paragraph>
-          Arazialcom, arsaların ve arazilerin açık artırma yöntemiyle satışa sunulduğu modern bir dijital ihale platformudur. Türkiye'nin dört bir yanındaki araziler, güvenli ve şeffaf bir ortamda yatırımcılarla buluşur.
+          Arazialcom Gayrimenkul Sanayi ve Ticaret Limited Şirketi, Türkiye genelinde tapulu taşınmazların dijital ortamda tanıtımını ve başvuru süreçlerini yönetmek amacıyla kurulmuş bir teknoloji platformudur.
         </Paragraph>
         
         <Paragraph>
-          Amacımız; kullanıcıların kolayca katılabileceği, güvenle teklif verebileceği ve yasal sürecin eksiksiz tamamlandığı bir sistem sunmaktır. Tüm işlemler online ortamda gerçekleştirilir ve satış, resmi tapu devri ile tamamlanır.
+          Amacımız; güvenilir, şeffaf ve kolay erişilebilir bir sistem ile gayrimenkul başvuru süreçlerini dijitalleştirerek, kullanıcıların zaman ve maliyet avantajı elde etmesini sağlamaktır.
+        </Paragraph>
+
+        <Paragraph>
+          Arazialcom üzerinden yapılan işlemler satış amaçlı değil, yalnızca kullanıcıların ilgilendiği taşınmazlara katılım başvurusu yapabilmesini sağlamak amacı taşır. Bu kapsamda, her başvuru için teminat bedeli tahsil edilmekte olup, işlem gerçekleşmediği durumlarda teminat tutarı şartsız ve eksiksiz şekilde iade edilmektedir.
         </Paragraph>
       </Section>
       
@@ -108,25 +112,31 @@ const About = () => {
         <SectionTitle>Sistem Nasıl Çalışır?</SectionTitle>
         
         <Paragraph>
-          Arazialcom'da iki farklı satış türü bulunmaktadır:
+          Arazialcom'da taşınmaz başvuru süreci şu şekilde işlemektedir:
         </Paragraph>
         
         <NumberedList>
           <NumberedListItem>
-            <strong>Teklif Toplama (Açık Artırma) Süreci:</strong>
+            <strong>Taşınmaz İnceleme:</strong>
             <br />
-            Belirlenen başlangıç ve bitiş süresi boyunca kullanıcılar, araziye teminat yatırarak teklif verebilir. En yüksek teklifi veren kişi ihalenin sonunda araziyi satın alma hakkı kazanır.
+            Platformda yer alan tapulu taşınmazların detaylarını, konumunu, özelliklerini ve diğer bilgilerini dijital ortamda inceleyebilirsiniz.
           </NumberedListItem>
           
           <NumberedListItem>
-            <strong>Doğrudan Satış (Sabit Fiyatlı Satış):</strong>
+            <strong>Başvuru Yapma:</strong>
             <br />
-            Bazı araziler sabit fiyatla satışa sunulur. Teminat yatırarak bu arazilere de başvuru yapılabilir. İlk başvuru yapan kullanıcı, belirtilen süre içinde işlemleri tamamlarsa satın alma hakkını elde eder.
+            İlgilendiğiniz taşınmaza başvuru yapmak için teminat bedelini yatırarak başvuru sürecini başlatabilirsiniz.
+          </NumberedListItem>
+          
+          <NumberedListItem>
+            <strong>Başvuru Sonucu:</strong>
+            <br />
+            Başvurunuz değerlendirilir ve sonuç tarafınıza bildirilir. İşlem gerçekleşmediği durumlarda teminat tutarı şartsız ve eksiksiz şekilde iade edilir.
           </NumberedListItem>
         </NumberedList>
         
         <Paragraph>
-          Her iki satış türünde de süreç teminatla başlar ve kazanan kişiyle birlikte tapu devri işlemleri başlatılır. Tapu devri, ilgili tapu müdürlüğünde yasal olarak gerçekleştirilir.
+          Tüm süreç dijital ortamda şeffaf bir şekilde yürütülür ve kullanıcıların zaman ve maliyet avantajı elde etmesi sağlanır.
         </Paragraph>
       </Section>
       
@@ -135,15 +145,15 @@ const About = () => {
       <Section>
         <SectionTitle>Neden Arazialcom?</SectionTitle>
         <List>
-          <ListItem>Açık ve şeffaf satış modeli</ListItem>
-          <ListItem>Teminat sistemiyle güvenli ihale katılımı</ListItem>
+          <ListItem>Güvenilir ve şeffaf başvuru sistemi</ListItem>
+          <ListItem>Teminat sistemiyle güvenli katılım</ListItem>
           <ListItem>Kullanıcı dostu, hızlı ve pratik arayüz</ListItem>
-          <ListItem>İhaleyi kazanamayanlara teminat iadesi garantisi</ListItem>
-          <ListItem>Satışlar tapu müdürlüğünde resmi olarak tamamlanır</ListItem>
+          <ListItem>İşlem gerçekleşmediğinde şartsız teminat iadesi</ListItem>
+          <ListItem>Dijital ortamda tapulu taşınmaz tanıtımı ve başvuru süreci</ListItem>
         </List>
         
         <Paragraph style={{ marginTop: '2rem' }}>
-          Arazialcom, modern teknolojiyle arazi yatırım süreçlerini daha adil, daha hızlı ve daha erişilebilir hale getirmek için kurulmuştur.
+          Arazialcom, modern teknolojiyle gayrimenkul başvuru süreçlerini daha güvenilir, daha hızlı ve daha erişilebilir hale getirmek için kurulmuştur.
         </Paragraph>
       </Section>
     </AboutContainer>
