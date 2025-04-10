@@ -339,7 +339,7 @@ const ResetPasswordPage = () => {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder=""
               />
               {errors.password && <div className="error-message">{errors.password}</div>}
             </Input>
@@ -365,7 +365,7 @@ const ResetPasswordPage = () => {
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder=""
               />
               {errors.confirmPassword && <div className="error-message">{errors.confirmPassword}</div>}
             </Input>
