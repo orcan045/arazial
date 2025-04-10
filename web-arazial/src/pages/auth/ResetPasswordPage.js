@@ -209,33 +209,48 @@ const ResetPasswordPage = () => {
     console.log('[ResetPasswordPage] Current URL:', window.location.href);
     console.log('[ResetPasswordPage] Current URL hash:', hash);
     
-    // More flexible token detection - accept any hash with access_token
-    if (hash && hash.includes('access_token')) {
-      console.log('[ResetPasswordPage] Auth token detected in URL');
-      
-      // Check the current session directly
-      supabase.auth.getSession().then(({ data }) => {
-        console.log('[ResetPasswordPage] Current session data:', data);
-        
-        if (data?.session?.user) {
-          console.log('[ResetPasswordPage] User authenticated via token:', data.session.user.id);
-          // We can proceed with password reset
-          setErrorMessage('');
+    // Hide error message initially during loading
+    setErrorMessage('');
+    
+    // Only show error messages after we've had time to check the session
+    const checkSession = async () => {
+      try {
+        if (hash && hash.includes('access_token')) {
+          console.log('[ResetPasswordPage] Auth token detected in URL');
+          
+          // Check the current session directly
+          const { data } = await supabase.auth.getSession();
+          console.log('[ResetPasswordPage] Current session data:', data);
+          
+          if (data?.session?.user) {
+            console.log('[ResetPasswordPage] User authenticated via token:', data.session.user.id);
+            // We can proceed with password reset - keep errorMessage empty
+          } else {
+            console.warn('[ResetPasswordPage] No active session with the auth token');
+            setErrorMessage('Oturum doğrulanamadı. Lütfen yeni bir şifre sıfırlama bağlantısı talep ediniz.');
+          }
+        } else if (!hash) {
+          // Only show this error if there's definitely no hash AND we're not already authenticated
+          if (!isAuthenticated) {
+            console.log('[ResetPasswordPage] No hash found in URL and not authenticated');
+            setErrorMessage('Doğrulama kodu bulunamadı. Lütfen e-postanızdaki bağlantıya tıkladığınızdan emin olun.');
+          }
         } else {
-          console.warn('[ResetPasswordPage] No active session with the auth token');
-          setErrorMessage('Oturum doğrulanamadı. Lütfen yeni bir şifre sıfırlama bağlantısı talep ediniz.');
+          console.log('[ResetPasswordPage] Invalid hash format:', hash);
+          setErrorMessage('Geçersiz sıfırlama bağlantısı. Lütfen yeni bir şifre sıfırlama bağlantısı talep ediniz.');
         }
-      }).catch(error => {
+      } catch (error) {
         console.error('[ResetPasswordPage] Error checking session:', error);
         setErrorMessage('Oturum doğrulanırken hata oluştu. Lütfen yeni bir şifre sıfırlama bağlantısı talep ediniz.');
-      });
-    } else if (!hash) {
-      console.log('[ResetPasswordPage] No hash found in URL');
-      setErrorMessage('Doğrulama kodu bulunamadı. Lütfen e-postanızdaki bağlantıya tıkladığınızdan emin olun.');
-    } else {
-      console.log('[ResetPasswordPage] Invalid hash format:', hash);
-      setErrorMessage('Geçersiz sıfırlama bağlantısı. Lütfen yeni bir şifre sıfırlama bağlantısı talep ediniz.');
-    }
+      }
+    };
+    
+    // Give auth state a moment to be determined before showing errors
+    const timer = setTimeout(() => {
+      checkSession();
+    }, 1000);
+    
+    return () => clearTimeout(timer);
   }, [authState, isAuthenticated]);
   
   // Validate password form
@@ -278,7 +293,18 @@ const ResetPasswordPage = () => {
       console.log('[ResetPasswordPage] Direct password update result:', data, error);
       
       if (error) {
-        throw error;
+        // Handle specific error cases in Turkish
+        if (error.message.includes('different from the old password')) {
+          throw new Error('Yeni şifreniz eski şifrenizle aynı olamaz. Lütfen farklı bir şifre belirleyin.');
+        } else if (error.message.includes('Password should be')) {
+          throw new Error('Şifreniz en az 8 karakter uzunluğunda olmalıdır.');
+        } else if (error.message.includes('token is invalid')) {
+          throw new Error('Şifre sıfırlama bağlantısı geçersiz olmuş veya süresi dolmuş. Lütfen yeni bir şifre sıfırlama talebinde bulunun.');
+        } else if (error.message.includes('rate limit')) {
+          throw new Error('Çok fazla deneme yapıldı. Lütfen bir süre bekleyip tekrar deneyin.');
+        } else {
+          throw error;
+        }
       }
       
       // Success!
@@ -291,7 +317,7 @@ const ResetPasswordPage = () => {
       }, 3000);
     } catch (error) {
       console.error('[ResetPasswordPage] Update password error:', error);
-      setErrorMessage(`Şifre değiştirme işlemi sırasında bir hata oluştu: ${error.message || 'Bilinmeyen hata'}`);
+      setErrorMessage(error.message || 'Şifre değiştirme işlemi sırasında bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setIsLoading(false);
     }
@@ -331,8 +357,27 @@ const ResetPasswordPage = () => {
       
       {!success && (
         <AuthForm onSubmit={handleSubmit}>
+          {errorMessage && errorMessage.includes('eski şifrenizle aynı olamaz') && (
+            <div style={{
+              padding: '0.75rem',
+              marginBottom: '1rem',
+              borderRadius: '8px',
+              backgroundColor: 'rgba(255, 247, 237, 0.8)',
+              border: '1px solid #FFEDD5',
+              color: '#9A3412'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <span style={{ fontWeight: 'bold' }}>Şifre değiştirilemedi</span>
+              </div>
+              <p>{errorMessage}</p>
+            </div>
+          )}
+          
           <div style={{ position: 'relative' }}>
-            <Input error={errors.password}>
+            <Input error={errors.password || (errorMessage && errorMessage.includes('eski şifrenizle aynı olamaz'))}>
               <label htmlFor="password">Yeni Şifre</label>
               <input
                 id="password"
@@ -342,6 +387,16 @@ const ResetPasswordPage = () => {
                 placeholder=""
               />
               {errors.password && <div className="error-message">{errors.password}</div>}
+              <div style={{
+                fontSize: '0.75rem',
+                marginTop: '0.5rem',
+                color: 'var(--color-text-secondary)',
+                lineHeight: '1.4'
+              }}>
+                Şifreniz: <br />
+                • En az 8 karakter uzunluğunda olmalı<br />
+                • Eski şifrenizden farklı olmalı
+              </div>
             </Input>
             <EyeButton type="button" onClick={togglePasswordVisibility}>
               {showPassword ? (
@@ -400,6 +455,11 @@ const ResetPasswordPage = () => {
       
       <FormFooter>
         <Link to="/login">Giriş sayfasına dön</Link>
+        {errorMessage && (
+          <div style={{ marginTop: '0.5rem' }}>
+            <Link to="/forgot-password">Yeni şifre sıfırlama bağlantısı talep et</Link>
+          </div>
+        )}
       </FormFooter>
     </AuthContainer>
   );

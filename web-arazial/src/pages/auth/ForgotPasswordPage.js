@@ -226,6 +226,13 @@ const PhoneDisplay = styled.div`
   font-size: 1.125rem;
 `;
 
+const CountdownTimer = styled.div`
+  margin-top: 0.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+`;
+
 const ForgotPasswordPage = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -254,6 +261,9 @@ const ForgotPasswordPage = () => {
   const otpRefs = useRef([]);
   
   const { resetPassword } = useAuth();
+  const [cooldownTime, setCooldownTime] = useState(0);
+  const [countdown, setCountdown] = useState(0);
+  const countdownTimerRef = useRef(null);
 
   // Handle method tab change
   const handleTabChange = (method) => {
@@ -343,6 +353,11 @@ const ForgotPasswordPage = () => {
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     
+    // If still in cooldown period, don't allow submission
+    if (countdown > 0) {
+      return;
+    }
+    
     setIsLoading(true);
     setErrorMessage('');
     
@@ -352,7 +367,26 @@ const ForgotPasswordPage = () => {
       setSuccessMessage('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi! Lütfen e-postanızı kontrol ediniz.');
     } catch (error) {
       console.error('Password reset error:', error);
-      setErrorMessage('Şifre sıfırlama işlemi sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+      
+      // Check if this is a rate limit error (429 Too Many Requests)
+      if (error.message && 
+          (error.message.includes('security purposes') || 
+           error.message.includes('seconds'))) {
+        
+        // Extract the wait time from the error message
+        const timeMatch = error.message.match(/(\d+) second/);
+        const waitSeconds = timeMatch ? parseInt(timeMatch[1], 10) : 60;
+        
+        console.log(`Rate limit detected, need to wait ${waitSeconds} seconds`);
+        
+        // Set the countdown
+        setCountdown(waitSeconds);
+        
+        // Show Turkish message
+        setErrorMessage(`Güvenlik nedeniyle, ${waitSeconds} saniye sonra tekrar deneyebilirsiniz.`);
+      } else {
+        setErrorMessage('Şifre sıfırlama işlemi sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -566,6 +600,41 @@ const ForgotPasswordPage = () => {
     }
   }, [success]);
 
+  // Handle countdown timer
+  useEffect(() => {
+    if (countdown > 0) {
+      console.log(`Starting countdown timer from ${countdown} seconds`);
+      
+      // Clear any existing timer
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+      }
+      
+      // Start a new countdown timer
+      countdownTimerRef.current = setInterval(() => {
+        setCountdown(prevCount => {
+          const newCount = prevCount - 1;
+          console.log(`Countdown: ${newCount} seconds`);
+          
+          if (newCount <= 0) {
+            console.log('Countdown finished');
+            clearInterval(countdownTimerRef.current);
+            return 0;
+          }
+          
+          return newCount;
+        });
+      }, 1000);
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      if (countdownTimerRef.current) {
+        clearInterval(countdownTimerRef.current);
+      }
+    };
+  }, [countdown]);
+
   // Render different forms based on reset method and step
   const renderForm = () => {
     if (success) {
@@ -635,10 +704,36 @@ const ForgotPasswordPage = () => {
           <>
             <ConfirmationBox>
               <p>Şifre sıfırlama bağlantısı <strong>{email}</strong> adresine gönderilecektir.</p>
+              
+              {countdown > 0 && (
+                <div style={{ 
+                  marginTop: '1rem', 
+                  padding: '0.75rem', 
+                  backgroundColor: 'rgba(255, 247, 237, 0.6)', 
+                  borderRadius: '8px',
+                  border: '1px solid var(--color-warning-light, #FFEDD5)',
+                  fontSize: '0.9rem' 
+                }}>
+                  <p style={{ marginBottom: '0.5rem', fontWeight: '500', color: 'var(--color-warning-dark, #9A3412)' }}>
+                    Lütfen bekleyin
+                  </p>
+                  <p style={{ color: 'var(--color-warning, #C2410C)' }}>
+                    Güvenlik nedeniyle, {countdown} saniye sonra tekrar deneyebilirsiniz.
+                  </p>
+                </div>
+              )}
             </ConfirmationBox>
             <AuthForm onSubmit={handleEmailSubmit}>
-              <Button type="submit" fullWidth loading={isLoading}>
-                {isLoading ? 'Gönderiliyor...' : 'Şifre Sıfırlama Bağlantısı Gönder'}
+              <Button 
+                type="submit" 
+                fullWidth 
+                loading={isLoading} 
+                disabled={countdown > 0}
+                variant={countdown > 0 ? "secondary" : "primary"}
+              >
+                {isLoading ? 'Gönderiliyor...' : countdown > 0 
+                  ? `Lütfen Bekleyin (${countdown}s)` 
+                  : 'Şifre Sıfırlama Bağlantısı Gönder'}
               </Button>
             </AuthForm>
           </>
