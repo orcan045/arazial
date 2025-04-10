@@ -1385,6 +1385,7 @@ function AdminDashboard() {
             profiles!bids_bidder_id_fkey (
               id,
               full_name,
+              email,
               phone_number,
               avatar_url
             )
@@ -1413,6 +1414,7 @@ function AdminDashboard() {
             profiles:user_id (
               id,
               full_name,
+              email,
               phone_number,
               avatar_url
             )
@@ -1858,17 +1860,76 @@ function AdminDashboard() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // First fetch auth users with our new admin edge function
+      const { data: authData, error: authError } = await supabase.functions.invoke('admin-get-users', {
+        body: {
+          page: 1,
+          limit: 100, // Fetch up to 100 users
+          search: '',
+          role: ''
+        }
+      });
       
-      if (error) {
-        console.error(`Error fetching users:`, error);
-        setUsers([]);
-      } else {
-        setUsers(data || []);
+      if (authError) {
+        console.error('Error fetching auth users:', authError);
+        // Fall back to just profiles if edge function fails
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          setUsers([]);
+        } else {
+          setUsers(profilesData || []);
+        }
+        return;
       }
+      
+      // Now fetch profile data to merge with auth users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*');
+        
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        // Just use auth users if profiles fetch fails
+        setUsers(authData.users || []);
+        return;
+      }
+      
+      // Create a map of profiles by user id
+      const profilesMap = profilesData.reduce((map, profile) => {
+        map[profile.id] = profile;
+        return map;
+      }, {});
+      
+      // Merge auth users with their profiles
+      const mergedUsers = authData.users.map(authUser => {
+        const profile = profilesMap[authUser.id] || {};
+        
+        return {
+          id: authUser.id,
+          email: authUser.email,
+          phone: authUser.phone,
+          role: profile.role || 'user',
+          full_name: authUser.user_metadata?.full_name || profile.full_name || '',
+          avatar_url: profile.avatar_url || null,
+          created_at: authUser.created_at || profile.created_at,
+          updated_at: authUser.updated_at || profile.updated_at,
+          last_sign_in_at: authUser.last_sign_in_at,
+          confirmed_at: authUser.confirmed_at,
+          email_confirmed_at: authUser.email_confirmed_at,
+          phone_confirmed_at: authUser.phone_confirmed_at,
+          banned_until: authUser.banned_until,
+          is_banned: authUser.banned_until && new Date(authUser.banned_until) > new Date(),
+          is_deleted: !!profile.deleted_at,
+          ...profile  // Include any other profile fields
+        };
+      });
+      
+      setUsers(mergedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
       setUsers([]);
@@ -2202,44 +2263,111 @@ function AdminDashboard() {
                   <Table>
                     <TableHead>
                       <TableRow>
+                        <TableHeader style={{ width: '60px' }}></TableHeader>
                         <TableHeader>Ad Soyad</TableHeader>
                         <TableHeader>E-posta</TableHeader>
                         <TableHeader>Telefon</TableHeader>
                         <TableHeader>Rol</TableHeader>
-                        <TableHeader>Kayıt Tarihi</TableHeader>
+                        <TableHeader>Son Giriş</TableHeader>
+                        <TableHeader>Durum</TableHeader>
                         <TableHeader>İşlemler</TableHeader>
                       </TableRow>
                     </TableHead>
                     <tbody>
-                      {users.map(user => (
-                        <TableRow key={user.id}>
-                          <TableCell>{user.full_name || '-'}</TableCell>
-                          <TableCell>{user.email}</TableCell>
-                          <TableCell>{user.phone || '-'}</TableCell>
-                          <TableCell>
-                            <StatusBadge status={user.role === 'admin' ? 'active' : 'completed'}>
-                              {user.role === 'admin' ? 'Yönetici' : 'Kullanıcı'}
-                            </StatusBadge>
-                          </TableCell>
-                          <TableCell>{formatDate(user.created_at)}</TableCell>
-                          <TableCell>
-                            <ActionButton 
-                              variant="primary" 
-                              size="small"
-                              onClick={() => handleViewUserDetails(user.id)}
-                            >
-                              Detaylar
-                            </ActionButton>
-                            <ActionButton 
-                              variant={user.role === 'admin' ? 'secondary' : 'primary'} 
-                              size="small"
-                              onClick={() => handleUpdateUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
-                            >
-                              {user.role === 'admin' ? 'Kullanıcı Yap' : 'Yönetici Yap'}
-                            </ActionButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {users
+                        .filter(user => auctionFilter === 'all' || user.role === auctionFilter)
+                        .map(user => (
+                          <TableRow key={user.id}>
+                            <TableCell>
+                              {user.avatar_url ? (
+                                <div style={{ 
+                                  width: '50px', 
+                                  height: '50px', 
+                                  borderRadius: '50%',
+                                  overflow: 'hidden' 
+                                }}>
+                                  <img 
+                                    src={user.avatar_url} 
+                                    alt={user.full_name} 
+                                    style={{ 
+                                      width: '100%', 
+                                      height: '100%', 
+                                      objectFit: 'cover'
+                                    }} 
+                                  />
+                                </div>
+                              ) : (
+                                <div style={{ 
+                                  width: '50px', 
+                                  height: '50px', 
+                                  backgroundColor: 'var(--color-background)',
+                                  borderRadius: '50%',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: 'var(--color-text-secondary)'
+                                }}>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                    <circle cx="12" cy="7" r="4" />
+                                  </svg>
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell>{user.full_name || '-'}</TableCell>
+                            <TableCell>
+                              {user.email || '-'}
+                              {user.email_confirmed_at && (
+                                <span style={{ 
+                                  marginLeft: '8px', 
+                                  color: 'var(--color-success)',
+                                  fontSize: '0.75rem' 
+                                }}>✓</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {user.phone || '-'}
+                              {user.phone_confirmed_at && (
+                                <span style={{ 
+                                  marginLeft: '8px', 
+                                  color: 'var(--color-success)',
+                                  fontSize: '0.75rem' 
+                                }}>✓</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <StatusBadge status={user.role === 'admin' ? 'active' : 'completed'}>
+                                {user.role === 'admin' ? 'Yönetici' : 'Kullanıcı'}
+                              </StatusBadge>
+                            </TableCell>
+                            <TableCell>{user.last_sign_in_at ? formatDate(user.last_sign_in_at) : '-'}</TableCell>
+                            <TableCell>
+                              {user.is_banned ? (
+                                <StatusBadge status="error">Engelli</StatusBadge>
+                              ) : user.is_deleted ? (
+                                <StatusBadge status="error">Silinmiş</StatusBadge>
+                              ) : (
+                                <StatusBadge status="active">Aktif</StatusBadge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <ActionButton 
+                                variant="primary" 
+                                size="small"
+                                onClick={() => handleViewUserDetails(user.id)}
+                              >
+                                Detaylar
+                              </ActionButton>
+                              <ActionButton 
+                                variant={user.role === 'admin' ? 'secondary' : 'primary'} 
+                                size="small"
+                                onClick={() => handleUpdateUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
+                              >
+                                {user.role === 'admin' ? 'Kullanıcı Yap' : 'Yönetici Yap'}
+                              </ActionButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
                     </tbody>
                   </Table>
                 </TableContainer>
@@ -3172,26 +3300,27 @@ function AdminDashboard() {
                       <TableHeader>E-posta</TableHeader>
                       <TableHeader>Telefon</TableHeader>
                       <TableHeader>Rol</TableHeader>
-                      <TableHeader>Kayıt Tarihi</TableHeader>
+                      <TableHeader>Son Giriş</TableHeader>
+                      <TableHeader>Durum</TableHeader>
                       <TableHeader>İşlemler</TableHeader>
                     </TableRow>
                   </TableHead>
                   <tbody>
                     {users
                       .filter(user => auctionFilter === 'all' || user.role === auctionFilter)
-                      .map(item => (
-                        <TableRow key={item.id}>
+                      .map(user => (
+                        <TableRow key={user.id}>
                           <TableCell>
-                            {item.images && item.images.length > 0 ? (
+                            {user.avatar_url ? (
                               <div style={{ 
                                 width: '50px', 
                                 height: '50px', 
-                                borderRadius: 'var(--border-radius-sm)',
+                                borderRadius: '50%',
                                 overflow: 'hidden' 
                               }}>
                                 <img 
-                                  src={item.images[0]} 
-                                  alt={item.title} 
+                                  src={user.avatar_url} 
+                                  alt={user.full_name} 
                                   style={{ 
                                     width: '100%', 
                                     height: '100%', 
@@ -3204,42 +3333,69 @@ function AdminDashboard() {
                                 width: '50px', 
                                 height: '50px', 
                                 backgroundColor: 'var(--color-background)',
-                                borderRadius: 'var(--border-radius-sm)',
+                                borderRadius: '50%',
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center'
+                                justifyContent: 'center',
+                                color: 'var(--color-text-secondary)'
                               }}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                                  <circle cx="8.5" cy="8.5" r="1.5" />
-                                  <polyline points="21 15 16 10 5 21" />
+                                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                  <circle cx="12" cy="7" r="4" />
                                 </svg>
                               </div>
                             )}
                           </TableCell>
-                          <TableCell>{item.full_name || '-'}</TableCell>
-                          <TableCell>{item.email}</TableCell>
-                          <TableCell>{item.phone || '-'}</TableCell>
+                          <TableCell>{user.full_name || '-'}</TableCell>
                           <TableCell>
-                            <StatusBadge status={item.role === 'admin' ? 'active' : 'completed'}>
-                              {item.role === 'admin' ? 'Yönetici' : 'Kullanıcı'}
+                            {user.email || '-'}
+                            {user.email_confirmed_at && (
+                              <span style={{ 
+                                marginLeft: '8px', 
+                                color: 'var(--color-success)',
+                                fontSize: '0.75rem' 
+                              }}>✓</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {user.phone || '-'}
+                            {user.phone_confirmed_at && (
+                              <span style={{ 
+                                marginLeft: '8px', 
+                                color: 'var(--color-success)',
+                                fontSize: '0.75rem' 
+                              }}>✓</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <StatusBadge status={user.role === 'admin' ? 'active' : 'completed'}>
+                              {user.role === 'admin' ? 'Yönetici' : 'Kullanıcı'}
                             </StatusBadge>
                           </TableCell>
-                          <TableCell>{formatDate(item.created_at)}</TableCell>
+                          <TableCell>{user.last_sign_in_at ? formatDate(user.last_sign_in_at) : '-'}</TableCell>
+                          <TableCell>
+                            {user.is_banned ? (
+                              <StatusBadge status="error">Engelli</StatusBadge>
+                            ) : user.is_deleted ? (
+                              <StatusBadge status="error">Silinmiş</StatusBadge>
+                            ) : (
+                              <StatusBadge status="active">Aktif</StatusBadge>
+                            )}
+                          </TableCell>
                           <TableCell>
                             <ActionButton 
                               variant="primary" 
                               size="small"
-                              onClick={() => handleViewUserDetails(item.id)}
+                              onClick={() => handleViewUserDetails(user.id)}
                             >
                               Detaylar
                             </ActionButton>
                             <ActionButton 
-                              variant={item.role === 'admin' ? 'secondary' : 'primary'} 
+                              variant={user.role === 'admin' ? 'secondary' : 'primary'} 
                               size="small"
-                              onClick={() => handleUpdateUserRole(item.id, item.role === 'admin' ? 'user' : 'admin')}
+                              onClick={() => handleUpdateUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
                             >
-                              {item.role === 'admin' ? 'Kullanıcı Yap' : 'Yönetici Yap'}
+                              {user.role === 'admin' ? 'Kullanıcı Yap' : 'Yönetici Yap'}
                             </ActionButton>
                           </TableCell>
                         </TableRow>

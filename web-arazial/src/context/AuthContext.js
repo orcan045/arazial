@@ -17,6 +17,7 @@ const AUTH_STATE = {
   LOADING: 'loading',      // Initial loading state
   AUTHENTICATED: 'authenticated',  // User is logged in
   UNAUTHENTICATED: 'unauthenticated', // User is not logged in
+  RECOVERY: 'recovery',    // Password recovery mode
   ERROR: 'error'       // Error occurred
 };
 
@@ -93,6 +94,30 @@ export function AuthProvider({ children }) {
         // Subscribe to auth changes
         const subscription = supabase.auth.onAuthStateChange(async (event, session) => {
           debug('[AuthContext] Auth state changed:', event, session ? `User: ${session.user.id}` : 'No session');
+          
+          // Specific handling for password recovery flow
+          if (event === 'PASSWORD_RECOVERY') {
+            console.log('[AuthContext] Password recovery mode detected');
+            
+            // Set special recovery state
+            setAuthState(AUTH_STATE.RECOVERY);
+            
+            // Store user from session for the password update operation
+            if (session?.user) {
+              setUser(session.user);
+            }
+            
+            // Make sure they stay on the reset-password page
+            if (!window.location.pathname.includes('reset-password')) {
+              console.log('[AuthContext] Redirecting to reset-password page');
+              window.location.href = '/reset-password' + window.location.hash;
+            } else {
+              console.log('[AuthContext] Already on reset-password page');
+            }
+            
+            setLoading(false);
+            return; // Don't continue with other auth logic
+          }
           
           try {
             if (session?.user) {
@@ -558,7 +583,7 @@ export function AuthProvider({ children }) {
     error,
     isAdmin,
     authState,
-    isAuthenticated: authState === AUTH_STATE.AUTHENTICATED,
+    isAuthenticated: authState === AUTH_STATE.AUTHENTICATED || authState === AUTH_STATE.RECOVERY,
     signIn,
     signUp,
     signOut,

@@ -13,6 +13,7 @@ import Layout from './components/layout/Layout';
 import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import Dashboard from './pages/Dashboard';
 import AuctionDetail from './pages/AuctionDetail';
 import Auctions from './pages/Auctions';
@@ -236,6 +237,41 @@ const App = () => {
     // Check for access_token in the URL to detect returning from email confirmation
     if (window.location.hash && window.location.hash.includes('access_token')) {
       console.log("[App] Detected auth redirect, handling session");
+      console.log("[App] FULL HASH:", window.location.hash); // Log the full hash to inspect
+      
+      // Check if this redirect has already been handled by our reset password flow
+      if (localStorage.getItem('redirected_to_reset') === 'true') {
+        const redirectTime = parseInt(localStorage.getItem('redirect_time') || '0', 10);
+        const timeElapsed = Date.now() - redirectTime;
+        
+        // If redirected within the last 10 seconds, skip normal auth processing
+        if (timeElapsed < 10000) {
+          console.log("[App] This redirect was already handled by reset password flow, skipping normal auth processing");
+          clearTimeout(failSafeTimer);
+          setHandlingRedirect(false);
+          return;
+        } else {
+          // Clear old redirect info
+          localStorage.removeItem('redirected_to_reset');
+          localStorage.removeItem('redirect_time');
+        }
+      }
+      
+      // Check if this is a password reset link even without type=recovery
+      const isLikelyPasswordReset = window.location.hash.includes('type=') &&
+        (window.location.hash.includes('recovery') || window.location.hash.includes('passwordReset'));
+      
+      if (isLikelyPasswordReset) {
+        console.log("[App] This appears to be a password reset link");
+        
+        // If we're not already on the reset-password page, redirect there
+        if (window.location.pathname !== '/reset-password') {
+          console.log("[App] Redirecting to reset-password page with hash");
+          window.location.href = `/reset-password${window.location.hash}`;
+          clearTimeout(failSafeTimer);
+          return; // Stop processing
+        }
+      }
       
       // Store timestamp of email confirmation redirect
       localStorage.setItem('auth_redirect_detected', Date.now().toString());
@@ -310,6 +346,33 @@ const App = () => {
       .catch(error => {
         console.error('[App] Failed to initialize auction service:', error);
       });
+  }, []);
+  
+  // Add a special effect to handle auth tokens directly
+  useEffect(() => {
+    // Check for any auth tokens in URL that might be password reset links
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      console.log('[App] AUTH TOKEN DETECTED in hash:', window.location.hash);
+      
+      // Store for debugging
+      localStorage.setItem('last_auth_hash', window.location.hash);
+      
+      // If not already on reset password page, redirect there
+      if (window.location.pathname !== '/reset-password') {
+        console.log('[App] Not on reset-password page, redirecting there with hash');
+        
+        // Store redirect info
+        localStorage.setItem('redirected_to_reset', 'true');
+        localStorage.setItem('redirect_time', Date.now().toString());
+        
+        // Redirect to reset password page with the hash
+        const fullResetUrl = `/reset-password${window.location.hash}`;
+        console.log('[App] Redirecting to:', fullResetUrl);
+        window.location.replace(fullResetUrl);
+      } else {
+        console.log('[App] Already on reset-password page');
+      }
+    }
   }, []);
   
   // Show a loading spinner if we're handling an email confirmation redirect
@@ -424,6 +487,15 @@ const App = () => {
             element={
               <AuthLayout>
                 <ForgotPasswordPage />
+              </AuthLayout>
+            } 
+          />
+          
+          <Route 
+            path="/reset-password" 
+            element={
+              <AuthLayout>
+                <ResetPasswordPage />
               </AuthLayout>
             } 
           />
