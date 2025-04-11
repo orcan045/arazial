@@ -63,6 +63,7 @@ const FormFooter = styled.div`
 const InputWrapper = styled.div`
   position: relative;
   margin-bottom: 1.5rem;
+  width: 100%;
 `;
 
 const Input = styled.div`
@@ -156,23 +157,41 @@ const SuccessMessage = styled.div`
   font-size: 0.875rem;
 `;
 
-const EyeButton = styled.button`
-  position: absolute;
-  right: 0.75rem;
-  top: 2.2rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-secondary);
-  
-  svg {
-    width: 1.25rem;
-    height: 1.25rem;
-  }
-`;
+// Update EyeButton to use inline styles for better positioning
+const EyeButton = ({ isVisible, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    style={{
+      position: 'absolute',
+      right: '12px',
+      top: '38px', // Positioned to align with the input field
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      color: 'var(--color-text-secondary)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '24px',
+      width: '24px',
+      padding: 0,
+      zIndex: 2
+    }}
+  >
+    {isVisible ? (
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+      </svg>
+    ) : (
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    )}
+  </button>
+);
 
 const BackLink = styled(Link)`
   display: flex;
@@ -329,12 +348,11 @@ const ResetPasswordPage = () => {
     }
   };
   
-  // Toggle password visibility
+  // Update toggle functions to use the new EyeButton component
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
   
-  // Toggle confirm password visibility
   const toggleConfirmPasswordVisibility = () => {
     setShowConfirmPassword(!showConfirmPassword);
   };
@@ -404,18 +422,7 @@ const ResetPasswordPage = () => {
                 • Eski şifrenizden farklı olmalı
               </div>
             </Input>
-            <EyeButton type="button" onClick={togglePasswordVisibility}>
-              {showPassword ? (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              )}
-            </EyeButton>
+            <EyeButton isVisible={showPassword} onClick={togglePasswordVisibility} />
           </InputWrapper>
           
           <InputWrapper>
@@ -430,18 +437,7 @@ const ResetPasswordPage = () => {
               />
               {errors.confirmPassword && <div className="error-message">{errors.confirmPassword}</div>}
             </Input>
-            <EyeButton type="button" onClick={toggleConfirmPasswordVisibility}>
-              {showConfirmPassword ? (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              )}
-            </EyeButton>
+            <EyeButton isVisible={showConfirmPassword} onClick={toggleConfirmPasswordVisibility} />
           </InputWrapper>
           
           <Button type="submit" fullWidth loading={isLoading}>
