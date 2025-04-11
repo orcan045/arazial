@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../context/AuthContext';
@@ -122,9 +122,26 @@ const TableContainer = styled.div`
   -webkit-overflow-scrolling: touch;
   
   @media (max-width: 767px) {
-    margin: 0 -1rem;
-    width: calc(100% + 2rem);
+    margin: 0;
+    width: 100%;
     border-radius: 0;
+    
+    /* Hide less important columns on mobile */
+    .hide-on-mobile {
+      display: none;
+    }
+    
+    /* Make buttons stack vertically */
+    td:last-child {
+      display: flex;
+      flex-direction: column;
+      padding: 0.5rem;
+      
+      button {
+        margin: 0.25rem 0;
+        width: 100%;
+      }
+    }
   }
 `;
 
@@ -138,6 +155,7 @@ const Table = styled.table`
   
   @media (max-width: 767px) {
     display: block;
+    width: 100%;
     
     thead, tbody, tr {
       display: block;
@@ -164,11 +182,15 @@ const TableRow = styled.tr`
   }
   
   @media (max-width: 767px) {
-    padding: 1rem;
+    padding: 1.25rem 1rem;
+    margin-bottom: 1.5rem;
     border-bottom: 10px solid var(--color-background);
     position: relative;
     display: flex;
     flex-wrap: wrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    background: white;
+    border-radius: var(--border-radius-md);
     
     &:first-child {
       border-top: 10px solid var(--color-background);
@@ -191,26 +213,22 @@ const TableCell = styled.td`
     display: block;
     padding: 0.5rem 0;
     width: 100%;
-    text-align: right;
+    text-align: left;
     position: relative;
-    padding-left: 45%;
     border: none;
     
     &:before {
       content: attr(data-label);
-      position: absolute;
-      left: 0;
-      width: 40%;
-      white-space: nowrap;
       font-weight: 600;
-      text-align: left;
+      display: block;
+      margin-bottom: 0.25rem;
     }
     
     &:first-child {
-      padding: 0;
+      padding-bottom: 1rem;
       margin-bottom: 0.5rem;
       text-align: center;
-      padding-left: 0;
+      border-bottom: 1px solid var(--color-border);
       
       &:before {
         display: none;
@@ -223,17 +241,16 @@ const TableCell = styled.td`
     
     &:last-child {
       display: flex;
+      flex-direction: column;
       flex-wrap: wrap;
-      justify-content: flex-start;
-      padding-left: 0;
+      justify-content: center;
       margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--color-border);
       
       button {
-        margin: 0.25rem;
-        flex: 1 0 auto;
-        max-width: calc(50% - 0.5rem);
-        min-width: calc(50% - 0.5rem);
-        justify-content: center;
+        margin: 0.25rem 0;
+        width: 100%;
       }
     }
   }
@@ -248,6 +265,14 @@ const ActionButton = styled(Button)`
   
   &:last-child {
     margin-right: 0;
+  }
+  
+  @media (max-width: 767px) {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    width: 100%;
+    margin-right: 0;
+    justify-content: center;
   }
 `;
 
@@ -701,6 +726,10 @@ const CardContainer = styled.div`
   padding: 1.5rem;
   position: relative;
   min-height: 100px;
+  
+  @media (max-width: 767px) {
+    padding: 1rem;
+  }
 `;
 
 const RelativeContainer = styled(CardContainer)`
@@ -777,6 +806,207 @@ const ContentLoadingOverlay = styled.div`
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 `;
+
+// Hide less important columns on mobile to save space
+const hideOnMobile = css`
+  @media (max-width: 767px) {
+    display: none;
+  }
+`;
+
+// Helper components to selectively hide columns on mobile
+const MobileHidden = styled.div`
+  ${hideOnMobile}
+`;
+
+// Mobile-only components
+const MobileOnly = styled.div`
+  display: none;
+  
+  @media (max-width: 767px) {
+    display: block;
+  }
+`;
+
+// Mobile-optimized card view for tables
+const MobileCardView = styled.div`
+  display: none;
+  
+  @media (max-width: 767px) {
+    display: block;
+    margin-top: 1rem;
+  }
+`;
+
+const MobileCard = styled.div`
+  background: white;
+  border-radius: var(--border-radius-md);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+`;
+
+const MobileCardHeader = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  
+  .image-container {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--color-background);
+  }
+  
+  .title-container {
+    flex: 1;
+    
+    h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin: 0 0 0.25rem 0;
+    }
+    
+    .status {
+      display: inline-block;
+    }
+  }
+`;
+
+const MobileCardContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  
+  .item {
+    display: flex;
+    justify-content: space-between;
+    
+    .label {
+      font-weight: 500;
+      color: var(--color-text-secondary);
+    }
+    
+    .value {
+      text-align: right;
+      font-weight: 400;
+    }
+  }
+`;
+
+const MobileCardActions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+  
+  button {
+    flex: 1;
+    min-width: 100px;
+    justify-content: center;
+  }
+`;
+
+.desktop-only {
+  @media (max-width: 767px) {
+    display: none;
+  }
+}
+
+.mobile-only {
+  display: none;
+  @media (max-width: 767px) {
+    display: block;
+  }
+}
+
+@media (max-width: 767px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+  
+  .table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Apply to specific columns you want to hide */
+  .column-hide-mobile {
+    display: none;
+  }
+  
+  /* Make action buttons stack vertically on mobile */
+  .action-buttons-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .action-buttons-mobile button {
+    width: 100%;
+    margin: 3px 0;
+  }
+  
+  /* Make card-style rows for mobile */
+  .mobile-card-row {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .mobile-card-header {
+    display: flex;
+    margin-bottom: 10px;
+    align-items: center;
+  }
+  
+  .mobile-card-content {
+    margin-bottom: 15px;
+  }
+  
+  .mobile-card-content .item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 8px;
+  }
+  
+  .mobile-card-content .label {
+    font-weight: 500;
+    color: #666;
+  }
+  
+  .mobile-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .mobile-card-actions button {
+    flex: 1;
+    min-width: 80px;
+  }
+}
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -2340,11 +2570,10 @@ function AdminDashboard() {
                 <LoadingOverlay>
                   <div>
                     <Spinner />
-                    <span>Yükleniyor...</span>
+                    <span>Son Kullanıcılar</span>
                   </div>
                 </LoadingOverlay>
               )}
-              <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>Son Kullanıcılar</h3>
               
               {users.length > 0 ? (
                 <TableContainer>
@@ -2535,6 +2764,105 @@ function AdminDashboard() {
                 </LoadingOverlay>
               )}
               
+              {/* Display table on larger screens, hidden on mobile */}
+              <div className="desktop-only">
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableHeader style={{ width: '60px' }}></TableHeader>
+                        <TableHeader>Başlık</TableHeader>
+                        <TableHeader>Tür</TableHeader>
+                        <TableHeader>Fiyat</TableHeader>
+                        <TableHeader>Bitiş Tarihi</TableHeader>
+                        <TableHeader>Durum</TableHeader>
+                        <TableHeader>İşlemler</TableHeader>
+                      </TableRow>
+                    </TableHead>
+                    <tbody>
+                      {auctions
+                        .filter(auction => auctionFilter === 'all' || auction.status === auctionFilter)
+                        .map(item => (
+                          <TableRow key={item.id}>
+                            <TableCell>
+                              {item.images && item.images.length > 0 ? (
+                                <div style={{ 
+                                  width: '50px', 
+                                  height: '50px', 
+                                  borderRadius: 'var(--border-radius-sm)',
+                                  overflow: 'hidden' 
+                                }}>
+                                  <img 
+                                    src={item.images[0]} 
+                                    alt={item.title} 
+                                    style={{ 
+                                      width: '100%', 
+                                      height: '100%', 
+                                      objectFit: 'cover'
+                                    }} 
+                                  />
+                                </div>
+                              ) : (
+                                <div style={{ 
+                                  width: '50px', 
+                                  height: '50px', 
+                                  backgroundColor: 'var(--color-background)',
+                                  borderRadius: 'var(--border-radius-sm)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}>
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                    <circle cx="8.5" cy="8.5" r="1.5" />
+                                    <polyline points="21 15 16 10 5 21" />
+                                  </svg>
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell data-label="Başlık">{item.title}</TableCell>
+                            <TableCell data-label="Tür">{item.listing_type === 'auction' || item.listingType === 'auction' ? 'İhale' : 'Pazarlık'}</TableCell>
+                            <TableCell data-label="Fiyat">{item.starting_price?.toLocaleString('tr-TR') || item.start_price?.toLocaleString('tr-TR')} TL</TableCell>
+                            <TableCell data-label="Bitiş Tarihi">{formatDate(item.end_date || item.endDate)}</TableCell>
+                            <TableCell data-label="Durum">
+                              <StatusBadge status={item.status}>
+                                {getStatusText(item.status)}
+                              </StatusBadge>
+                            </TableCell>
+                            <TableCell data-label="İşlemler">
+                              <ActionButton 
+                                variant="primary"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewAuctionDetails(item.id);
+                                }}
+                              >
+                                Detaylar
+                              </ActionButton>
+                              <ActionButton 
+                                variant="warning"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedAuctionId(item.id);
+                                  handleSectionChange('edit-auction');
+                                }}
+                              >
+                                Düzenle
+                              </ActionButton>
+                              <ActionButton 
+                                variant="danger"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm('Bu ilanı silmek istediğinize emin misiniz?')) {
+                                    handleDeleteAuction(item.id);
+                                  }
+                                }}
+                              >
+                                Sil
+                              </ActionButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
               {/* Single table for all listings */}
               <TableContainer>
                 <Table>
@@ -3750,12 +4078,12 @@ function AdminDashboard() {
                       <tbody>
                         {bids.map(bid => (
                           <TableRow key={bid.id}>
-                            <TableCell>{bid.profiles?.full_name || 'İsimsiz'}</TableCell>
-                            <TableCell>{bid.profiles?.email || '-'}</TableCell>
-                            <TableCell>{bid.profiles?.phone_number || '-'}</TableCell>
-                            <TableCell>{bid.amount?.toLocaleString('tr-TR')} TL</TableCell>
-                            <TableCell>{formatDate(bid.created_at)}</TableCell>
-                            <TableCell>
+                            <TableCell data-label="Teklif Veren">{bid.profiles?.full_name || 'İsimsiz'}</TableCell>
+                            <TableCell data-label="E-posta">{bid.profiles?.email || '-'}</TableCell>
+                            <TableCell data-label="Telefon">{bid.profiles?.phone_number || '-'}</TableCell>
+                            <TableCell data-label="Teklif Tutarı">{bid.amount?.toLocaleString('tr-TR')} TL</TableCell>
+                            <TableCell data-label="Teklif Tarihi">{formatDate(bid.created_at)}</TableCell>
+                            <TableCell data-label="Durum">
                               {bid.isHighestBid ? (
                                 <StatusBadge status={'active'}>En Yüksek</StatusBadge>
                               ) : (
@@ -3798,12 +4126,12 @@ function AdminDashboard() {
                       <tbody>
                         {selectedAuctionOffers.map(offer => (
                           <TableRow key={offer.id}>
-                            <TableCell>{offer.profiles?.full_name || 'İsimsiz'}</TableCell>
-                            <TableCell>{offer.profiles?.email || '-'}</TableCell>
-                            <TableCell>{offer.profiles?.phone_number || '-'}</TableCell>
-                            <TableCell>{offer.amount?.toLocaleString('tr-TR')} TL</TableCell>
-                            <TableCell>{formatDate(offer.created_at)}</TableCell>
-                            <TableCell>
+                            <TableCell data-label="Teklif Veren">{offer.profiles?.full_name || 'İsimsiz'}</TableCell>
+                            <TableCell data-label="E-posta">{offer.profiles?.email || '-'}</TableCell>
+                            <TableCell data-label="Telefon">{offer.profiles?.phone_number || '-'}</TableCell>
+                            <TableCell data-label="Teklif Tutarı">{offer.amount?.toLocaleString('tr-TR')} TL</TableCell>
+                            <TableCell data-label="Teklif Tarihi">{formatDate(offer.created_at)}</TableCell>
+                            <TableCell data-label="Durum">
                               <StatusBadge status={
                                 offer.status === 'accepted' ? 'completed' :
                                 offer.status === 'rejected' ? 'error' :
@@ -3814,14 +4142,21 @@ function AdminDashboard() {
                                  'Beklemede'}
                               </StatusBadge>
                             </TableCell>
-                            <TableCell>
+                            <TableCell data-label="İşlemler">
                               {offer.status === 'pending' && (
-                                <div style={{ display: 'flex', gap: '8px' }}>
+                                <div style={{ 
+                                  display: 'flex', 
+                                  flexWrap: 'wrap',
+                                  gap: '8px',
+                                  justifyContent: 'flex-end',
+                                  width: '100%'
+                                }}>
                                   <ActionButton
                                     size="small"
                                     variant="primary"
                                     onClick={() => handleAcceptOffer(offer.id)}
                                     disabled={actionLoading}
+                                    style={{ minWidth: '80px' }}
                                   >
                                     Kabul Et
                                   </ActionButton>
@@ -3830,6 +4165,7 @@ function AdminDashboard() {
                                     variant="danger"
                                     onClick={() => handleRejectOffer(offer.id)}
                                     disabled={actionLoading}
+                                    style={{ minWidth: '80px' }}
                                   >
                                     Reddet
                                   </ActionButton>
