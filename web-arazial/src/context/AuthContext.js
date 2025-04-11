@@ -93,6 +93,30 @@ export function AuthProvider({ children }) {
         
         // Subscribe to auth changes
         const subscription = supabase.auth.onAuthStateChange(async (event, session) => {
+          // Enhanced debugging for all auth events
+          console.log('[AuthContext] Auth event received:', {
+            event,
+            sessionExists: !!session,
+            userId: session?.user?.id,
+            url: window.location.href,
+            hash: window.location.hash,
+            pathname: window.location.pathname
+          });
+          
+          // Try to parse hash params for debugging
+          if (window.location.hash) {
+            try {
+              const hashParams = {};
+              window.location.hash.substring(1).split('&').forEach(item => {
+                const [key, value] = item.split('=');
+                hashParams[key] = decodeURIComponent(value);
+              });
+              console.log('[AuthContext] Hash parameters:', hashParams);
+            } catch (e) {
+              console.log('[AuthContext] Failed to parse hash params:', e);
+            }
+          }
+          
           debug('[AuthContext] Auth state changed:', event, session ? `User: ${session.user.id}` : 'No session');
           
           // Specific handling for password recovery flow
@@ -120,12 +144,15 @@ export function AuthProvider({ children }) {
           }
           
           // Specific handling for email confirmation flow
-          if (event === 'EMAIL_CONFIRMED') {
+          if (event === 'EMAIL_CONFIRMED' || 
+              (event === 'SIGNED_IN' && window.location.hash && window.location.hash.includes('type=email_confirmation'))) {
             console.log('[AuthContext] Email confirmation detected');
             debug('[AuthContext] Email confirmed, updating auth state');
             
             // Store confirmation time for debugging
             localStorage.setItem('auth_email_confirmed', Date.now().toString());
+            localStorage.setItem('auth_email_confirmed_event', event);
+            localStorage.setItem('auth_email_confirmed_hash', window.location.hash);
             
             if (session?.user) {
               setUser(session.user);
