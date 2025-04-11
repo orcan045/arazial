@@ -92,7 +92,7 @@ const PrivacyPolicy = () => {
 
       <ContentSection>
         <Paragraph>
-          Arazialcom Gayrimenkul Sanayi ve Ticaret Limited Şirketi ("Arazialcom" olarak anılacaktır) olarak, kullanıcılarımızın kişisel verilerinin güvenliğine önem veriyoruz.
+          arazialcom Gayrimenkul Sanayi ve Ticaret Limited Şirketi ("arazialcom" olarak anılacaktır) olarak, kullanıcılarımızın kişisel verilerinin güvenliğine önem veriyoruz.
           Bu metin, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında kişisel verilerin ne şekilde toplandığı, işlendiği ve korunduğuna dair bilgilendirme amacıyla hazırlanmıştır.
         </Paragraph>
       </ContentSection>
@@ -101,7 +101,7 @@ const PrivacyPolicy = () => {
         <SectionTitle>1. Veri Sorumlusu</SectionTitle>
         <Paragraph>
           Veri Sorumlusu:
-          Arazialcom Gayrimenkul Sanayi ve Ticaret Ltd. Şti.
+          arazialcom Gayrimenkul Sanayi ve Ticaret Ltd. Şti.
           Adres: ULU CAMİİ MAH. 388 SK. NO:29/1B, AKHİSAR / MANİSA
           Vergi No: 0730982784
           E-posta: info@arazialcom.org

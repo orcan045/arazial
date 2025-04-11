@@ -596,9 +596,9 @@ const Navbar = () => {
       <NavbarContent $isScrolled={isScrolled}>
         <Logo to="/">
           <LogoIcon>
-            <img src={logoImage} alt="Arazialcom Logo" />
+            <img src={logoImage} alt="arazialcom Logo" />
           </LogoIcon>
-          <span>Arazialcom</span>
+          <span>arazialcom</span>
         </Logo>
         
         <NavMenu>
@@ -707,8 +707,8 @@ const Navbar = () => {
         </CloseButton>
         
         <MobileHeader>
-          <img src={logoImage} alt="Arazialcom Logo" />
-          <span>Arazial<strong>com</strong></span>
+          <img src={logoImage} alt="arazialcom Logo" />
+          <span>arazial<strong>com</strong></span>
         </MobileHeader>
         
         {!user && !loading && (

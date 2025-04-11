@@ -106,14 +106,14 @@ const TermsOfUse = () => {
       <ContentSection>
         <SectionTitle>1. Taraflar</SectionTitle>
         <Paragraph>
-          İşbu Mesafeli Hizmet Sözleşmesi, bir tarafta Arazialcom Gayrimenkul Sanayi ve Ticaret Limited Şirketi ("Hizmet Sağlayıcı" olarak anılacaktır), diğer tarafta platforma üye olan ve teminat ödemesi gerçekleştiren kullanıcı ("Hizmet Alan" olarak anılacaktır) arasında, aşağıdaki şartlar çerçevesinde elektronik ortamda kurulmuştur.
+          İşbu Mesafeli Hizmet Sözleşmesi, bir tarafta arazialcom Gayrimenkul Sanayi ve Ticaret Limited Şirketi ("Hizmet Sağlayıcı" olarak anılacaktır), diğer tarafta platforma üye olan ve teminat ödemesi gerçekleştiren kullanıcı ("Hizmet Alan" olarak anılacaktır) arasında, aşağıdaki şartlar çerçevesinde elektronik ortamda kurulmuştur.
         </Paragraph>
       </ContentSection>
 
       <ContentSection>
         <SectionTitle>2. Konu</SectionTitle>
         <Paragraph>
-          İşbu sözleşme, Hizmet Alan'ın Arazialcom platformunda yayınlanan taşınmazlara katılım teminatı ödeyerek başvuru hakkı kazanması sürecine ilişkin şartları düzenler.
+          İşbu sözleşme, Hizmet Alan'ın arazialcom platformunda yayınlanan taşınmazlara katılım teminatı ödeyerek başvuru hakkı kazanması sürecine ilişkin şartları düzenler.
         </Paragraph>
         <Paragraph>
           Bu sözleşme herhangi bir taşınmazın satışı değil, yalnızca başvuru ve teklif sürecine katılım hizmeti sunulmasına ilişkindir.
@@ -125,7 +125,7 @@ const TermsOfUse = () => {
         <List>
           <ListItem>Hizmet Alan, ilanda belirtilen teminat tutarını ödeyerek ilgili taşınmaza teklif verme hakkı elde eder.</ListItem>
           <ListItem>Teminat ödemesi yapılmadan teklif verilemez.</ListItem>
-          <ListItem>Bu süreçte Arazialcom yalnızca dijital altyapı sağlar, doğrudan satış gerçekleştirmez.</ListItem>
+          <ListItem>Bu süreçte arazialcom yalnızca dijital altyapı sağlar, doğrudan satış gerçekleştirmez.</ListItem>
         </List>
       </ContentSection>
 
@@ -165,7 +165,7 @@ const TermsOfUse = () => {
       <ContentSection>
         <SectionTitle>8. İletişim Bilgileri</SectionTitle>
         <Paragraph>
-          Arazialcom Gayrimenkul Sanayi ve Ticaret Ltd. Şti.
+          arazialcom Gayrimenkul Sanayi ve Ticaret Ltd. Şti.
           <br />
           Adres: ULU CAMİİ MAH. 388 SK. NO:29/1B, AKHİSAR / MANİSA
           <br />

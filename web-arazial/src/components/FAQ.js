@@ -64,7 +64,7 @@ const FAQ = () => {
   const faqItems = [
     {
       question: "İhaleye nasıl katılabilirim?",
-      answer: "İhaleye katılmak için önce Arazialcom'a üye olmanız gerekiyor. Üyelikten sonra ilgilendiğiniz arazi ilanına girerek teminat yatırma adımlarını takip edebilir ve ihaleye katılım hakkı kazanabilirsiniz."
+      answer: "İhaleye katılmak için önce arazialcom'a üye olmanız gerekiyor. Üyelikten sonra ilgilendiğiniz arazi ilanına girerek teminat yatırma adımlarını takip edebilir ve ihaleye katılım hakkı kazanabilirsiniz."
     },
     {
       question: "Teminat nedir, ne işe yarar?",
@@ -84,7 +84,7 @@ const FAQ = () => {
     },
     {
       question: "Ödeme yöntemleri nelerdir?",
-      answer: "Arazialcom üzerinden sadece teminat bedeli tahsil edilmektedir. Teminat yatırmak için banka havalesi, EFT veya sistemde tanımlı online ödeme altyapısı kullanılabilir.\n\nİhaleyi kazandıktan sonra yapılacak olan tapuyla ilgili tüm ödemeler, doğrudan tapu dairesinde, resmi işlem sırasında gerçekleştirilir. Bu işlemler Arazialcom dışında yürütülür."
+      answer: "arazialcom üzerinden sadece teminat bedeli tahsil edilmektedir. Teminat yatırmak için banka havalesi, EFT veya sistemde tanımlı online ödeme altyapısı kullanılabilir.\n\nİhaleyi kazandıktan sonra yapılacak olan tapuyla ilgili tüm ödemeler, doğrudan tapu dairesinde, resmi işlem sırasında gerçekleştirilir. Bu işlemler arazialcom dışında yürütülür."
     },
     {
       question: "Araziyi görmeden satın alabilir miyim?",

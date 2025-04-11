@@ -281,7 +281,7 @@ const Footer = () => {
       <FooterContent>
         <FooterTop>
           <FooterSection>
-            <h3>Arazialcom</h3>
+            <h3>arazialcom</h3>
             <ul>
               <li>
                 <Link to="/about">Hakkımızda</Link>
@@ -353,7 +353,7 @@ const Footer = () => {
         
         <FooterBottom>
           <CopyrightText>
-            © {currentYear} <Link to="/">Arazialcom</Link>. Tüm hakları saklıdır.
+            © {currentYear} <Link to="/">arazialcom</Link>. Tüm hakları saklıdır.
           </CopyrightText>
         </FooterBottom>
       </FooterContent>

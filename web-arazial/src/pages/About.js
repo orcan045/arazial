@@ -94,7 +94,7 @@ const About = () => {
       
       <Section>
         <Paragraph>
-          Arazialcom Gayrimenkul Sanayi ve Ticaret Limited Şirketi, Türkiye genelinde tapulu taşınmazların dijital ortamda tanıtımını ve başvuru süreçlerini yönetmek amacıyla kurulmuş bir teknoloji platformudur.
+          arazialcom Gayrimenkul Sanayi ve Ticaret Limited Şirketi, Türkiye genelinde tapulu taşınmazların dijital ortamda tanıtımını ve başvuru süreçlerini yönetmek amacıyla kurulmuş bir teknoloji platformudur.
         </Paragraph>
         
         <Paragraph>
@@ -102,7 +102,7 @@ const About = () => {
         </Paragraph>
 
         <Paragraph>
-          Arazialcom üzerinden yapılan işlemler satış amaçlı değil, yalnızca kullanıcıların ilgilendiği taşınmazlara katılım başvurusu yapabilmesini sağlamak amacı taşır. Bu kapsamda, her başvuru için teminat bedeli tahsil edilmekte olup, işlem gerçekleşmediği durumlarda teminat tutarı şartsız ve eksiksiz şekilde iade edilmektedir.
+          arazialcom üzerinden yapılan işlemler satış amaçlı değil, yalnızca kullanıcıların ilgilendiği taşınmazlara katılım başvurusu yapabilmesini sağlamak amacı taşır. Bu kapsamda, her başvuru için teminat bedeli tahsil edilmekte olup, işlem gerçekleşmediği durumlarda teminat tutarı şartsız ve eksiksiz şekilde iade edilmektedir.
         </Paragraph>
       </Section>
       
@@ -112,7 +112,7 @@ const About = () => {
         <SectionTitle>Sistem Nasıl Çalışır?</SectionTitle>
         
         <Paragraph>
-          Arazialcom'da taşınmaz başvuru süreci şu şekilde işlemektedir:
+          arazialcom'da taşınmaz başvuru süreci şu şekilde işlemektedir:
         </Paragraph>
         
         <NumberedList>
@@ -143,7 +143,7 @@ const About = () => {
       <Divider />
       
       <Section>
-        <SectionTitle>Neden Arazialcom?</SectionTitle>
+        <SectionTitle>Neden arazialcom?</SectionTitle>
         <List>
           <ListItem>Güvenilir ve şeffaf başvuru sistemi</ListItem>
           <ListItem>Teminat sistemiyle güvenli katılım</ListItem>
@@ -153,7 +153,7 @@ const About = () => {
         </List>
         
         <Paragraph style={{ marginTop: '2rem' }}>
-          Arazialcom, modern teknolojiyle gayrimenkul başvuru süreçlerini daha güvenilir, daha hızlı ve daha erişilebilir hale getirmek için kurulmuştur.
+          arazialcom, modern teknolojiyle gayrimenkul başvuru süreçlerini daha güvenilir, daha hızlı ve daha erişilebilir hale getirmek için kurulmuştur.
         </Paragraph>
       </Section>
     </AboutContainer>

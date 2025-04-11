@@ -93,7 +93,7 @@ const LegalNotices = () => {
         <SectionTitle>Fikri Mülkiyet Hakları</SectionTitle>
         <List>
           <ListItem>
-            Tüm metinler, görseller, logolar ve diğer içerikler Arazialcom'un mülkiyetindedir.
+            Tüm metinler, görseller, logolar ve diğer içerikler arazialcom'un mülkiyetindedir.
           </ListItem>
           <ListItem>
             İçeriklerin kopyalanması, çoğaltılması ve dağıtılması için yazılı izin gereklidir.
@@ -107,7 +107,7 @@ const LegalNotices = () => {
       <ContentSection>
         <SectionTitle>Sorumluluk Reddi</SectionTitle>
         <Paragraph>
-          Arazialcom, sitede yer alan bilgilerin doğruluğu ve güncelliği konusunda azami özeni göstermektedir. Ancak, içeriklerin kullanımından doğabilecek doğrudan veya dolaylı zararlardan sorumlu tutulamaz.
+          arazialcom, sitede yer alan bilgilerin doğruluğu ve güncelliği konusunda azami özeni göstermektedir. Ancak, içeriklerin kullanımından doğabilecek doğrudan veya dolaylı zararlardan sorumlu tutulamaz.
         </Paragraph>
         <List>
           <ListItem>
