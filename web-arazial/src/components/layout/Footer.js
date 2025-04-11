@@ -4,8 +4,8 @@ import styled from 'styled-components';
 import logoImage from '../../assets/logo.png';
 
 const FooterContainer = styled.footer`
-  background: linear-gradient(to bottom, var(--color-primary-dark) 0%, #041124 100%);
-  color: rgba(255, 255, 255, 0.8);
+  background: linear-gradient(to bottom, #f8fafc 0%, #f1f5f9 100%);
+  color: var(--color-text-secondary);
   padding: 5rem 0 2rem;
   position: relative;
   width: 100%;
@@ -17,7 +17,7 @@ const FooterContainer = styled.footer`
     left: 0;
     width: 100%;
     height: 1px;
-    background: linear-gradient(90deg, transparent 0%, rgba(212, 175, 55, 0.3) 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.05) 50%, transparent 100%);
   }
 `;
 
@@ -49,14 +49,14 @@ const FooterTop = styled.div`
 
 const FooterBottom = styled.div`
   text-align: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
   padding-top: 2rem;
   font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--color-text-secondary);
 `;
 
 const FooterColumnTitle = styled.h3`
-  color: white;
+  color: var(--color-text);
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 1.5rem;
@@ -69,7 +69,7 @@ const FooterColumnTitle = styled.h3`
     bottom: -0.5rem;
     width: 40px;
     height: 2px;
-    background: linear-gradient(90deg, var(--color-gold) 0%, rgba(212, 175, 55, 0.5) 100%);
+    background: linear-gradient(90deg, var(--color-primary) 0%, rgba(15, 52, 96, 0.5) 100%);
   }
 `;
 
@@ -78,7 +78,7 @@ const FooterLogo = styled(Link)`
   align-items: center;
   font-size: 1.75rem;
   font-weight: 700;
-  color: white;
+  color: var(--color-text);
   margin-bottom: 1.25rem;
   text-decoration: none;
   
@@ -91,7 +91,7 @@ const FooterLogo = styled(Link)`
   }
   
   span {
-    color: white;
+    color: var(--color-text);
     letter-spacing: -0.5px;
   }
   
@@ -106,7 +106,7 @@ const FooterDescription = styled.p`
   margin-bottom: 2rem;
   line-height: 1.7;
   max-width: 400px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--color-text-secondary);
 `;
 
 const FooterLinks = styled.ul`
@@ -119,7 +119,7 @@ const FooterLink = styled.li`
   margin-bottom: 0.75rem;
   
   a {
-    color: rgba(255, 255, 255, 0.7);
+    color: var(--color-text-secondary);
     text-decoration: none;
     transition: all 0.2s ease;
     position: relative;
@@ -133,12 +133,12 @@ const FooterLink = styled.li`
       height: 1px;
       bottom: -2px;
       left: 0;
-      background-color: var(--color-gold);
+      background-color: var(--color-primary);
       transition: width 0.3s ease;
     }
     
     &:hover {
-      color: white;
+      color: var(--color-text);
       padding-left: 5px;
       
       &::before {
