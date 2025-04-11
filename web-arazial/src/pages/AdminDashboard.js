@@ -920,93 +920,186 @@ const MobileCardActions = styled.div`
   }
 `;
 
-.desktop-only {
-  @media (max-width: 767px) {
-    display: none;
+const GlobalAdminStyles = styled.div`
+  .desktop-only {
+    @media (max-width: 767px) {
+      display: none;
+    }
   }
-}
 
-.mobile-only {
-  display: none;
-  @media (max-width: 767px) {
-    display: block;
-  }
-}
-
-@media (max-width: 767px) {
-  .hide-on-mobile {
-    display: none !important;
-  }
-  
-  .table-responsive {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  /* Apply to specific columns you want to hide */
-  .column-hide-mobile {
+  .mobile-only {
     display: none;
+    @media (max-width: 767px) {
+      display: block;
+    }
   }
-  
-  /* Make action buttons stack vertically on mobile */
-  .action-buttons-mobile {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+
+  @media (max-width: 767px) {
+    .hide-on-mobile {
+      display: none !important;
+    }
+    
+    .table-responsive {
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Apply to specific columns you want to hide */
+    .column-hide-mobile {
+      display: none;
+    }
+    
+    /* Make action buttons stack vertically on mobile */
+    .action-buttons-mobile {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    
+    .action-buttons-mobile button {
+      width: 100%;
+      margin: 3px 0;
+    }
+    
+    /* Make card-style rows for mobile */
+    .mobile-card-row {
+      display: flex;
+      flex-direction: column;
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .mobile-card-header {
+      display: flex;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    
+    .mobile-card-content {
+      margin-bottom: 15px;
+    }
+    
+    .mobile-card-content .item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 8px;
+    }
+    
+    .mobile-card-content .label {
+      font-weight: 500;
+      color: #666;
+    }
+    
+    .mobile-card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .mobile-card-actions button {
+      flex: 1;
+      min-width: 80px;
+    }
   }
-  
-  .action-buttons-mobile button {
-    width: 100%;
-    margin: 3px 0;
+`;
+
+// Mobile view classes applied via styled component
+const MobileStyles = styled.div`
+  .desktop-only {
+    @media (max-width: 767px) {
+      display: none;
+    }
   }
-  
-  /* Make card-style rows for mobile */
-  .mobile-card-row {
-    display: flex;
-    flex-direction: column;
-    background: white;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+  .mobile-only {
+    display: none;
+    @media (max-width: 767px) {
+      display: block;
+    }
   }
-  
-  .mobile-card-header {
-    display: flex;
-    margin-bottom: 10px;
-    align-items: center;
+
+  @media (max-width: 767px) {
+    .hide-on-mobile {
+      display: none !important;
+    }
+    
+    .table-responsive {
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Apply to specific columns you want to hide */
+    .column-hide-mobile {
+      display: none;
+    }
+    
+    /* Make action buttons stack vertically on mobile */
+    .action-buttons-mobile {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    
+    .action-buttons-mobile button {
+      width: 100%;
+      margin: 3px 0;
+    }
+    
+    /* Make card-style rows for mobile */
+    .mobile-card-row {
+      display: flex;
+      flex-direction: column;
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .mobile-card-header {
+      display: flex;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    
+    .mobile-card-content {
+      margin-bottom: 15px;
+    }
+    
+    .mobile-card-content .item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 8px;
+    }
+    
+    .mobile-card-content .label {
+      font-weight: 500;
+      color: #666;
+    }
+    
+    .mobile-card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .mobile-card-actions button {
+      flex: 1;
+      min-width: 80px;
+    }
   }
-  
-  .mobile-card-content {
-    margin-bottom: 15px;
-  }
-  
-  .mobile-card-content .item {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    border-bottom: 1px solid #f0f0f0;
-    padding-bottom: 8px;
-  }
-  
-  .mobile-card-content .label {
-    font-weight: 500;
-    color: #666;
-  }
-  
-  .mobile-card-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  
-  .mobile-card-actions button {
-    flex: 1;
-    min-width: 80px;
-  }
-}
+`;
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -2863,107 +2956,107 @@ function AdminDashboard() {
                             </TableCell>
                           </TableRow>
                         ))}
-              {/* Single table for all listings */}
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableHeader style={{ width: '60px' }}></TableHeader>
-                      <TableHeader>Başlık</TableHeader>
-                      <TableHeader>Tür</TableHeader>
-                      <TableHeader>Fiyat</TableHeader>
-                      <TableHeader>Bitiş Tarihi</TableHeader>
-                      <TableHeader>Durum</TableHeader>
-                      <TableHeader>İşlemler</TableHeader>
-                    </TableRow>
-                  </TableHead>
-                  <tbody>
-                    {auctions
-                      .filter(auction => auctionFilter === 'all' || auction.status === auctionFilter)
-                      .map(item => (
-                        <TableRow key={item.id}>
-                          <TableCell>
-                            {item.images && item.images.length > 0 ? (
-                              <div style={{ 
-                                width: '50px', 
-                                height: '50px', 
-                                borderRadius: 'var(--border-radius-sm)',
-                                overflow: 'hidden' 
-                              }}>
-                                <img 
-                                  src={item.images[0]} 
-                                  alt={item.title} 
-                                  style={{ 
-                                    width: '100%', 
-                                    height: '100%', 
-                                    objectFit: 'cover'
-                                  }} 
-                                />
-                              </div>
-                            ) :
-                              <div style={{ 
-                                width: '50px', 
-                                height: '50px', 
-                                backgroundColor: 'var(--color-background)',
-                                borderRadius: 'var(--border-radius-sm)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                              }}>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                                  <circle cx="8.5" cy="8.5" r="1.5" />
-                                  <polyline points="21 15 16 10 5 21" />
-                                </svg>
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell data-label="Başlık">{item.title}</TableCell>
-                          <TableCell data-label="Tür">{item.listing_type === 'auction' || item.listingType === 'auction' ? 'İhale' : 'Pazarlık'}</TableCell>
-                          <TableCell data-label="Fiyat">{item.starting_price?.toLocaleString('tr-TR') || item.start_price?.toLocaleString('tr-TR')} TL</TableCell>
-                          <TableCell data-label="Bitiş Tarihi">{formatDate(item.end_date || item.endDate)}</TableCell>
-                          <TableCell data-label="Durum">
-                            <StatusBadge status={item.status}>
-                              {getStatusText(item.status)}
-                            </StatusBadge>
-                          </TableCell>
-                          <TableCell data-label="İşlemler">
-                            <ActionButton 
-                              variant="primary"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewAuctionDetails(item.id);
-                              }}
-                            >
-                              Detaylar
-                            </ActionButton>
-                            <ActionButton 
-                              variant="warning"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedAuctionId(item.id);
-                                handleSectionChange('edit-auction');
-                              }}
-                            >
-                              Düzenle
-                            </ActionButton>
-                            <ActionButton 
-                              variant="danger"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (window.confirm('Bu ilanı silmek istediğinize emin misiniz?')) {
-                                  handleDeleteAuction(item.id);
-                                }
-                              }}
-                            >
-                              Sil
-                            </ActionButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </tbody>
-                </Table>
-              </TableContainer>
+                    </tbody>
+                  </Table>
+                </TableContainer>
+              </div>
+              
+              {/* Show mobile card view on small screens */}
+              <div className="mobile-only">
+                {auctions
+                  .filter(auction => auctionFilter === 'all' || auction.status === auctionFilter)
+                  .map(item => (
+                    <div className="mobile-card-row" key={item.id}>
+                      <div className="mobile-card-header">
+                        {item.images && item.images.length > 0 ? (
+                          <div style={{ 
+                            width: '50px', 
+                            height: '50px', 
+                            borderRadius: 'var(--border-radius-sm)',
+                            overflow: 'hidden',
+                            marginRight: '12px'
+                          }}>
+                            <img 
+                              src={item.images[0]} 
+                              alt={item.title} 
+                              style={{ 
+                                width: '100%', 
+                                height: '100%', 
+                                objectFit: 'cover'
+                              }} 
+                            />
+                          </div>
+                        ) : (
+                          <div style={{ 
+                            width: '50px', 
+                            height: '50px', 
+                            backgroundColor: 'var(--color-background)',
+                            borderRadius: 'var(--border-radius-sm)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginRight: '12px'
+                          }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                              <circle cx="8.5" cy="8.5" r="1.5" />
+                              <polyline points="21 15 16 10 5 21" />
+                            </svg>
+                          </div>
+                        )}
+                        <div>
+                          <div style={{ fontWeight: '600', marginBottom: '4px' }}>{item.title}</div>
+                          <StatusBadge status={item.status} style={{ padding: '2px 8px', fontSize: '12px' }}>
+                            {getStatusText(item.status)}
+                          </StatusBadge>
+                        </div>
+                      </div>
+                      
+                      <div className="mobile-card-content">
+                        <div className="item">
+                          <div className="label">Tür</div>
+                          <div>{item.listing_type === 'auction' || item.listingType === 'auction' ? 'İhale' : 'Pazarlık'}</div>
+                        </div>
+                        <div className="item">
+                          <div className="label">Fiyat</div>
+                          <div>{item.starting_price?.toLocaleString('tr-TR') || item.start_price?.toLocaleString('tr-TR')} TL</div>
+                        </div>
+                        <div className="item">
+                          <div className="label">Bitiş Tarihi</div>
+                          <div>{formatDate(item.end_date || item.endDate)}</div>
+                        </div>
+                      </div>
+                      
+                      <div className="mobile-card-actions">
+                        <ActionButton 
+                          variant="primary" size="small"
+                          onClick={() => handleViewAuctionDetails(item.id)}
+                        >
+                          Detaylar
+                        </ActionButton>
+                        <ActionButton 
+                          variant="warning" size="small"
+                          onClick={() => {
+                            setSelectedAuctionId(item.id);
+                            handleSectionChange('edit-auction');
+                          }}
+                        >
+                          Düzenle
+                        </ActionButton>
+                        <ActionButton 
+                          variant="danger" size="small"
+                          onClick={() => {
+                            if (window.confirm('Bu ilanı silmek istediğinize emin misiniz?')) {
+                              handleDeleteAuction(item.id);
+                            }
+                          }}
+                        >
+                          Sil
+                        </ActionButton>
+                      </div>
+                    </div>
+                  ))}
+              </div>
             </CardContainer>
           </>
         );

@@ -1084,8 +1084,8 @@ const BidCard = ({
                       <OfferInput 
                         type="number"
                         id="bidAmount"
-                        value={bidAmount || getMinimumBidAmount()}
-                        onChange={(e) => setBidAmount(e.target.value)}
+                        value={bidAmount === '' ? '' : bidAmount || getMinimumBidAmount()}
+                        onChange={(e) => setBidAmount(e.target.value === '' ? '' : e.target.value)}
                         placeholder={isMobile ? `Min. ${formatPrice(getMinimumBidAmount())}` : `Min. ${formatPrice(getMinimumBidAmount())}`}
                         step="any"
                         disabled={submitLoading || authLoading}
@@ -1262,7 +1262,7 @@ const BidCard = ({
                     type="number"
                     id="offerAmount"
                     value={offerAmount}
-                    onChange={(e) => setOfferAmount(e.target.value)}
+                    onChange={(e) => setOfferAmount(e.target.value === '' ? '' : e.target.value)}
                     placeholder="Teklifinizi Girin (₺)"
                     step="any"
                     required 
