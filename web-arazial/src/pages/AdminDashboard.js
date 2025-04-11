@@ -120,12 +120,36 @@ const TableContainer = styled.div`
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  
+  @media (max-width: 767px) {
+    margin: 0 -1rem;
+    width: calc(100% + 2rem);
+    border-radius: 0;
+  }
 `;
 
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  min-width: 650px;
+  
+  @media (min-width: 768px) {
+    min-width: 650px;
+  }
+  
+  @media (max-width: 767px) {
+    display: block;
+    
+    thead, tbody, tr {
+      display: block;
+      width: 100%;
+    }
+    
+    thead tr {
+      position: absolute;
+      top: -9999px;
+      left: -9999px;
+    }
+  }
 `;
 
 const TableHead = styled.thead`
@@ -137,6 +161,18 @@ const TableRow = styled.tr`
   
   &:last-child {
     border-bottom: none;
+  }
+  
+  @media (max-width: 767px) {
+    padding: 1rem;
+    border-bottom: 10px solid var(--color-background);
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    
+    &:first-child {
+      border-top: 10px solid var(--color-background);
+    }
   }
 `;
 
@@ -151,10 +187,54 @@ const TableCell = styled.td`
   padding: 1rem;
   font-size: 0.875rem;
   
-  &:last-child {
-    @media (max-width: 767px) {
+  @media (max-width: 767px) {
+    display: block;
+    padding: 0.5rem 0;
+    width: 100%;
+    text-align: right;
+    position: relative;
+    padding-left: 45%;
+    border: none;
+    
+    &:before {
+      content: attr(data-label);
+      position: absolute;
+      left: 0;
+      width: 40%;
+      white-space: nowrap;
+      font-weight: 600;
+      text-align: left;
+    }
+    
+    &:first-child {
+      padding: 0;
+      margin-bottom: 0.5rem;
+      text-align: center;
+      padding-left: 0;
+      
+      &:before {
+        display: none;
+      }
+      
+      img, div {
+        margin: 0 auto;
+      }
+    }
+    
+    &:last-child {
       display: flex;
       flex-wrap: wrap;
+      justify-content: flex-start;
+      padding-left: 0;
+      margin-top: 1rem;
+      
+      button {
+        margin: 0.25rem;
+        flex: 1 0 auto;
+        max-width: calc(50% - 0.5rem);
+        min-width: calc(50% - 0.5rem);
+        justify-content: center;
+      }
     }
   }
 `;
@@ -556,9 +636,17 @@ const GridContainer = styled.div`
 
 const StatCardGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(1, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
+  
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
 `;
 
 // Add loading overlay component for card sections
@@ -2314,8 +2402,8 @@ function AdminDashboard() {
                                 </div>
                               )}
                             </TableCell>
-                            <TableCell>{user.full_name || '-'}</TableCell>
-                            <TableCell>
+                            <TableCell data-label="Ad Soyad">{user.full_name || '-'}</TableCell>
+                            <TableCell data-label="E-posta">
                               {user.email || '-'}
                               {user.email_confirmed_at && (
                                 <span style={{ 
@@ -2325,7 +2413,7 @@ function AdminDashboard() {
                                 }}>✓</span>
                               )}
                             </TableCell>
-                            <TableCell>
+                            <TableCell data-label="Telefon">
                               {user.phone || '-'}
                               {user.phone_confirmed_at && (
                                 <span style={{ 
@@ -2335,13 +2423,13 @@ function AdminDashboard() {
                                 }}>✓</span>
                               )}
                             </TableCell>
-                            <TableCell>
+                            <TableCell data-label="Rol">
                               <StatusBadge status={user.role === 'admin' ? 'active' : 'completed'}>
                                 {user.role === 'admin' ? 'Yönetici' : 'Kullanıcı'}
                               </StatusBadge>
                             </TableCell>
-                            <TableCell>{user.last_sign_in_at ? formatDate(user.last_sign_in_at) : '-'}</TableCell>
-                            <TableCell>
+                            <TableCell data-label="Son Giriş">{user.last_sign_in_at ? formatDate(user.last_sign_in_at) : '-'}</TableCell>
+                            <TableCell data-label="Durum">
                               {user.is_banned ? (
                                 <StatusBadge status="error">Engelli</StatusBadge>
                               ) : user.is_deleted ? (
@@ -2350,18 +2438,18 @@ function AdminDashboard() {
                                 <StatusBadge status="active">Aktif</StatusBadge>
                               )}
                             </TableCell>
-                            <TableCell>
+                            <TableCell data-label="İşlemler">
                               <ActionButton 
-                                variant="primary" 
-                                size="small"
+                                variant="primary"
                                 onClick={() => handleViewUserDetails(user.id)}
+                                disabled={actionLoading}
                               >
                                 Detaylar
                               </ActionButton>
                               <ActionButton 
-                                variant={user.role === 'admin' ? 'secondary' : 'primary'} 
-                                size="small"
+                                variant="warning"
                                 onClick={() => handleUpdateUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
+                                disabled={actionLoading}
                               >
                                 {user.role === 'admin' ? 'Kullanıcı Yap' : 'Yönetici Yap'}
                               </ActionButton>
@@ -2484,7 +2572,7 @@ function AdminDashboard() {
                                   }} 
                                 />
                               </div>
-                            ) : (
+                            ) :
                               <div style={{ 
                                 width: '50px', 
                                 height: '50px', 
@@ -2502,37 +2590,43 @@ function AdminDashboard() {
                               </div>
                             )}
                           </TableCell>
-                          <TableCell>{item.title}</TableCell>
-                          <TableCell>{item.listing_type === 'auction' || item.listingType === 'auction' ? 'İhale' : 'Pazarlık'}</TableCell>
-                          <TableCell>{item.starting_price?.toLocaleString('tr-TR') || item.start_price?.toLocaleString('tr-TR')} TL</TableCell>
-                          <TableCell>{formatDate(item.end_date || item.endDate)}</TableCell>
-                          <TableCell>
+                          <TableCell data-label="Başlık">{item.title}</TableCell>
+                          <TableCell data-label="Tür">{item.listing_type === 'auction' || item.listingType === 'auction' ? 'İhale' : 'Pazarlık'}</TableCell>
+                          <TableCell data-label="Fiyat">{item.starting_price?.toLocaleString('tr-TR') || item.start_price?.toLocaleString('tr-TR')} TL</TableCell>
+                          <TableCell data-label="Bitiş Tarihi">{formatDate(item.end_date || item.endDate)}</TableCell>
+                          <TableCell data-label="Durum">
                             <StatusBadge status={item.status}>
                               {getStatusText(item.status)}
                             </StatusBadge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell data-label="İşlemler">
                             <ActionButton 
-                              variant="primary" 
-                              size="small"
-                              onClick={() => handleViewAuctionDetails(item.id)}
-                              disabled={actionLoading}
+                              variant="primary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewAuctionDetails(item.id);
+                              }}
                             >
                               Detaylar
                             </ActionButton>
                             <ActionButton 
-                              variant="secondary" 
-                              size="small"
-                              onClick={() => navigate(`/auctions/${item.id}`)}
-                              disabled={actionLoading}
+                              variant="warning"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedAuctionId(item.id);
+                                handleSectionChange('edit-auction');
+                              }}
                             >
-                              Görüntüle
+                              Düzenle
                             </ActionButton>
                             <ActionButton 
-                              variant="danger" 
-                              size="small"
-                              onClick={() => handleDeleteAuction(item.id)}
-                              disabled={actionLoading}
+                              variant="danger"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm('Bu ilanı silmek istediğinize emin misiniz?')) {
+                                  handleDeleteAuction(item.id);
+                                }
+                              }}
                             >
                               Sil
                             </ActionButton>
@@ -3346,8 +3440,8 @@ function AdminDashboard() {
                               </div>
                             )}
                           </TableCell>
-                          <TableCell>{user.full_name || '-'}</TableCell>
-                          <TableCell>
+                          <TableCell data-label="Ad Soyad">{user.full_name || '-'}</TableCell>
+                          <TableCell data-label="E-posta">
                             {user.email || '-'}
                             {user.email_confirmed_at && (
                               <span style={{ 
@@ -3357,7 +3451,7 @@ function AdminDashboard() {
                               }}>✓</span>
                             )}
                           </TableCell>
-                          <TableCell>
+                          <TableCell data-label="Telefon">
                             {user.phone || '-'}
                             {user.phone_confirmed_at && (
                               <span style={{ 
@@ -3367,13 +3461,13 @@ function AdminDashboard() {
                               }}>✓</span>
                             )}
                           </TableCell>
-                          <TableCell>
+                          <TableCell data-label="Rol">
                             <StatusBadge status={user.role === 'admin' ? 'active' : 'completed'}>
                               {user.role === 'admin' ? 'Yönetici' : 'Kullanıcı'}
                             </StatusBadge>
                           </TableCell>
-                          <TableCell>{user.last_sign_in_at ? formatDate(user.last_sign_in_at) : '-'}</TableCell>
-                          <TableCell>
+                          <TableCell data-label="Son Giriş">{user.last_sign_in_at ? formatDate(user.last_sign_in_at) : '-'}</TableCell>
+                          <TableCell data-label="Durum">
                             {user.is_banned ? (
                               <StatusBadge status="error">Engelli</StatusBadge>
                             ) : user.is_deleted ? (
@@ -3382,18 +3476,18 @@ function AdminDashboard() {
                               <StatusBadge status="active">Aktif</StatusBadge>
                             )}
                           </TableCell>
-                          <TableCell>
+                          <TableCell data-label="İşlemler">
                             <ActionButton 
-                              variant="primary" 
-                              size="small"
+                              variant="primary"
                               onClick={() => handleViewUserDetails(user.id)}
+                              disabled={actionLoading}
                             >
                               Detaylar
                             </ActionButton>
                             <ActionButton 
-                              variant={user.role === 'admin' ? 'secondary' : 'primary'} 
-                              size="small"
+                              variant="warning"
                               onClick={() => handleUpdateUserRole(user.id, user.role === 'admin' ? 'user' : 'admin')}
+                              disabled={actionLoading}
                             >
                               {user.role === 'admin' ? 'Kullanıcı Yap' : 'Yönetici Yap'}
                             </ActionButton>
@@ -3521,29 +3615,23 @@ function AdminDashboard() {
                               </div>
                             )}
                           </TableCell>
-                          <TableCell>{item.profiles?.full_name || '-'}</TableCell>
-                          <TableCell>{item.auctions?.title || '-'}</TableCell>
-                          <TableCell>{item.amount?.toLocaleString('tr-TR')} TL</TableCell>
-                          <TableCell>
+                          <TableCell data-label="Kullanıcı">{item.profiles?.full_name || '-'}</TableCell>
+                          <TableCell data-label="İlan">{item.auctions?.title || '-'}</TableCell>
+                          <TableCell data-label="Tutar">{item.amount?.toLocaleString('tr-TR')} TL</TableCell>
+                          <TableCell data-label="Durum">
                             <StatusBadge status={item.status}>
                               {getStatusText(item.status)}
                             </StatusBadge>
                           </TableCell>
-                          <TableCell>{formatDate(item.created_at)}</TableCell>
-                          <TableCell>
+                          <TableCell data-label="Tarih">{formatDate(item.created_at)}</TableCell>
+                          <TableCell data-label="İşlemler">
                             <ActionButton 
-                              variant="primary" 
+                              variant="primary"
                               size="small"
-                              onClick={() => handleViewPaymentDetails(item.id)}
+                              onClick={() => handleUpdatePaymentStatus(item.id, item.status === 'pending' ? 'completed' : 'pending')}
+                              disabled={actionLoading}
                             >
-                              Detaylar
-                            </ActionButton>
-                            <ActionButton 
-                              variant="secondary" 
-                              size="small"
-                              onClick={() => handleUpdatePaymentStatus(item.id, 'completed')}
-                            >
-                              Tamamla
+                              {item.status === 'pending' ? 'Tamamlandı olarak işaretle' : 'Beklemede olarak işaretle'}
                             </ActionButton>
                           </TableCell>
                         </TableRow>
