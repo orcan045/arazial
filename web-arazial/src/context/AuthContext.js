@@ -451,9 +451,7 @@ export function AuthProvider({ children }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: 'https://arazialcom.net'
-        }
+        redirectTo: 'https://arazialcom.net/',
       });
       
       if (error) throw error;
