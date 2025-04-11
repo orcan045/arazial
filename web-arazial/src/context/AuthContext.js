@@ -119,20 +119,33 @@ export function AuthProvider({ children }) {
             return; // Don't continue with other auth logic
           }
           
+          // Specific handling for email confirmation flow
+          if (event === 'EMAIL_CONFIRMED') {
+            console.log('[AuthContext] Email confirmation detected');
+            debug('[AuthContext] Email confirmed, updating auth state');
+            
+            // Store confirmation time for debugging
+            localStorage.setItem('auth_email_confirmed', Date.now().toString());
+            
+            if (session?.user) {
+              setUser(session.user);
+              await fetchUserProfile(session.user.id);
+              setAuthState(AUTH_STATE.AUTHENTICATED);
+            }
+            
+            // Redirect to homepage or dashboard after email confirmation
+            console.log('[AuthContext] Redirecting after email confirmation');
+            window.location.href = '/'; // or '/dashboard' or any other page
+            
+            setLoading(false);
+            return; // Don't continue with other auth logic
+          }
+          
           try {
             if (session?.user) {
               setUser(session.user);
               await fetchUserProfile(session.user.id);
               setAuthState(AUTH_STATE.AUTHENTICATED);
-              
-              // Special handling for confirmed email event
-              if (event === 'EMAIL_CONFIRMED') {
-                debug('[AuthContext] Email confirmed, updating auth state');
-                // Store confirmation time for debugging
-                localStorage.setItem('auth_email_confirmed', Date.now().toString());
-                // Force a session refresh to ensure everything is up to date
-                await forceAuthRefresh();
-              }
             } else {
               setUser(null);
               setProfile(null);
