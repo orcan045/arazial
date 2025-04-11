@@ -198,59 +198,59 @@ const SearchButton = styled(Button)`
 
 const TabsContainer = styled.div`
   display: flex;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.06);
   margin-bottom: 2rem;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
   position: relative;
   width: 100%;
+  gap: 0.5rem;
   
   &::-webkit-scrollbar {
     display: none;
   }
   
   @media (max-width: 768px) {
-    margin: 1.5rem -0.75rem 1.5rem -0.75rem;
-    padding: 0 0.75rem;
-    width: calc(100% + 1.5rem);
-    justify-content: space-between;
+    padding: 0;
+    width: 100%;
   }
 `;
 
 const TabButton = styled.button`
-  padding: 1rem 2rem;
-  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: ${props => props.$isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)'};
-  background: none;
-  border: none;
-  border-bottom: 2px solid ${props => props.$isActive ? 'var(--color-primary)' : 'transparent'};
-  margin-bottom: -2px;
+  color: ${props => props.$isActive ? 'white' : 'var(--color-text)'};
+  background: ${props => props.$isActive ? 'var(--color-primary)' : 'white'};
+  border: 1px solid ${props => props.$isActive ? 'var(--color-primary)' : 'var(--color-border)'};
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
-  white-space: nowrap;
+  box-shadow: ${props => props.$isActive ? '0 4px 12px rgba(0, 0, 0, 0.1)' : '0 2px 4px rgba(0, 0, 0, 0.05)'};
   
   &:hover {
-    color: var(--color-primary);
+    background: ${props => props.$isActive ? 'var(--color-primary-dark)' : 'rgba(0, 0, 0, 0.02)'};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
   
   @media (max-width: 768px) {
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
   }
 `;
 
 const StatusTabs = styled.div`
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   margin-bottom: 2rem;
+  padding-top: 0.5rem;
   
   @media (max-width: 768px) {
     overflow-x: auto;
     white-space: nowrap;
-    gap: 0.5rem;
     margin-bottom: 1.5rem;
+    padding-top: 0;
   }
 `;
 
@@ -259,15 +259,22 @@ const StatusTab = styled.button`
   background: ${props => props.active ? 'var(--color-primary)' : 'white'};
   color: ${props => props.active ? 'white' : 'var(--color-text)'};
   border: 1px solid ${props => props.active ? 'var(--color-primary)' : 'var(--color-border)'};
-  border-radius: 20px;
+  border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: ${props => props.active ? '0 4px 12px rgba(0, 0, 0, 0.1)' : '0 2px 4px rgba(0, 0, 0, 0.05)'};
   
   &:hover {
-    border-color: var(--color-primary);
-    color: ${props => props.active ? 'white' : 'var(--color-primary)'};
+    background: ${props => props.active ? 'var(--color-primary-dark)' : 'rgba(0, 0, 0, 0.02)'};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
   }
 `;
 
@@ -307,10 +314,18 @@ const PopularSearches = styled.div`
 const PageContainer = styled.div`
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 2rem 2rem;
+  padding: 2rem 2rem;
+  background-color: #f9fafb;
+  border-radius: 16px;
+  margin-top: -3rem;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 10;
   
   @media (max-width: 768px) {
-    padding: 0 1rem 2rem;
+    padding: 1.5rem 1rem;
+    margin-top: -2rem;
+    border-radius: 16px 16px 0 0;
   }
 `;
 
@@ -338,7 +353,8 @@ const SectionDescription = styled.p`
 const AuctionsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 2rem;
+  gap: 1.5rem;
+  margin-top: 1rem;
   
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -978,178 +994,166 @@ const Home = () => {
         </HeroContent>
       </HeroSection>
       
-      <PageContainer>
-        <TabsContainer>
-          <TabButton 
-            $isActive={listingType === 'new'} 
-            onClick={() => handleListingTypeChange('new')}
-          >
-            Yeni Eklenenler
-          </TabButton>
-          <TabButton 
-            $isActive={listingType === 'auction'} 
-            onClick={() => handleListingTypeChange('auction')}
-          >
-            Müzayedeler
-          </TabButton>
-          <TabButton 
-            $isActive={listingType === 'offer'} 
-            onClick={() => handleListingTypeChange('offer')}
-          >
-            Pazarlık Yap
-          </TabButton>
-        </TabsContainer>
-        
-        {listingType === 'auction' && (
-          <StatusTabs>
-            <StatusTab
-              active={auctionStatus === 'active'}
-              onClick={() => handleStatusChange('active')}
+      <div style={{ background: '#fff', minHeight: '100vh', paddingBottom: '3rem' }}>
+        <PageContainer>
+          <TabsContainer>
+            <TabButton 
+              $isActive={listingType === 'new'} 
+              onClick={() => handleListingTypeChange('new')}
             >
-              Aktif Müzayedeler
-            </StatusTab>
-            <StatusTab
-              active={auctionStatus === 'upcoming'}
-              onClick={() => handleStatusChange('upcoming')}
+              Yeni Eklenenler
+            </TabButton>
+            <TabButton 
+              $isActive={listingType === 'auction'} 
+              onClick={() => handleListingTypeChange('auction')}
             >
-              Yakında Başlayacak
-            </StatusTab>
-            <StatusTab
-              active={auctionStatus === 'ended'}
-              onClick={() => handleStatusChange('ended')}
+              Müzayedeler
+            </TabButton>
+            <TabButton 
+              $isActive={listingType === 'offer'} 
+              onClick={() => handleListingTypeChange('offer')}
             >
-              Tamamlanmış
-            </StatusTab>
-          </StatusTabs>
-        )}
-        
-        <SectionTitle>
-          {listingType === 'new' ? 'Yeni Eklenen İlanlar' : 
-           listingType === 'auction' ? 
-            auctionStatus === 'active' ? 'Aktif Müzayedeler' :
-            auctionStatus === 'upcoming' ? 'Yakında Başlayacak Müzayedeler' :
-            'Tamamlanmış Müzayedeler' : 
-           'Pazarlık Yapılabilir İlanlar'}
-        </SectionTitle>
-        <SectionDescription>
-          {listingType === 'new' ? 'Arazial.com\'a eklenen en yeni ilanları inceleyin ve fırsatları kaçırmayın.' :
-           listingType === 'auction' ? 
-            auctionStatus === 'active' ? 'Şu anda aktif olan müzayedelere katılın ve teklifinizi verin.' :
-            auctionStatus === 'upcoming' ? 'Yakında başlayacak müzayedeleri takip edin ve hazırlıklı olun.' :
-            'Tamamlanmış müzayedeleri inceleyin ve piyasa hakkında bilgi edinin.' : 
-           'Doğrudan pazarlık yapabileceğiniz ilanları keşfedin ve teklifinizi iletin.'}
-        </SectionDescription>
-        
-        <AuctionsGrid>
-          {isLoading ? (
-            // Show skeletons while loading
-            Array(6).fill(0).map((_, index) => (
-              <AuctionCard key={`skeleton-${index}`} style={{ opacity: 0.7 }}>
-                <AuctionImage style={{ backgroundColor: '#f0f0f0' }} />
-                <AuctionContent>
-                  <div style={{ height: '24px', backgroundColor: '#f0f0f0', borderRadius: '4px', marginBottom: '12px' }}></div>
-                  <div style={{ height: '16px', backgroundColor: '#f0f0f0', borderRadius: '4px', marginBottom: '24px', width: '60%' }}></div>
-                  <div style={{ height: '20px', backgroundColor: '#f0f0f0', borderRadius: '4px' }}></div>
-                </AuctionContent>
-              </AuctionCard>
-            ))
-          ) : getPaginatedAuctions().length === 0 ? (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem 0' }}>
-              <p>Arama kriterlerinize uygun aktif emlak müzayedesi bulunamadı.</p>
+              Pazarlık Yap
+            </TabButton>
+          </TabsContainer>
+          
+          {listingType === 'auction' && (
+            <StatusTabs>
+              <StatusTab
+                active={auctionStatus === 'active'}
+                onClick={() => handleStatusChange('active')}
+              >
+                Aktif Müzayedeler
+              </StatusTab>
+              <StatusTab
+                active={auctionStatus === 'upcoming'}
+                onClick={() => handleStatusChange('upcoming')}
+              >
+                Yakında Başlayacak
+              </StatusTab>
+              <StatusTab
+                active={auctionStatus === 'ended'}
+                onClick={() => handleStatusChange('ended')}
+              >
+                Tamamlanmış
+              </StatusTab>
+            </StatusTabs>
+          )}
+          
+          <AuctionsGrid>
+            {isLoading ? (
+              // Show skeletons while loading
+              Array(6).fill(0).map((_, index) => (
+                <AuctionCard key={`skeleton-${index}`} style={{ opacity: 0.7 }}>
+                  <AuctionImage style={{ backgroundColor: '#f0f0f0' }} />
+                  <AuctionContent>
+                    <div style={{ height: '24px', backgroundColor: '#f0f0f0', borderRadius: '4px', marginBottom: '12px' }}></div>
+                    <div style={{ height: '16px', backgroundColor: '#f0f0f0', borderRadius: '4px', marginBottom: '24px', width: '60%' }}></div>
+                    <div style={{ height: '20px', backgroundColor: '#f0f0f0', borderRadius: '4px' }}></div>
+                  </AuctionContent>
+                </AuctionCard>
+              ))
+            ) : getPaginatedAuctions().length === 0 ? (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem 0' }}>
+                <p>Arama kriterlerinize uygun aktif emlak müzayedesi bulunamadı.</p>
+                <Button 
+                  variant="secondary" 
+                  size="small" 
+                  onClick={resetFilters}
+                  style={{ marginTop: '1rem' }}
+                >
+                  Tüm Müzayedeleri Göster
+                </Button>
+              </div>
+            ) : (
+              getPaginatedAuctions().map(listing => (
+                <AuctionCard key={listing.id} onClick={() => handleAuctionClick(listing.id)}>
+                  <AuctionImage>
+                    <img 
+                      src={listing.images?.[0] || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'} 
+                      alt={listing.title} 
+                    />
+                    <AuctionStatusBadge status={listing.status} type={listing._display_type}>
+                      {getStatusText(listing.status, listing._display_type)}
+                    </AuctionStatusBadge>
+                    {listingType === 'new' && (
+                      <AuctionTypeTag>
+                        {listing._display_type === 'offer' ? 'Pazarlık' : 'Müzayede'}
+                      </AuctionTypeTag>
+                    )}
+                  </AuctionImage>
+                  <AuctionContent>
+                    <AuctionTitle>{listing.title || 'Emlak İlanı'}</AuctionTitle>
+                    <AuctionLocation>
+                      <LocationIcon />
+                      {getAuctionLocation(listing)}
+                    </AuctionLocation>
+                    <AuctionDetails>
+                      <AuctionPrice>
+                        {formatPrice(
+                          listing.highest_bid || 
+                          listing.final_price || 
+                          listing.finalPrice || 
+                          listing.start_price || 
+                          listing.startPrice || 
+                          listing.starting_bid || 
+                          0
+                        )}
+                      </AuctionPrice>
+                      <AuctionStatus status={listing._display_type === 'offer' ? 'offer' : listing.status}>
+                        {getStatusIcon(listing.status, listing._display_type)}
+                        {listing._display_type === 'offer' ? 'Pazarlık Yap' : 
+                          listing.status === 'active' && (listing.end_time || listing.endTime || listing.end_date) ? (
+                            <span>Kalan: <CountdownTimer 
+                              endTime={new Date(listing.end_time || listing.endTime || listing.end_date).toISOString()} 
+                              compact={true}
+                            /></span>
+                          ) : getStatusText(listing.status, listing._display_type)
+                        }
+                      </AuctionStatus>
+                    </AuctionDetails>
+                  </AuctionContent>
+                </AuctionCard>
+              ))
+            )}
+          </AuctionsGrid>
+          
+          {/* Pagination Controls */}
+          {filteredAuctions.length > itemsPerPage && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem', gap: '0.5rem' }}>
               <Button 
                 variant="secondary" 
                 size="small" 
-                onClick={resetFilters}
-                style={{ marginTop: '1rem' }}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
               >
-                Tüm Müzayedeleri Göster
+                Önceki
+              </Button>
+              
+              {Array.from({ length: Math.ceil(filteredAuctions.length / itemsPerPage) }, (_, i) => (
+                <Button 
+                  key={i + 1}
+                  variant={currentPage === i + 1 ? "primary" : "secondary"} 
+                  size="small"
+                  onClick={() => setCurrentPage(i + 1)}
+                  style={{ minWidth: '40px' }}
+                >
+                  {i + 1}
+                </Button>
+              ))}
+              
+              <Button 
+                variant="secondary" 
+                size="small"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredAuctions.length / itemsPerPage)))}
+                disabled={currentPage === Math.ceil(filteredAuctions.length / itemsPerPage)}
+              >
+                Sonraki
               </Button>
             </div>
-          ) : (
-            getPaginatedAuctions().map(listing => (
-              <AuctionCard key={listing.id} onClick={() => handleAuctionClick(listing.id)}>
-                <AuctionImage>
-                  <img 
-                    src={listing.images?.[0] || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'} 
-                    alt={listing.title} 
-                  />
-                  <AuctionStatusBadge status={listing.status} type={listing._display_type}>
-                    {getStatusText(listing.status, listing._display_type)}
-                  </AuctionStatusBadge>
-                  {listingType === 'new' && (
-                    <AuctionTypeTag>
-                      {listing._display_type === 'offer' ? 'Pazarlık' : 'Müzayede'}
-                    </AuctionTypeTag>
-                  )}
-                </AuctionImage>
-                <AuctionContent>
-                  <AuctionTitle>{listing.title || 'Emlak İlanı'}</AuctionTitle>
-                  <AuctionLocation>
-                    <LocationIcon />
-                    {getAuctionLocation(listing)}
-                  </AuctionLocation>
-                  <AuctionDetails>
-                    <AuctionPrice>
-                      {formatPrice(
-                        listing.highest_bid || 
-                        listing.final_price || 
-                        listing.finalPrice || 
-                        listing.start_price || 
-                        listing.startPrice || 
-                        listing.starting_bid || 
-                        0
-                      )}
-                    </AuctionPrice>
-                    <AuctionStatus status={listing._display_type === 'offer' ? 'offer' : listing.status}>
-                      {getStatusIcon(listing.status, listing._display_type)}
-                      {listing._display_type === 'offer' ? 'Pazarlık Yap' : 
-                        listing.status === 'active' && (listing.end_time || listing.endTime || listing.end_date) ? (
-                          <CountdownTimer targetDate={listing.end_time || listing.endTime || listing.end_date} />
-                        ) : getStatusText(listing.status, listing._display_type)
-                      }
-                    </AuctionStatus>
-                  </AuctionDetails>
-                </AuctionContent>
-              </AuctionCard>
-            ))
           )}
-        </AuctionsGrid>
-        
-        {/* Pagination Controls */}
-        {filteredAuctions.length > itemsPerPage && (
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '2rem', gap: '0.5rem' }}>
-            <Button 
-              variant="secondary" 
-              size="small" 
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-            >
-              Önceki
-            </Button>
-            
-            {Array.from({ length: Math.ceil(filteredAuctions.length / itemsPerPage) }, (_, i) => (
-              <Button 
-                key={i + 1}
-                variant={currentPage === i + 1 ? "primary" : "secondary"} 
-                size="small"
-                onClick={() => setCurrentPage(i + 1)}
-                style={{ minWidth: '40px' }}
-              >
-                {i + 1}
-              </Button>
-            ))}
-            
-            <Button 
-              variant="secondary" 
-              size="small"
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredAuctions.length / itemsPerPage)))}
-              disabled={currentPage === Math.ceil(filteredAuctions.length / itemsPerPage)}
-            >
-              Sonraki
-            </Button>
-          </div>
-        )}
-      </PageContainer>
+        </PageContainer>
+      </div>
     </>
   );
 };
