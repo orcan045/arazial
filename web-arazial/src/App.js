@@ -27,6 +27,9 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
 import PaymentCallback from './pages/PaymentCallback';
 import FAQ from './pages/FAQ';
+import CookiePolicy from './pages/CookiePolicy';
+import LegalNotices from './pages/LegalNotices';
+import Security from './pages/Security';
 
 // Re-export for backward compatibility
 export { forceAuthRefresh, resetAllAuthStorage };
@@ -496,6 +499,33 @@ const App = () => {
             element={
               <Layout>
                 <TermsOfUse />
+              </Layout>
+            } 
+          />
+          
+          <Route 
+            path="/cookies" 
+            element={
+              <Layout>
+                <CookiePolicy />
+              </Layout>
+            } 
+          />
+          
+          <Route 
+            path="/legal" 
+            element={
+              <Layout>
+                <LegalNotices />
+              </Layout>
+            } 
+          />
+          
+          <Route 
+            path="/security" 
+            element={
+              <Layout>
+                <Security />
               </Layout>
             } 
           />

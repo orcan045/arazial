@@ -383,8 +383,8 @@ const Footer = () => {
             © {currentYear} <Link to="/">Arazialcom</Link>. Tüm hakları saklıdır.
           </CopyrightText>
           <LegalLinks>
-            <Link to="/terms">Kullanım Koşulları</Link>
-            <Link to="/privacy">Gizlilik Politikası</Link>
+            <Link to="/terms-of-use">Kullanım Koşulları</Link>
+            <Link to="/privacy-policy">Gizlilik Politikası</Link>
             <Link to="/cookies">Çerez Politikası</Link>
             <Link to="/legal">Yasal Bildirimler</Link>
             <Link to="/security">Güvenlik</Link>
