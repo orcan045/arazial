@@ -41,6 +41,7 @@ const DashboardGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
+  min-height: calc(100vh - 200px); // Add minimum height for full page
   
   @media (min-width: 1024px) {
     grid-template-columns: 240px 1fr;
@@ -53,6 +54,8 @@ const Sidebar = styled.div`
   padding: 1rem;
   box-shadow: var(--shadow-sm);
   height: fit-content;
+  position: sticky;
+  top: 2rem;
   
   @media (min-width: 768px) {
     padding: 1.5rem;
@@ -60,6 +63,7 @@ const Sidebar = styled.div`
   
   @media (max-width: 1023px) {
     margin-bottom: 2rem;
+    position: static;
   }
 `;
 
@@ -95,16 +99,10 @@ const ContentArea = styled.div`
   padding: 2rem;
   box-shadow: var(--shadow-sm);
   position: relative;
-  
-  @media (min-width: 768px) {
-    height: 1000px;
-    overflow-y: auto;
-  }
+  height: fit-content;
   
   @media (max-width: 767px) {
     padding: 1rem;
-    height: auto;
-    overflow: visible;
     background-color: var(--color-background);
     box-shadow: none;
   }
@@ -142,7 +140,6 @@ const TableContainer = styled.div`
     width: 100%;
     border-radius: 0;
     background: transparent;
-    overflow: visible;
   }
 `;
 
@@ -368,26 +365,24 @@ const SearchInput = styled.input`
 
 const EmptyState = styled.div`
   text-align: center;
-  padding: 3rem 2rem;
+  padding: 3rem 1.5rem;
   color: var(--color-text-secondary);
 `;
 
 const EmptyStateIcon = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
   margin-bottom: 1rem;
   
   svg {
-    width: 2rem;
-    height: 2rem;
-    color: var(--color-text-secondary);
+    width: 3rem;
+    height: 3rem;
+    opacity: 0.5;
   }
 `;
 
-const EmptyStateTitle = styled.div`
+const EmptyStateTitle = styled.h3`
   font-size: 1rem;
-  color: var(--color-text-secondary);
+  font-weight: 500;
+  color: var(--color-text);
   margin-bottom: 0.5rem;
 `;
 
@@ -526,91 +521,24 @@ const ImageGallery = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 1rem;
-  margin: 1rem 0;
+  padding: 1rem;
   
   .gallery-item {
     aspect-ratio: 1;
+    cursor: pointer;
     border-radius: var(--border-radius-md);
     overflow: hidden;
     box-shadow: var(--shadow-sm);
-    position: relative;
+    transition: transform 0.2s ease;
+    
+    &:hover {
+      transform: scale(1.05);
+    }
     
     img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: transform 0.3s ease;
-    }
-    
-    &:hover img {
-      transform: scale(1.05);
-    }
-  }
-  
-  .gallery-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.8);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 2rem;
-    
-    .modal-content {
-      max-width: 90%;
-      max-height: 90%;
-      position: relative;
-      
-      img {
-        max-width: 100%;
-        max-height: 80vh;
-        object-fit: contain;
-        border-radius: var(--border-radius-md);
-      }
-      
-      .close-button {
-        position: absolute;
-        top: -2rem;
-        right: 0;
-        background: transparent;
-        border: none;
-        color: white;
-        font-size: 1.5rem;
-        cursor: pointer;
-      }
-      
-      .nav-button {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        background: rgba(255, 255, 255, 0.2);
-        border: none;
-        color: white;
-        width: 3rem;
-        height: 3rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: background 0.3s ease;
-        
-        &:hover {
-          background: rgba(255, 255, 255, 0.4);
-        }
-        
-        &.prev {
-          left: -4rem;
-        }
-        
-        &.next {
-          right: -4rem;
-        }
-      }
     }
   }
 `;
@@ -711,15 +639,11 @@ const Spinner = styled.div`
 const CardContainer = styled.div`
   background-color: white;
   border-radius: var(--border-radius-lg);
-  padding: 1.5rem;
   box-shadow: var(--shadow-sm);
-  position: relative;
-  height: 100%;
+  width: 100%;
   
   @media (max-width: 767px) {
-    padding: 1rem;
-    background-color: transparent;
-    box-shadow: none;
+    border-radius: var(--border-radius-md);
   }
 `;
 
@@ -1092,6 +1016,18 @@ const MobileStyles = styled.div`
   }
 `;
 
+const DesktopView = styled.div`
+  @media (max-width: 767px) {
+    display: none;
+  }
+`;
+
+const MobileView = styled.div`
+  @media (min-width: 768px) {
+    display: none;
+  }
+`;
+
 function AdminDashboard() {
   const navigate = useNavigate();
   const { user, isAdmin: authIsAdmin, loading: authLoading, userRole } = useAuth();
@@ -1262,11 +1198,29 @@ function AdminDashboard() {
         // Continue with just auctions data
       }
       
-      // Combine both types
-      const allListings = [
-        ...(auctionData || []),
-        ...(offerData || [])
-      ];
+      // Create a Map to store unique listings by ID
+      const listingsMap = new Map();
+      
+      // Add auction listings
+      (auctionData || []).forEach(auction => {
+        listingsMap.set(auction.id, {
+          ...auction,
+          listing_type: auction.listing_type || 'auction'
+        });
+      });
+      
+      // Add offer listings, only if they don't already exist
+      (offerData || []).forEach(offer => {
+        if (!listingsMap.has(offer.id)) {
+          listingsMap.set(offer.id, {
+            ...offer,
+            listing_type: offer.listing_type || 'offer'
+          });
+        }
+      });
+      
+      // Convert Map back to array
+      const allListings = Array.from(listingsMap.values());
       
       // Set auctions state
       setAuctions(allListings);
@@ -2859,8 +2813,8 @@ function AdminDashboard() {
                 </LoadingOverlay>
               )}
               
-              {/* Display table on larger screens, hidden on mobile */}
-              <div className="desktop-only">
+              {/* Desktop Table View */}
+              <DesktopView>
                 <TableContainer>
                   <Table>
                     <TableHead>
@@ -2961,10 +2915,10 @@ function AdminDashboard() {
                     </tbody>
                   </Table>
                 </TableContainer>
-              </div>
+              </DesktopView>
               
-              {/* Show mobile card view on small screens */}
-              <div className="mobile-only">
+              {/* Mobile Card View */}
+              <MobileView>
                 {auctions
                   .filter(auction => auctionFilter === 'all' || auction.status === auctionFilter)
                   .map(item => (
@@ -3058,7 +3012,7 @@ function AdminDashboard() {
                       </div>
                     </div>
                   ))}
-              </div>
+              </MobileView>
             </CardContainer>
           </>
         );
@@ -4077,7 +4031,7 @@ function AdminDashboard() {
         // Find the actual auction data from the auctions list for potentially more fields
         const currentAuction = auctions.find(a => a.id === selectedAuctionId);
         return (
-          <>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             <SectionTitle>
               İlan Detayları: {auctionForm.title}
               <div>
@@ -4095,68 +4049,60 @@ function AdminDashboard() {
             </SectionTitle>
 
             {/* Auction Information */}
-            <CardContainer style={{ marginBottom: '2rem' }}>
-              <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>Genel Bilgiler</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
-                <div><strong>Başlık:</strong> {auctionForm.title}</div>
-                <div><strong>Durum:</strong> <StatusBadge status={auctionForm.status}>{getStatusText(auctionForm.status)}</StatusBadge></div>
-                <div><strong>Tür:</strong> {auctionForm.listingType === 'auction' ? 'İhale' : 'Pazarlık'}</div>
-                <div><strong>Başlangıç/Liste Fiyatı:</strong> {auctionForm.startingPrice?.toLocaleString('tr-TR')} TL</div>
-                {auctionForm.listingType === 'auction' && 
-                  <div><strong>Min. Artış:</strong> {auctionForm.minIncrement?.toLocaleString('tr-TR')} TL</div>
-                }
-                {auctionForm.listingType === 'offer' && 
-                  <div><strong>Teklif Artış:</strong> {auctionForm.offerIncrement?.toLocaleString('tr-TR')} TL</div>
-                }
-                <div><strong>Başlangıç:</strong> {formatDate(auctionForm.startDate)} {auctionForm.startTime}</div>
-                <div><strong>Bitiş:</strong> {formatDate(auctionForm.endDate)} {auctionForm.endTime}</div>
-                <div><strong>Konum:</strong> {auctionForm.locationDetails ? `${auctionForm.locationDetails}, ${auctionForm.city}` : auctionForm.city}</div>
-                {auctionForm.ada_no && <div><strong>Ada No:</strong> {auctionForm.ada_no}</div>}
-                {auctionForm.parsel_no && <div><strong>Parsel No:</strong> {auctionForm.parsel_no}</div>}
-                {/* Display new TEXT fields */}
-                <div><strong>Alan:</strong> {auctionForm.area_size} {auctionForm.area_unit}</div>
-                <div><strong>Emlak Tipi:</strong> {auctionForm.emlak_tipi || '-'}</div>
-                <div><strong>İmar Durumu:</strong> {auctionForm.imar_durumu || '-'}</div>
-                <div><strong>İlan Sahibi:</strong> {auctionForm.ilan_sahibi || '-'}</div>
-                {/* Display original creator if different */}
-                {currentAuction?.created_by && currentAuction.created_by !== auctionForm.ilan_sahibi && 
-                  <div><strong>Oluşturan:</strong> {currentAuction.profiles?.full_name || currentAuction.created_by}</div>
-                }
+            <CardContainer>
+              <div style={{ padding: '1.5rem' }}>
+                <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>Genel Bilgiler</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                  <div><strong>Başlık:</strong> {auctionForm.title}</div>
+                  <div><strong>Durum:</strong> <StatusBadge status={auctionForm.status}>{getStatusText(auctionForm.status)}</StatusBadge></div>
+                  <div><strong>Tür:</strong> {auctionForm.listingType === 'auction' ? 'İhale' : 'Pazarlık'}</div>
+                  <div><strong>Başlangıç/Liste Fiyatı:</strong> {auctionForm.startingPrice?.toLocaleString('tr-TR')} TL</div>
+                  {auctionForm.listingType === 'auction' && 
+                    <div><strong>Min. Artış:</strong> {auctionForm.minIncrement?.toLocaleString('tr-TR')} TL</div>
+                  }
+                  {auctionForm.listingType === 'offer' && 
+                    <div><strong>Teklif Artış:</strong> {auctionForm.offerIncrement?.toLocaleString('tr-TR')} TL</div>
+                  }
+                  <div><strong>Başlangıç:</strong> {formatDate(auctionForm.startDate)} {auctionForm.startTime}</div>
+                  <div><strong>Bitiş:</strong> {formatDate(auctionForm.endDate)} {auctionForm.endTime}</div>
+                  <div><strong>Konum:</strong> {auctionForm.locationDetails ? `${auctionForm.locationDetails}, ${auctionForm.city}` : auctionForm.city}</div>
+                  {auctionForm.ada_no && <div><strong>Ada No:</strong> {auctionForm.ada_no}</div>}
+                  {auctionForm.parsel_no && <div><strong>Parsel No:</strong> {auctionForm.parsel_no}</div>}
+                  <div><strong>Alan:</strong> {auctionForm.area_size} {auctionForm.area_unit}</div>
+                  <div><strong>Emlak Tipi:</strong> {auctionForm.emlak_tipi || '-'}</div>
+                  <div><strong>İmar Durumu:</strong> {auctionForm.imar_durumu || '-'}</div>
+                  <div><strong>İlan Sahibi:</strong> {auctionForm.ilan_sahibi || '-'}</div>
+                  {currentAuction?.created_by && currentAuction.created_by !== auctionForm.ilan_sahibi && 
+                    <div><strong>Oluşturan:</strong> {currentAuction.profiles?.full_name || currentAuction.created_by}</div>
+                  }
+                </div>
+                <h4 style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>Açıklama:</h4>
+                <p style={{ marginBottom: '1.5rem' }}>{auctionForm.description || '-'}</p>
               </div>
-               <h4 style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>Açıklama:</h4>
-               <p style={{ marginBottom: '0' }}>{auctionForm.description || '-'}</p>
             </CardContainer>
             
             {/* Image Gallery */}
             {auctionForm.images && auctionForm.images.length > 0 && (
-              <CardContainer style={{ marginBottom: '2rem' }}>
-                <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>Görseller</h3>
-                <ImageGallery>
+              <CardContainer>
+                <div style={{ padding: '1.5rem' }}>
+                  <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>Görseller</h3>
+                  <ImageGallery>
                     {auctionForm.images.map((imageUrl, index) => (
-                        <div key={index} className="gallery-item" onClick={() => handleImageClick(imageUrl)}>
-                          <img src={imageUrl} alt={`Auction Image ${index + 1}`} />
-                        </div>
+                      <div key={index} className="gallery-item" onClick={() => handleImageClick(imageUrl)}>
+                        <img src={imageUrl} alt={`Auction Image ${index + 1}`} />
+                      </div>
                     ))}
-                </ImageGallery>
+                  </ImageGallery>
+                </div>
               </CardContainer>
             )}
-            
-            {/* Modal for viewing full image */}
-            {activeImage && (
-                <div className="gallery-modal" onClick={handleCloseGallery}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}> 
-                        <button className="close-button" onClick={handleCloseGallery}>&times;</button>
-                        <button className="nav-button prev" onClick={handlePrevImage}>&#10094;</button>
-                        <img src={activeImage} alt="Full Size Auction Image" />
-                        <button className="nav-button next" onClick={handleNextImage}>&#10095;</button>
-                    </div>
-                </div>
-            )}
 
-            {/* Bids/Offers Section based on listing type */}
-            {auctionForm.listingType === 'auction' ? (
-              <CardContainer>
-                <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>Teklifler (İhale)</h3>
+            {/* Bids/Offers Section */}
+            <CardContainer>
+              <div style={{ padding: '1.5rem' }}>
+                <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
+                  {auctionForm.listingType === 'auction' ? 'Teklifler (İhale)' : 'Pazarlık Teklifleri'}
+                </h3>
                 {bids && bids.length > 0 ? (
                   <TableContainer>
                     <Table>
@@ -4200,91 +4146,9 @@ function AdminDashboard() {
                     <EmptyStateTitle>Bu ihale için henüz teklif verilmemiştir.</EmptyStateTitle>
                   </EmptyState>
                 )}
-              </CardContainer>
-            ) : (
-              <CardContainer>
-                <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>Teklifler (Pazarlık)</h3>
-                {selectedAuctionOffers && selectedAuctionOffers.length > 0 ? (
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableHeader>Teklif Veren</TableHeader>
-                          <TableHeader>E-posta</TableHeader>
-                          <TableHeader>Telefon</TableHeader>
-                          <TableHeader>Teklif Tutarı</TableHeader>
-                          <TableHeader>Teklif Tarihi</TableHeader>
-                          <TableHeader>Durum</TableHeader>
-                          <TableHeader>İşlemler</TableHeader>
-                        </TableRow>
-                      </TableHead>
-                      <tbody>
-                        {selectedAuctionOffers.map(offer => (
-                          <TableRow key={offer.id}>
-                            <TableCell data-label="Teklif Veren">{offer.profiles?.full_name || 'İsimsiz'}</TableCell>
-                            <TableCell data-label="E-posta">{offer.profiles?.email || '-'}</TableCell>
-                            <TableCell data-label="Telefon">{offer.profiles?.phone_number || '-'}</TableCell>
-                            <TableCell data-label="Teklif Tutarı">{offer.amount?.toLocaleString('tr-TR')} TL</TableCell>
-                            <TableCell data-label="Teklif Tarihi">{formatDate(offer.created_at)}</TableCell>
-                            <TableCell data-label="Durum">
-                              <StatusBadge status={
-                                offer.status === 'accepted' ? 'completed' :
-                                offer.status === 'rejected' ? 'error' :
-                                'pending'
-                              }>
-                                {offer.status === 'accepted' ? 'Kabul Edildi' :
-                                 offer.status === 'rejected' ? 'Reddedildi' :
-                                 'Beklemede'}
-                              </StatusBadge>
-                            </TableCell>
-                            <TableCell data-label="İşlemler">
-                              {offer.status === 'pending' && (
-                                <div style={{ 
-                                  display: 'flex', 
-                                  flexWrap: 'wrap',
-                                  gap: '8px',
-                                  justifyContent: 'flex-end',
-                                  width: '100%'
-                                }}>
-                                  <ActionButton
-                                    size="small"
-                                    variant="primary"
-                                    onClick={() => handleAcceptOffer(offer.id)}
-                                    disabled={actionLoading}
-                                    style={{ minWidth: '80px' }}
-                                  >
-                                    Kabul Et
-                                  </ActionButton>
-                                  <ActionButton
-                                    size="small"
-                                    variant="danger"
-                                    onClick={() => handleRejectOffer(offer.id)}
-                                    disabled={actionLoading}
-                                    style={{ minWidth: '80px' }}
-                                  >
-                                    Reddet
-                                  </ActionButton>
-                                </div>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </TableContainer>
-                ) : (
-                  <EmptyState>
-                    <EmptyStateIcon>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                      </svg>
-                    </EmptyStateIcon>
-                    <EmptyStateTitle>Bu ilan için henüz teklif (pazarlık) alınmamıştır.</EmptyStateTitle>
-                  </EmptyState>
-                )}
-              </CardContainer>
-            )}
-          </>
+              </div>
+            </CardContainer>
+          </div>
         );
       default:
         return null;
