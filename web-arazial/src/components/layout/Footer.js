@@ -338,12 +338,6 @@ const Footer = () => {
               <FooterLink>
                 <Link to="/faq">Sık Sorulan Sorular</Link>
               </FooterLink>
-              <FooterLink>
-                <Link to="/blog">Blog</Link>
-              </FooterLink>
-              <FooterLink>
-                <Link to="/careers">Kariyer</Link>
-              </FooterLink>
             </FooterLinks>
           </div>
           

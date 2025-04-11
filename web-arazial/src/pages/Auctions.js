@@ -220,6 +220,7 @@ const TabsContainer = styled.div`
   -webkit-overflow-scrolling: touch;
   position: relative;
   width: 100%;
+  padding: 0 1rem;
   
   &::-webkit-scrollbar {
     display: none;
@@ -229,7 +230,7 @@ const TabsContainer = styled.div`
     margin: 0 -0.75rem 1.5rem -0.75rem;
     padding: 0 0.75rem;
     width: calc(100% + 1.5rem);
-    justify-content: space-between;
+    justify-content: flex-start;
     
     &::after {
       display: none;
@@ -248,14 +249,14 @@ const TabButton = styled.button`
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
-  flex: 1;
+  min-width: fit-content;
   
   &:hover {
     color: var(--color-primary);
   }
   
   @media (max-width: 768px) {
-    padding: 0.75rem 0.5rem;
+    padding: 0.75rem 1rem;
     font-size: 0.875rem;
     text-align: center;
   }
@@ -265,33 +266,31 @@ const SubTabsContainer = styled(TabsContainer)`
   margin-top: 1rem;
   margin-bottom: 1rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 0 1rem;
   
   @media (max-width: 768px) {
     margin: 0.5rem -0.75rem 1rem -0.75rem;
     padding: 0 0.75rem;
     width: calc(100% + 1.5rem);
-    justify-content: space-between;
-    gap: 0;
+    justify-content: flex-start;
+    gap: 0.5rem;
   }
 `;
 
 const SubTabButton = styled(TabButton)`
   padding: 0.75rem 1.5rem;
   font-size: 0.95rem;
+  min-width: fit-content;
   
   @media (max-width: 768px) {
-    padding: 0.5rem;
+    padding: 0.5rem 1rem;
     font-size: 0.75rem;
-    flex: 1;
-    min-width: 0;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.5rem;
     text-align: center;
-    white-space: normal;
-    word-wrap: break-word;
-    line-height: 1.2;
+    white-space: nowrap;
   }
 `;
 
