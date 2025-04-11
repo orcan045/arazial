@@ -209,13 +209,6 @@ const ResetPasswordPage = () => {
     console.log('[ResetPasswordPage] Current URL:', window.location.href);
     console.log('[ResetPasswordPage] Current URL hash:', hash);
     
-    // Check if this is a confirmation redirect (contains signup or confirmation in the hash)
-    if (hash && (hash.includes('type=signup') || hash.includes('confirmation'))) {
-      console.log('[ResetPasswordPage] Detected email confirmation redirect, redirecting to home page');
-      navigate('/');
-      return;
-    }
-    
     // Hide error message initially during loading
     setErrorMessage('');
     
@@ -258,7 +251,7 @@ const ResetPasswordPage = () => {
     }, 1000);
     
     return () => clearTimeout(timer);
-  }, [authState, isAuthenticated, navigate]);
+  }, [authState, isAuthenticated]);
   
   // Validate password form
   const validatePasswordForm = () => {

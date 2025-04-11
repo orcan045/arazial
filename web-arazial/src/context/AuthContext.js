@@ -119,23 +119,6 @@ export function AuthProvider({ children }) {
             return; // Don't continue with other auth logic
           }
           
-          // Handle email confirmation separately
-          if (event === 'SIGNED_IN' && window.location.hash && window.location.hash.includes('type=signup')) {
-            console.log('[AuthContext] Email confirmation sign in detected');
-            if (session?.user) {
-              setUser(session.user);
-              await fetchUserProfile(session.user.id);
-              setAuthState(AUTH_STATE.AUTHENTICATED);
-              
-              // Redirect to home page instead of reset-password
-              if (window.location.pathname.includes('reset-password')) {
-                console.log('[AuthContext] Redirecting from reset-password to home after email confirmation');
-                window.location.href = '/';
-                return;
-              }
-            }
-          }
-          
           try {
             if (session?.user) {
               setUser(session.user);
@@ -149,13 +132,6 @@ export function AuthProvider({ children }) {
                 localStorage.setItem('auth_email_confirmed', Date.now().toString());
                 // Force a session refresh to ensure everything is up to date
                 await forceAuthRefresh();
-                
-                // Redirect to home page if on reset-password
-                if (window.location.pathname.includes('reset-password')) {
-                  console.log('[AuthContext] Redirecting to home page after email confirmation');
-                  window.location.href = '/';
-                  return;
-                }
               }
             } else {
               setUser(null);
@@ -475,9 +451,6 @@ export function AuthProvider({ children }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          emailRedirectTo: 'https://arazialcom.net'
-        }
       });
       
       if (error) throw error;
@@ -552,7 +525,7 @@ export function AuthProvider({ children }) {
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://arazialcom.net/reset-password',
+        redirectTo: `${window.location.origin}/reset-password`,
       });
       
       if (error) throw error;
