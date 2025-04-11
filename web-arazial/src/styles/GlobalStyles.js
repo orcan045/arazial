@@ -31,6 +31,14 @@ const GlobalStyles = createGlobalStyle`
     --color-warning: #FF9800;
     --color-info: #3B82F6;
     
+    /* Form Colors */
+    --color-border: #cbd5e1;
+    --color-bg-input: #ffffff;
+    --color-text-placeholder: #9CA3AF;
+    --color-disabled: #E5E7EB;
+    --color-error-bg: #FEF2F2;
+    --color-success-bg: #ECFDF5;
+    
     /* Border Radius */
     --border-radius-sm: 4px;
     --border-radius-md: 8px;
@@ -110,15 +118,15 @@ const GlobalStyles = createGlobalStyle`
     font-family: inherit;
     font-size: inherit;
     border-radius: var(--border-radius-md);
-    border: 1px solid var(--color-text-light);
+    border: 2px solid var(--color-border);
     padding: var(--spacing-sm) var(--spacing-md);
-    background-color: var(--color-surface);
+    background-color: var(--color-bg-input);
   }
   
   input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb, 15, 52, 96), 0.2);
+    box-shadow: 0 0 0 2px rgba(15, 52, 96, 0.2);
   }
   
   button {

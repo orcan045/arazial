@@ -60,6 +60,11 @@ const FormFooter = styled.div`
   }
 `;
 
+const InputWrapper = styled.div`
+  position: relative;
+  margin-bottom: 1.5rem;
+`;
+
 const Input = styled.div`
   margin-bottom: 1.5rem;
   
@@ -74,15 +79,16 @@ const Input = styled.div`
   input {
     width: 100%;
     padding: 0.75rem 1rem;
-    border: 1px solid ${props => props.error ? 'var(--color-error)' : 'var(--color-border)'};
+    border: 2px solid ${props => props.error ? 'var(--color-error)' : '#cbd5e1'};
     border-radius: var(--border-radius-md);
     font-size: 1rem;
-    background-color: var(--color-bg-input);
+    background-color: white;
     color: var(--color-text);
     
     &:focus {
       outline: none;
       border-color: var(--color-primary);
+      box-shadow: 0 0 0 1px var(--color-primary-light);
     }
     
     &::placeholder {
@@ -376,7 +382,7 @@ const ResetPasswordPage = () => {
             </div>
           )}
           
-          <div style={{ position: 'relative' }}>
+          <InputWrapper>
             <Input error={errors.password || (errorMessage && errorMessage.includes('eski şifrenizle aynı olamaz'))}>
               <label htmlFor="password">Yeni Şifre</label>
               <input
@@ -410,9 +416,9 @@ const ResetPasswordPage = () => {
                 </svg>
               )}
             </EyeButton>
-          </div>
+          </InputWrapper>
           
-          <div style={{ position: 'relative' }}>
+          <InputWrapper>
             <Input error={errors.confirmPassword}>
               <label htmlFor="confirmPassword">Yeni Şifre Tekrar</label>
               <input
@@ -436,7 +442,7 @@ const ResetPasswordPage = () => {
                 </svg>
               )}
             </EyeButton>
-          </div>
+          </InputWrapper>
           
           <Button type="submit" fullWidth loading={isLoading}>
             {isLoading ? (
