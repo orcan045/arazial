@@ -94,9 +94,20 @@ const ContentArea = styled.div`
   border-radius: var(--border-radius-lg);
   padding: 2rem;
   box-shadow: var(--shadow-sm);
-  height: 1000px; /* Just make it huge so it never collapses */
   position: relative;
-  overflow-y: auto;
+  
+  @media (min-width: 768px) {
+    height: 1000px;
+    overflow-y: auto;
+  }
+  
+  @media (max-width: 767px) {
+    padding: 1rem;
+    height: auto;
+    overflow: visible;
+    background-color: var(--color-background);
+    box-shadow: none;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -118,16 +129,20 @@ const SectionTitle = styled.h2`
 
 const TableContainer = styled.div`
   width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   background: white;
   border-radius: var(--border-radius-lg);
+  
+  @media (min-width: 768px) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
   
   @media (max-width: 767px) {
     margin: 0;
     width: 100%;
     border-radius: 0;
     background: transparent;
+    overflow: visible;
   }
 `;
 
@@ -694,14 +709,17 @@ const Spinner = styled.div`
 // Fix order - CardContainer needs to be defined before RelativeContainer
 // Update CardContainer to support relative positioning for the loading overlay
 const CardContainer = styled.div`
-  background-color: var(--color-background);
-  border-radius: var(--border-radius-md);
+  background-color: white;
+  border-radius: var(--border-radius-lg);
   padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
   position: relative;
-  min-height: 100px;
+  height: 100%;
   
   @media (max-width: 767px) {
     padding: 1rem;
+    background-color: transparent;
+    box-shadow: none;
   }
 `;
 
