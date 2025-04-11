@@ -120,28 +120,14 @@ const TableContainer = styled.div`
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  background: white;
+  border-radius: var(--border-radius-lg);
   
   @media (max-width: 767px) {
     margin: 0;
     width: 100%;
     border-radius: 0;
-    
-    /* Hide less important columns on mobile */
-    .hide-on-mobile {
-      display: none;
-    }
-    
-    /* Make buttons stack vertically */
-    td:last-child {
-      display: flex;
-      flex-direction: column;
-      padding: 0.5rem;
-      
-      button {
-        margin: 0.25rem 0;
-        width: 100%;
-      }
-    }
+    background: transparent;
   }
 `;
 
@@ -157,15 +143,13 @@ const Table = styled.table`
     display: block;
     width: 100%;
     
-    thead, tbody, tr {
-      display: block;
-      width: 100%;
+    thead {
+      display: none;
     }
     
-    thead tr {
-      position: absolute;
-      top: -9999px;
-      left: -9999px;
+    tbody {
+      display: block;
+      width: 100%;
     }
   }
 `;
@@ -182,97 +166,86 @@ const TableRow = styled.tr`
   }
   
   @media (max-width: 767px) {
-    padding: 1.25rem 1rem;
-    margin-bottom: 1.5rem;
-    border-bottom: 10px solid var(--color-background);
-    position: relative;
-    display: flex;
-    flex-wrap: wrap;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: block;
+    padding: 0;
+    margin-bottom: 1rem;
     background: white;
-    border-radius: var(--border-radius-md);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
     
-    &:first-child {
-      border-top: 10px solid var(--color-background);
+    &:last-child {
+      margin-bottom: 0;
     }
   }
 `;
 
 const TableHeader = styled.th`
-  text-align: left;
   padding: 1rem;
+  text-align: left;
   font-weight: 600;
   font-size: 0.875rem;
+  color: var(--color-text);
+  background-color: var(--color-background);
+  
+  &:first-child {
+    border-top-left-radius: var(--border-radius-lg);
+  }
+  
+  &:last-child {
+    border-top-right-radius: var(--border-radius-lg);
+  }
+  
+  @media (max-width: 767px) {
+    display: none;
+  }
 `;
 
 const TableCell = styled.td`
   padding: 1rem;
   font-size: 0.875rem;
+  color: var(--color-text);
+  vertical-align: middle;
   
   @media (max-width: 767px) {
-    display: block;
-    padding: 0.5rem 0;
-    width: 100%;
-    text-align: left;
-    position: relative;
-    border: none;
+    display: flex;
+    padding: 0.5rem 1rem;
+    align-items: center;
     
     &:before {
       content: attr(data-label);
       font-weight: 600;
-      display: block;
-      margin-bottom: 0.25rem;
+      margin-right: 1rem;
+      min-width: 120px;
     }
     
     &:first-child {
-      padding-bottom: 1rem;
-      margin-bottom: 0.5rem;
-      text-align: center;
-      border-bottom: 1px solid var(--color-border);
-      
-      &:before {
-        display: none;
-      }
-      
-      img, div {
-        margin: 0 auto;
-      }
+      padding-top: 1rem;
     }
     
     &:last-child {
-      display: flex;
-      flex-direction: column;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--color-border);
+      padding-bottom: 1rem;
+      border-bottom: none;
       
       button {
-        margin: 0.25rem 0;
-        width: 100%;
+        margin: 0.25rem;
+        
+        &:first-child {
+          margin-left: 0;
+        }
       }
     }
   }
 `;
 
 const ActionButton = styled(Button)`
-  margin-right: 0.5rem;
-  margin-bottom: 0.5rem;
-  padding: 0.375rem 0.75rem;
-  font-size: 0.75rem;
-  white-space: nowrap;
-  
-  &:last-child {
-    margin-right: 0;
-  }
+  margin: 0 0.25rem;
   
   @media (max-width: 767px) {
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
-    width: 100%;
-    margin-right: 0;
-    justify-content: center;
+    margin: 0.25rem;
+    
+    &:first-child {
+      margin-left: 0;
+    }
   }
 `;
 
@@ -2510,7 +2483,7 @@ function AdminDashboard() {
                       <tbody>
                         {auctions.map(auction => (
                           <TableRow key={auction.id}>
-                            <TableCell>
+                            <TableCell data-label="Görsel">
                               {auction.images && auction.images.length > 0 ? (
                                 <div style={{ 
                                   width: '50px', 
