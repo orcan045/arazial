@@ -358,20 +358,47 @@ const App = () => {
       // Store for debugging
       localStorage.setItem('last_auth_hash', window.location.hash);
       
-      // If not already on reset password page, redirect there
-      if (window.location.pathname !== '/reset-password') {
-        console.log('[App] Not on reset-password page, redirecting there with hash');
+      // Parse the hash to extract the token type
+      try {
+        let tokenType = null;
+        window.location.hash.substring(1).split('&').forEach(item => {
+          const [key, value] = item.split('=');
+          if (key === 'type') {
+            tokenType = decodeURIComponent(value);
+          }
+        });
         
-        // Store redirect info
-        localStorage.setItem('redirected_to_reset', 'true');
-        localStorage.setItem('redirect_time', Date.now().toString());
+        console.log('[App] Token type:', tokenType);
         
-        // Redirect to reset password page with the hash
-        const fullResetUrl = `/reset-password${window.location.hash}`;
-        console.log('[App] Redirecting to:', fullResetUrl);
-        window.location.replace(fullResetUrl);
-      } else {
-        console.log('[App] Already on reset-password page');
+        // Only redirect to reset-password if it's a recovery/passwordReset token
+        const isPasswordReset = tokenType === 'recovery' || tokenType === 'passwordReset';
+        
+        if (isPasswordReset && window.location.pathname !== '/reset-password') {
+          console.log('[App] Password reset token detected, redirecting to reset-password page');
+          
+          // Store redirect info
+          localStorage.setItem('redirected_to_reset', 'true');
+          localStorage.setItem('redirect_time', Date.now().toString());
+          
+          // Redirect to reset password page with the hash
+          const fullResetUrl = `/reset-password${window.location.hash}`;
+          console.log('[App] Redirecting to:', fullResetUrl);
+          window.location.replace(fullResetUrl);
+        } else if (tokenType === 'signup' || tokenType === 'email_confirmation' || tokenType === 'magiclink') {
+          console.log('[App] Email confirmation token detected, redirecting to homepage');
+          
+          // Allow the component to finish processing the token first
+          setTimeout(() => {
+            // Redirect to home page after token processing
+            if (window.location.pathname !== '/') {
+              window.location.href = '/';
+            }
+          }, 1000);
+        } else {
+          console.log('[App] Already on appropriate page or unknown token type');
+        }
+      } catch (e) {
+        console.error('[App] Error parsing hash parameters:', e);
       }
     }
   }, []);
