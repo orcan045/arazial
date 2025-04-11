@@ -27,8 +27,10 @@ const HeroSection = styled.section`
   position: relative;
   
   @media (max-width: 768px) {
-    height: 450px;
+    height: 480px;
     padding: 1rem;
+    justify-content: flex-start;
+    padding-top: 3rem;
   }
 `;
 
@@ -49,7 +51,8 @@ const HeroTitle = styled.h1`
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   
   @media (max-width: 768px) {
-    font-size: 2.5rem;
+    font-size: 2.25rem;
+    margin-bottom: 1rem;
   }
 `;
 
@@ -75,7 +78,8 @@ const SearchContainer = styled.div`
   max-width: 900px;
   
   @media (max-width: 768px) {
-    padding: 1rem;
+    padding: 0.75rem;
+    margin-bottom: 1.5rem;
   }
 `;
 
@@ -120,6 +124,7 @@ const SearchForm = styled.form`
   
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
 `;
 
@@ -152,6 +157,11 @@ const SearchInput = styled.div`
       border-color: var(--color-primary);
       box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.15);
     }
+    
+    @media (max-width: 768px) {
+      padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+      font-size: 0.9rem;
+    }
   }
   
   select {
@@ -159,6 +169,18 @@ const SearchInput = styled.div`
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236E6E6E' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 1rem center;
+  }
+  
+  @media (max-width: 768px) {
+    svg {
+      left: 0.75rem;
+      width: 1rem;
+      height: 1rem;
+    }
+    
+    select {
+      background-position: right 0.75rem center;
+    }
   }
 `;
 
@@ -169,7 +191,8 @@ const SearchButton = styled(Button)`
   font-weight: 600;
   
   @media (max-width: 768px) {
-    min-height: 54px;
+    min-height: 45px;
+    padding: 0.5rem 1.5rem;
   }
 `;
 
@@ -188,7 +211,7 @@ const TabsContainer = styled.div`
   }
   
   @media (max-width: 768px) {
-    margin: 0 -0.75rem 1.5rem -0.75rem;
+    margin: 1.5rem -0.75rem 1.5rem -0.75rem;
     padding: 0 0.75rem;
     width: calc(100% + 1.5rem);
     justify-content: space-between;
@@ -267,6 +290,16 @@ const PopularSearches = styled.div`
     &:hover {
       color: var(--color-primary-light);
       text-decoration: underline;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+    
+    a {
+      margin-right: 1rem;
+      font-size: 0.85rem;
     }
   }
 `;
@@ -474,6 +507,16 @@ const AuctionStatus = styled.div`
     props.status === 'offer' ? 'rgb(234, 88, 12)' :
     'rgb(107, 114, 128)'
   };
+`;
+
+const ResponsiveButton = styled(Button)`
+  min-height: auto;
+  padding: 1rem 1.5rem;
+  
+  @media (max-width: 768px) {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
 `;
 
 const Home = () => {
@@ -913,15 +956,14 @@ const Home = () => {
                   Ara
                 </SearchButton>
                 
-                <Button 
+                <ResponsiveButton 
                   type="button" 
                   variant="secondary" 
                   size="large" 
                   onClick={resetFilters}
-                  style={{ minHeight: 'auto', padding: '1rem 1.5rem' }}
                 >
                   Sıfırla
-                </Button>
+                </ResponsiveButton>
               </div>
             </SearchForm>
           </SearchContainer>
