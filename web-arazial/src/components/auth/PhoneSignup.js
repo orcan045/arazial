@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { forceAuthRefresh } from '../../services/authUtils';
 import { supabase } from '../../services/supabase';
@@ -152,6 +152,33 @@ const Timer = styled.p`
   text-align: center;
 `;
 
+const CheckboxContainer = styled.div`
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+`;
+
+const Checkbox = styled.input`
+  margin-top: 0.25rem;
+  margin-right: 0.75rem;
+`;
+
+const CheckboxLabel = styled.label`
+  font-size: 0.875rem;
+  color: ${props => props.theme?.colors?.secondaryText || defaultColors.secondaryText};
+  line-height: 1.5;
+  
+  a {
+    color: ${props => props.theme?.colors?.primary || defaultColors.primary};
+    text-decoration: none;
+    font-weight: 500;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
+
 const PhoneSignup = () => {
   const [step, setStep] = useState('phone'); // 'phone', 'otp', 'password'
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -159,6 +186,8 @@ const PhoneSignup = () => {
   const [otpInputs, setOtpInputs] = useState(['', '', '', '', '', '']);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -306,6 +335,19 @@ const PhoneSignup = () => {
       // Check password length
       if (password.length < 6) {
         setVerificationError('Şifre en az 6 karakter olmalıdır');
+        setVerifyLoading(false);
+        return;
+      }
+      
+      // Check terms and privacy acceptance
+      if (!termsAccepted) {
+        setVerificationError('Kullanım Koşullarını kabul etmelisiniz');
+        setVerifyLoading(false);
+        return;
+      }
+      
+      if (!privacyAccepted) {
+        setVerificationError('Gizlilik Politikasını kabul etmelisiniz');
         setVerifyLoading(false);
         return;
       }
@@ -603,7 +645,31 @@ const PhoneSignup = () => {
         Şifreniz en az 6 karakter olmalıdır.
       </InfoText>
       
-      <Button type="submit" disabled={verifyLoading || !password || !confirmPassword}>
+      <CheckboxContainer>
+        <Checkbox 
+          id="termsAgreement" 
+          type="checkbox" 
+          checked={termsAccepted} 
+          onChange={(e) => setTermsAccepted(e.target.checked)}
+        />
+        <CheckboxLabel htmlFor="termsAgreement">
+          <Link to="/terms-of-use" target="_blank">Kullanım Koşulları</Link>'nı okudum ve kabul ediyorum.
+        </CheckboxLabel>
+      </CheckboxContainer>
+      
+      <CheckboxContainer>
+        <Checkbox 
+          id="privacyAgreement" 
+          type="checkbox" 
+          checked={privacyAccepted} 
+          onChange={(e) => setPrivacyAccepted(e.target.checked)}
+        />
+        <CheckboxLabel htmlFor="privacyAgreement">
+          <Link to="/privacy-policy" target="_blank">Gizlilik Politikası</Link>'nı okudum ve kabul ediyorum.
+        </CheckboxLabel>
+      </CheckboxContainer>
+      
+      <Button type="submit" disabled={verifyLoading || !password || !confirmPassword || !termsAccepted || !privacyAccepted}>
         {verifyLoading ? 'Kaydediliyor...' : 'Kayıt Ol'}
       </Button>
     </Form>

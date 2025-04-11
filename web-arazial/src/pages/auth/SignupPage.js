@@ -108,7 +108,7 @@ const FormFooter = styled.div`
 const CheckboxContainer = styled.div`
   display: flex;
   align-items: flex-start;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 `;
 
 const Checkbox = styled.input`
@@ -166,6 +166,7 @@ const SignupPage = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -194,7 +195,11 @@ const SignupPage = () => {
     }
     
     if (!termsAccepted) {
-      newErrors.terms = 'Gizlilik Politikası ve Kullanım Koşullarını kabul etmelisiniz';
+      newErrors.terms = 'Kullanım Koşullarını kabul etmelisiniz';
+    }
+    
+    if (!privacyAccepted) {
+      newErrors.privacy = 'Gizlilik Politikasını kabul etmelisiniz';
     }
     
     setErrors(newErrors);
@@ -344,12 +349,25 @@ const SignupPage = () => {
               onChange={(e) => setTermsAccepted(e.target.checked)}
             />
             <CheckboxLabel htmlFor="termsAgreement">
-              <Link to="/terms-of-use" target="_blank">Kullanım Koşulları</Link> ve <Link to="/privacy-policy" target="_blank">Gizlilik Politikası</Link>'nı okudum ve kabul ediyorum.
+              <Link to="/terms-of-use" target="_blank">Kullanım Koşulları</Link>'nı okudum ve kabul ediyorum.
             </CheckboxLabel>
           </CheckboxContainer>
           {errors.terms && <ErrorText>{errors.terms}</ErrorText>}
           
-          <Button type="submit" fullWidth loading={isLoading}>
+          <CheckboxContainer>
+            <Checkbox 
+              id="privacyAgreement" 
+              type="checkbox" 
+              checked={privacyAccepted} 
+              onChange={(e) => setPrivacyAccepted(e.target.checked)}
+            />
+            <CheckboxLabel htmlFor="privacyAgreement">
+              <Link to="/privacy-policy" target="_blank">Gizlilik Politikası</Link>'nı okudum ve kabul ediyorum.
+            </CheckboxLabel>
+          </CheckboxContainer>
+          {errors.privacy && <ErrorText>{errors.privacy}</ErrorText>}
+          
+          <Button type="submit" fullWidth loading={isLoading} disabled={!termsAccepted || !privacyAccepted}>
             {isLoading ? 'Kayıt Yapılıyor...' : 'Kayıt Ol'}
           </Button>
         </AuthForm>

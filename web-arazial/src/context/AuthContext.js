@@ -451,6 +451,9 @@ export function AuthProvider({ children }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: 'https://arazialcom.net'
+        }
       });
       
       if (error) throw error;
@@ -525,7 +528,7 @@ export function AuthProvider({ children }) {
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: 'https://arazialcom.net/reset-password',
       });
       
       if (error) throw error;

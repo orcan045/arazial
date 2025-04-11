@@ -184,6 +184,34 @@ const EyeButton = ({ isVisible, onClick }) => (
   </button>
 );
 
+// Add the CheckboxContainer, Checkbox and CheckboxLabel styled components
+const CheckboxContainer = styled.div`
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+`;
+
+const Checkbox = styled.input`
+  margin-top: 0.25rem;
+  margin-right: 0.75rem;
+`;
+
+const CheckboxLabel = styled.label`
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  
+  a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
+
 const LoginPage = () => {
   const [loginMethod, setLoginMethod] = useState('phone'); // 'email' or 'phone', default to phone
   const [authStep, setAuthStep] = useState('identifier'); // 'identifier', 'password', 'otp', 'new_password'
@@ -199,6 +227,8 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginAttempted, setLoginAttempted] = useState(false);
   const [formattedIdentifier, setFormattedIdentifier] = useState(''); // Formatted email or phone
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   
   const { signIn, error, user, loading, authState, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -677,7 +707,33 @@ const LoginPage = () => {
               </div>
             </div>
             
-            <Button type="submit" fullWidth loading={isLoading}>
+            <CheckboxContainer>
+              <Checkbox 
+                id="termsAgreement" 
+                type="checkbox" 
+                checked={termsAccepted} 
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+              />
+              <CheckboxLabel htmlFor="termsAgreement">
+                <Link to="/terms-of-use" target="_blank">Kullanım Koşulları</Link>'nı okudum ve kabul ediyorum.
+              </CheckboxLabel>
+            </CheckboxContainer>
+            {errors.terms && <div style={{ color: 'var(--color-error)', fontSize: '0.75rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>{errors.terms}</div>}
+            
+            <CheckboxContainer>
+              <Checkbox 
+                id="privacyAgreement" 
+                type="checkbox" 
+                checked={privacyAccepted} 
+                onChange={(e) => setPrivacyAccepted(e.target.checked)}
+              />
+              <CheckboxLabel htmlFor="privacyAgreement">
+                <Link to="/privacy-policy" target="_blank">Gizlilik Politikası</Link>'nı okudum ve kabul ediyorum.
+              </CheckboxLabel>
+            </CheckboxContainer>
+            {errors.privacy && <div style={{ color: 'var(--color-error)', fontSize: '0.75rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>{errors.privacy}</div>}
+            
+            <Button type="submit" fullWidth loading={isLoading} disabled={!termsAccepted || !privacyAccepted}>
               {isLoading ? 'Doğrulanıyor...' : 'Doğrula ve Kaydol'}
             </Button>
             
@@ -734,7 +790,33 @@ const LoginPage = () => {
               <EyeButton isVisible={showConfirmPassword} onClick={toggleConfirmPasswordVisibility} />
             </div>
             
-            <Button type="submit" fullWidth loading={isLoading}>
+            <CheckboxContainer>
+              <Checkbox 
+                id="termsAgreement" 
+                type="checkbox" 
+                checked={termsAccepted} 
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+              />
+              <CheckboxLabel htmlFor="termsAgreement">
+                <Link to="/terms-of-use" target="_blank">Kullanım Koşulları</Link>'nı okudum ve kabul ediyorum.
+              </CheckboxLabel>
+            </CheckboxContainer>
+            {errors.terms && <div style={{ color: 'var(--color-error)', fontSize: '0.75rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>{errors.terms}</div>}
+            
+            <CheckboxContainer>
+              <Checkbox 
+                id="privacyAgreement" 
+                type="checkbox" 
+                checked={privacyAccepted} 
+                onChange={(e) => setPrivacyAccepted(e.target.checked)}
+              />
+              <CheckboxLabel htmlFor="privacyAgreement">
+                <Link to="/privacy-policy" target="_blank">Gizlilik Politikası</Link>'nı okudum ve kabul ediyorum.
+              </CheckboxLabel>
+            </CheckboxContainer>
+            {errors.privacy && <div style={{ color: 'var(--color-error)', fontSize: '0.75rem', marginTop: '0.25rem', marginBottom: '0.5rem' }}>{errors.privacy}</div>}
+            
+            <Button type="submit" fullWidth loading={isLoading} disabled={!termsAccepted || !privacyAccepted}>
               {isLoading ? 'Hesap Oluşturuluyor...' : 'Hesap Oluştur'}
             </Button>
           </AuthForm>
@@ -1090,6 +1172,16 @@ const LoginPage = () => {
       return;
     }
     
+    if (!termsAccepted) {
+      setErrors({ terms: 'Kullanım Koşullarını kabul etmelisiniz' });
+      return;
+    }
+    
+    if (!privacyAccepted) {
+      setErrors({ privacy: 'Gizlilik Politikasını kabul etmelisiniz' });
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -1236,6 +1328,16 @@ const LoginPage = () => {
     
     if (password !== confirmPassword) {
       setErrors({ confirmPassword: 'Şifreler eşleşmiyor' });
+      return;
+    }
+    
+    if (!termsAccepted) {
+      setErrors({ terms: 'Kullanım Koşullarını kabul etmelisiniz' });
+      return;
+    }
+    
+    if (!privacyAccepted) {
+      setErrors({ privacy: 'Gizlilik Politikasını kabul etmelisiniz' });
       return;
     }
     

@@ -43,7 +43,7 @@ BEGIN
   ON CONFLICT (id) DO UPDATE
   SET 
     email = EXCLUDED.email,
-    phone_number = EXCLUDED.phone,
+    phone_number = EXCLUDED.phone_number,
     updated_at = EXCLUDED.updated_at;
   RETURN new;
 END;

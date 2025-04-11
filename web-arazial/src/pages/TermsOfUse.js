@@ -78,13 +78,19 @@ const Emphasis = styled.div`
   font-weight: 600;
 `;
 
+const Divider = styled.hr`
+  margin: 1.5rem 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+`;
+
 const TermsOfUse = () => {
   return (
     <PageContainer>
       <PageHeader>
         <PageTitle>Kullanım Koşulları</PageTitle>
         <PageSubtitle>
-          ARAZIALCOM EMLAK SANAYİ VE TİCARET LİMİTED ŞİRKETİ MOBİL UYGULAMA KULLANIM KOŞULLARI
+          MESAFELİ HİZMET SÖZLEŞMESİ
         </PageSubtitle>
       </PageHeader>
 
@@ -98,226 +104,76 @@ const TermsOfUse = () => {
       </Emphasis>
 
       <ContentSection>
-        <SectionTitle>1. Taraflar ve Kabul</SectionTitle>
+        <SectionTitle>1. Taraflar</SectionTitle>
         <Paragraph>
-          İşbu Kullanım Koşulları ("Koşullar"), bir tarafta ULU CAMİ MAH. 389 SK. NO:2/18 AKHİSAR / MANİSA adresinde mukim ARAZIALCOM EMLAK SANAYİ VE TİCARET LİMİTED ŞİRKETİ ("ARAZIALCOM" veya "Şirket") ile diğer tarafta Şirket tarafından sunulan mobil uygulamayı ("Uygulama") kullanan gerçek veya tüzel kişi ("Kullanıcı") arasındaki hukuki ilişkiyi düzenlemektedir.
-        </Paragraph>
-        <Paragraph>
-          Uygulama'yı indirerek, yükleyerek, erişerek veya kullanarak, işbu Koşulları ve ayrılmaz bir parçası olan Gizlilik Politikası'nı okuduğunuzu, anladığınızı ve yasal olarak bağlı olduğunuzu kabul etmiş olursunuz. Bu Koşulları kabul etmiyorsanız, Uygulama'yı kullanmamalısınız.
+          İşbu Mesafeli Hizmet Sözleşmesi, bir tarafta Arazialcom Gayrimenkul Sanayi ve Ticaret Limited Şirketi ("Hizmet Sağlayıcı" olarak anılacaktır), diğer tarafta platforma üye olan ve teminat ödemesi gerçekleştiren kullanıcı ("Hizmet Alan" olarak anılacaktır) arasında, aşağıdaki şartlar çerçevesinde elektronik ortamda kurulmuştur.
         </Paragraph>
       </ContentSection>
 
       <ContentSection>
-        <SectionTitle>2. Tanımlar</SectionTitle>
-        <Paragraph>Bu Koşullarda geçen;</Paragraph>
-
-        <List>
-          <ListItem>
-            <strong>Şirket/ARAZIALCOM:</strong> ARAZIALCOM EMLAK SANAYİ VE TİCARET LİMİTED ŞİRKETİ'ni,
-          </ListItem>
-          <ListItem>
-            <strong>Uygulama:</strong> ARAZIALCOM tarafından geliştirilen ve işletilen, arsa ve arazi gibi gayrimenkullerin online ihale (açık artırma) yöntemiyle alım satımına aracılık eden mobil platformu,
-          </ListItem>
-          <ListItem>
-            <strong>Kullanıcı:</strong> Uygulama'ya üye olan ve/veya Uygulama üzerinden sunulan Hizmetlerden faydalanan her türlü gerçek veya tüzel kişiyi (Alıcı, Satıcı veya her ikisi),
-          </ListItem>
-          <ListItem>
-            <strong>Hizmetler:</strong> Uygulama aracılığıyla Kullanıcılara sunulan, gayrimenkul ilanı verme, ihale düzenleme, teklif verme, alıcı ve satıcıyı buluşturma ve ilgili diğer platform hizmetlerini,
-          </ListItem>
-          <ListItem>
-            <strong>İhale:</strong> Satıcı tarafından belirlenen koşullar çerçevesinde, bir gayrimenkulün Uygulama üzerinden teklif alma suretiyle satışa sunulduğu süreci,
-          </ListItem>
-          <ListItem>
-            <strong>Teklif:</strong> Bir Kullanıcının (Alıcı Adayı) bir İhale'deki gayrimenkulü belirli bir bedel karşılığında satın alma yönündeki bağlayıcı irade beyanını,
-          </ListItem>
-          <ListItem>
-            <strong>Satıcı:</strong> Uygulama üzerinden gayrimenkulünü (arsa, arazi vb.) İhale yoluyla satışa sunan Kullanıcıyı,
-          </ListItem>
-          <ListItem>
-            <strong>Alıcı:</strong> Bir İhale'de en yüksek geçerli Teklifi vererek gayrimenkulü satın alma hakkını kazanan Kullanıcıyı,
-          </ListItem>
-          <ListItem>
-            <strong>İçerik:</strong> Uygulama'da yer alan her türlü metin, grafik, kullanıcı arayüzü, görsel arayüz, fotoğraf, ticari marka, logo, ses, müzik, yazılım ve bilgisayar kodu dahil ancak bunlarla sınırlı olmamak üzere tüm materyalleri,
-          </ListItem>
-          <ListItem>
-            <strong>Gizlilik Politikası:</strong> Uygulama kullanımı sırasında toplanan kişisel verilerin işlenmesine ilişkin esasları belirleyen ve işbu Koşulların ayrılmaz bir parçası olan politikayı,
-          </ListItem>
-          <ListItem>
-            <strong>KVKK:</strong> 6698 sayılı Kişisel Verilerin Korunması Kanunu'nu, ifade eder.
-          </ListItem>
-        </List>
-      </ContentSection>
-
-      <ContentSection>
-        <SectionTitle>3. Hizmetlerin Açıklaması ve Kapsamı</SectionTitle>
-        <List>
-          <ListItem>
-            ARAZIALCOM, Kullanıcıların (Satıcıların) sahip oldukları arsa ve arazileri Uygulama üzerinden online ihale yöntemiyle satışa sunmalarına ve diğer Kullanıcıların (Alıcıların) bu ihalelere katılarak teklif vermelerine olanak tanıyan bir platform (aracı hizmet sağlayıcı) sunmaktadır.
-          </ListItem>
-          <ListItem>
-            ARAZIALCOM, kural olarak satışa sunulan gayrimenkullerin sahibi değildir. Şirket, Alıcı ve Satıcı arasındaki alım-satım işleminin tarafı olmayıp, yalnızca bu işlemin gerçekleştirilebileceği dijital ortamı sağlar. Taraflar arasındaki gayrimenkul satış sözleşmesi ve ilgili tüm yasal süreçler (tapu devri vb.) Alıcı ve Satıcı'nın kendi sorumluluğundadır.
-          </ListItem>
-          <ListItem>
-            ARAZIALCOM, listelenen gayrimenkullerin mülkiyeti, durumu, imar durumu, hukuki durumu, değeri veya Satıcı tarafından sağlanan bilgilerin doğruluğu konusunda herhangi bir garanti vermez. Alıcılar, teklif vermeden önce ilgili gayrimenkul hakkında gerekli tüm araştırmayı (due diligence) yapmakla bizzat yükümlüdür.
-          </ListItem>
-          <ListItem>
-            Hizmetlerin kapsamı ve Uygulama'nın özellikleri ARAZIALCOM tarafından tek taraflı olarak değiştirilebilir, genişletilebilir veya daraltılabilir.
-          </ListItem>
-        </List>
-      </ContentSection>
-
-      <ContentSection>
-        <SectionTitle>4. Kullanıcı Hesabı ve Üyelik</SectionTitle>
-        <List>
-          <ListItem>
-            Uygulama'nın belirli özelliklerinden (örn. teklif verme, ihale başlatma) faydalanmak için Kullanıcıların bir hesap oluşturması gerekmektedir.
-          </ListItem>
-          <ListItem>
-            Kullanıcı, hesap oluşturma sırasında doğru, güncel ve eksiksiz bilgi sağlamayı kabul ve taahhüt eder. Sağlanan bilgilerin yanlış veya eksik olmasından doğacak tüm sorumluluk Kullanıcıya aittir.
-          </ListItem>
-          <ListItem>
-            Kullanıcılar, hesap bilgilerini (kullanıcı adı, şifre vb.) gizli tutmakla ve hesaplarının güvenliğini sağlamakla yükümlüdür. Hesapları üzerinden gerçekleştirilen tüm işlemlerden Kullanıcılar sorumludur. Hesap güvenliğinin ihlal edildiğinden şüphelenilmesi durumunda derhal ARAZIALCOM'a bildirimde bulunulmalıdır.
-          </ListItem>
-          <ListItem>
-            Kullanıcılar, 18 yaşından büyük ve fiil ehliyetine sahip olmalıdır. Tüzel kişiler adına hesap oluşturanlar, ilgili tüzel kişiyi temsil etmeye yetkili olduklarını beyan ve taahhüt ederler.
-          </ListItem>
-          <ListItem>
-            ARAZIALCOM, gerekli gördüğü durumlarda Kullanıcılardan kimlik veya yetki doğrulama amacıyla ek bilgi ve belge talep etme hakkını saklı tutar.
-          </ListItem>
-          <ListItem>
-            Her Kullanıcı yalnızca bir hesaba sahip olabilir. Birden fazla hesap açılması veya hesap devri yasaktır.
-          </ListItem>
-        </List>
-      </ContentSection>
-
-      <ContentSection>
-        <SectionTitle>5. Kullanım Kuralları ve Kullanıcı Yükümlülükleri</SectionTitle>
+        <SectionTitle>2. Konu</SectionTitle>
         <Paragraph>
-          Kullanıcılar, Uygulama'yı kullanırken aşağıdaki kurallara uymayı kabul ve taahhüt ederler:
+          İşbu sözleşme, Hizmet Alan'ın Arazialcom platformunda yayınlanan taşınmazlara katılım teminatı ödeyerek başvuru hakkı kazanması sürecine ilişkin şartları düzenler.
         </Paragraph>
-
-        <List>
-          <ListItem>Uygulama'yı yalnızca yasalara uygun amaçlarla kullanmak.</ListItem>
-          <ListItem>Yanlış, yanıltıcı, eksik veya güncel olmayan bilgiler vermemek.</ListItem>
-          <ListItem>Başkası adına veya sahte kimlikle hesap oluşturmamak, işlem yapmamak.</ListItem>
-          <ListItem>Uygulama'nın işleyişine müdahale etmemek, güvenlik sistemlerini aşmaya çalışmamak, virüs veya zararlı kod bulaştırmamak.</ListItem>
-          <ListItem>Diğer Kullanıcıların haklarını ihlal etmemek, taciz edici, tehditkar, karalayıcı veya rahatsız edici davranışlarda bulunmamak.</ListItem>
-          <ListItem>ARAZIALCOM'un veya üçüncü tarafların fikri mülkiyet haklarını (telif hakkı, marka vb.) ihlal etmemek.</ListItem>
-          <ListItem>İhale süreçlerini manipüle etmeye yönelik davranışlarda bulunmamak (örn. sahte teklifler vermek, Satıcı ile anlaşarak fiyatı yapay olarak artırmak).</ListItem>
-          <ListItem>Uygulama aracılığıyla elde edilen bilgileri, ARAZIALCOM'un yazılı izni olmaksızın ticari veya başka amaçlarla kullanmamak, kopyalamamak, dağıtmamak.</ListItem>
-          <ListItem>Özellikle Alıcılar, ilgilendikleri gayrimenkullerle ilgili tüm hukuki, teknik ve fiili durumu (imar, tapu kaydı, vergi borcu, ipotek, haciz, fiili kullanım durumu vb.) teklif vermeden önce kendi imkanlarıyla araştırmak ve doğrulamakla yükümlüdür.</ListItem>
-          <ListItem>Satıcılar, satışa sundukları gayrimenkuller hakkında doğru ve eksiksiz bilgi vermekle, gayrimenkulün satışına engel teşkil edecek hukuki veya fiili bir durum varsa bunu açıkça belirtmekle yükümlüdür.</ListItem>
-          <ListItem>İlgili tüm vergi (KDV, tapu harcı vb.) ve yasal yükümlülüklere uymak.</ListItem>
-        </List>
-      </ContentSection>
-
-      <ContentSection>
-        <SectionTitle>6. İhale Süreci, Teklif Verme ve Satın Alma</SectionTitle>
-        <List>
-          <ListItem>
-            Satıcılar, ARAZIALCOM tarafından belirlenen kurallar çerçevesinde Uygulama üzerinden gayrimenkullerini ihaleye çıkarabilirler. İhale başlangıç fiyatı, süresi, rezerv fiyat (varsa) gibi detaylar Satıcı tarafından belirlenir ve ihale sayfasında gösterilir.
-          </ListItem>
-          <ListItem>
-            <strong>Verilen Her Teklif, İhalenin Kazanılması Durumunda Gayrimenkulü Belirtilen Fiyattan Satın Almaya Yönelik Geri Alınamaz ve Bağlayıcı Bir İradedir.</strong> Kullanıcılar, teklif vermeden önce tüm koşulları dikkatlice incelemeli ve satın alma niyetlerinin kesin olduğundan emin olmalıdırlar.
-          </ListItem>
-          <ListItem>
-            İhale süresi sonunda veya "Hemen Al" seçeneği (varsa) kullanıldığında, en yüksek geçerli teklifi veren Kullanıcı (Alıcı), ihaleyi kazanmış sayılır ve Satıcı ile arasında, teklif edilen bedel üzerinden gayrimenkul alım-satımına yönelik bir ön anlaşma kurulmuş olur.
-          </ListItem>
-          <ListItem>
-            İhaleyi kazanan Alıcı, ARAZIALCOM tarafından belirlenen süre ve yöntemle (örn. kapora ödemesi) yükümlülüklerini yerine getirmek ve Satıcı ile tapu devri dahil resmi alım-satım işlemlerini tamamlamakla yükümlüdür.
-          </ListItem>
-          <ListItem>
-            İhaleyi kazanan Alıcının yükümlülüklerini yerine getirmemesi durumunda, Satıcının yasal hakları saklı kalmak kaydıyla, ARAZIALCOM tarafından Kullanıcının hesabı askıya alınabilir veya kapatılabilir ve varsa ödenen teminat/kapora iade edilmeyebilir.
-          </ListItem>
-          <ListItem>
-            Satıcının, ihaleyi kazanan Alıcıya gayrimenkulü devretme yükümlülüğünü yerine getirmemesi durumunda Alıcının yasal hakları saklıdır. ARAZIALCOM bu tür uyuşmazlıklarda taraf değildir.
-          </ListItem>
-          <ListItem>
-            ARAZIALCOM, teknik arızalar veya mücbir sebepler nedeniyle ihale süreçlerinde yaşanabilecek aksaklıklardan sorumlu tutulamaz, ancak bu gibi durumlarda makul çözümler üretmeye çalışır.
-          </ListItem>
-        </List>
-      </ContentSection>
-
-      <ContentSection>
-        <SectionTitle>7. Ücretler ve Ödemeler</SectionTitle>
-        <List>
-          <ListItem>
-            Uygulama'nın temel kullanımı ücretsiz olabilir ancak ARAZIALCOM, belirli Hizmetler (örn. ihale listeleme, başarılı satış sonrası komisyon vb.) için ücret talep etme hakkını saklı tutar.
-          </ListItem>
-          <ListItem>
-            Uygulanacak ücretler, komisyon oranları ve ödeme koşulları, ilgili Hizmetin sunulduğu Uygulama ekranlarında veya ayrı bir "Ücretlendirme Politikası" sayfasında Kullanıcılara açıkça bildirilecektir.
-          </ListItem>
-          <ListItem>
-            Ödemeler, ARAZIALCOM'un anlaşmalı olduğu üçüncü taraf ödeme hizmeti sağlayıcısı (Paratika) aracılığıyla gerçekleştirilir. Ödeme işlemleri sırasında Paratika'nın kendi kullanım koşulları ve gizlilik politikası geçerli olabilir.
-          </ListItem>
-          <ListItem>
-            Kullanıcılar, beyan ettikleri ödeme bilgilerinin doğruluğundan ve geçerliliğinden sorumludur.
-          </ListItem>
-          <ListItem>
-            Alım-satım işlemine ilişkin yasal vergiler (KDV, tapu harcı vb.) ve masraflar, ilgili mevzuat uyarınca Alıcı ve/veya Satıcı tarafından karşılanır. ARAZIALCOM, bu vergi ve masraflardan sorumlu değildir.
-          </ListItem>
-        </List>
-      </ContentSection>
-
-      <ContentSection>
-        <SectionTitle>8. Fikri Mülkiyet Hakları</SectionTitle>
-        <List>
-          <ListItem>
-            Uygulama'nın kendisi, tasarımı, metinleri, görselleri, logoları, markaları, veritabanı, yazılım kodları ve diğer tüm İçerik ("ARAZIALCOM İçeriği"), ARAZIALCOM'a veya lisans verenlerine aittir ve Türk ve uluslararası fikri mülkiyet yasalarıyla korunmaktadır.
-          </ListItem>
-          <ListItem>
-            Kullanıcılara, Uygulama'yı yalnızca işbu Koşullar çerçevesinde ve Hizmetlerden faydalanma amacıyla kişisel, münhasır olmayan, devredilemez ve geri alınabilir sınırlı bir kullanım lisansı verilmektedir.
-          </ListItem>
-          <ListItem>
-            Kullanıcılar, ARAZIALCOM İçeriğini kopyalayamaz, değiştiremez, çoğaltamaz, dağıtamaz, satamaz, kiralayamaz, tersine mühendislik yapamaz veya türev çalışmalarını oluşturamaz.
-          </ListItem>
-          <ListItem>
-            Kullanıcılar tarafından Uygulama'ya yüklenen içeriklerin (ilan bilgileri, fotoğraflar vb.) fikri mülkiyet hakları kendilerine aittir. Ancak Kullanıcılar, bu içeriklerin Hizmetlerin sunulması amacıyla ARAZIALCOM tarafından kullanılmasına, çoğaltılmasına, dağıtılmasına ve sergilenmesine yönelik dünya çapında, telifsiz ve münhasır olmayan bir lisansı ARAZIALCOM'a vermiş sayılırlar.
-          </ListItem>
-        </List>
-      </ContentSection>
-
-      <ContentSection>
-        <SectionTitle>9. Garantilerin Reddi</SectionTitle>
-        <List>
-          <ListItem>
-            UYGULAMA VE HİZMETLER, "OLDUĞU GİBİ" VE "MEVCUT OLDUĞU ŞEKİLDE" SUNULMAKTADIR. ARAZIALCOM, UYGULAMANIN KESİNTİSİZ, HATASIZ, GÜVENLİ VEYA VİRÜSSÜZ ÇALIŞACAĞINA DAİR AÇIK VEYA ZIMNİ HİÇBİR GARANTİ VERMEMEKTEDİR.
-          </ListItem>
-          <ListItem>
-            ARAZIALCOM, KULLANICILAR TARAFINDAN SAĞLANAN BİLGİLERİN (GAYRİMENKUL DETAYLARI, İLAN AÇIKLAMALARI DAHİL) DOĞRULUĞU, GÜVENİLİRLİĞİ, EKSİKSİZLİĞİ VEYA GÜNCELLİĞİ KONUSUNDA HİÇBİR SORUMLULUK KABUL ETMEZ VE GARANTİ VERMEZ.
-          </ListItem>
-          <ListItem>
-            ARAZIALCOM, UYGULAMA ÜZERİNDEN SATIŞA SUNULAN GAYRİMENKULLERİN HUKUKİ DURUMU, MÜLKİYETİ, DEĞERİ, İMAR DURUMU, FİZİKİ KOŞULLARI VEYA SATILABİLİRLİĞİ KONUSUNDA HİÇBİR GARANTİ VERMEMEKTEDİR. BU KONULARDAKİ TÜM RİSK KULLANICILARA (ÖZELLİKLE ALICILARA) AİTTİR.
-          </ListItem>
-          <ListItem>
-            ARAZIALCOM, ALICI VE SATICI ARASINDAKİ İLİŞKİDEN, ALIM-SATIM SÖZLEŞMESİNİN İFASINDAN VEYA İFASINDAN KAYNAKLANAN UYUŞMAZLIKLARDAN SORUMLU DEĞİLDİR.
-          </ListItem>
-        </List>
-      </ContentSection>
-
-      <ContentSection>
-        <SectionTitle>14. Uygulanacak Hukuk ve Yetkili Mahkeme</SectionTitle>
         <Paragraph>
-          İşbu Koşulların yorumlanmasında, uygulanmasında ve Koşullar nedeniyle ortaya çıkabilecek tüm uyuşmazlıkların çözümünde Türk Hukuku uygulanacaktır. İşbu Koşullardan kaynaklanan veya Koşullar ile bağlantılı her türlü ihtilafın çözümünde Manisa (Akhisar) Mahkemeleri ve İcra Daireleri münhasıran yetkilidir.
+          Bu sözleşme herhangi bir taşınmazın satışı değil, yalnızca başvuru ve teklif sürecine katılım hizmeti sunulmasına ilişkindir.
         </Paragraph>
       </ContentSection>
 
       <ContentSection>
-        <SectionTitle>15. İletişim Bilgileri</SectionTitle>
+        <SectionTitle>3. Hizmetin Kapsamı</SectionTitle>
+        <List>
+          <ListItem>Hizmet Alan, ilanda belirtilen teminat tutarını ödeyerek ilgili taşınmaza teklif verme hakkı elde eder.</ListItem>
+          <ListItem>Teminat ödemesi yapılmadan teklif verilemez.</ListItem>
+          <ListItem>Bu süreçte Arazialcom yalnızca dijital altyapı sağlar, doğrudan satış gerçekleştirmez.</ListItem>
+        </List>
+      </ContentSection>
+
+      <ContentSection>
+        <SectionTitle>4. Teminat ve İade Koşulları</SectionTitle>
+        <List>
+          <ListItem>Teminat ödemesi, başvurulan taşınmaza katılım amacıyla tahsil edilir.</ListItem>
+          <ListItem>Satın alma gerçekleşmezse, teminat bedeli 7 (yedi) iş günü içinde iade edilir.</ListItem>
+          <ListItem>Kazanım sağlanırsa, teminat bedeli satış bedelinden düşülür.</ListItem>
+          <ListItem>Hatalı IBAN, alıcı bilgisi gibi kullanıcıdan kaynaklı sorunlarda gecikmelerden Hizmet Sağlayıcı sorumlu değildir.</ListItem>
+        </List>
+      </ContentSection>
+
+      <ContentSection>
+        <SectionTitle>5. Cayma Hakkı</SectionTitle>
+        <List>
+          <ListItem>Kullanıcı, teminat ödemesini yaptıktan sonra taşınmaza teklif vermemişse, 14 gün içinde cayma hakkını kullanabilir.</ListItem>
+          <ListItem>Bu durumda teminat, kullanıcıya iade edilir.</ListItem>
+        </List>
+      </ContentSection>
+
+      <ContentSection>
+        <SectionTitle>6. Sözleşmenin Süresi</SectionTitle>
         <Paragraph>
-          İşbu Koşullar ile ilgili soru ve bildirimleriniz için aşağıdaki iletişim kanallarını kullanabilirsiniz:
-        </Paragraph>
-        <Paragraph>
-          E-posta: destek@arazialcom.com
-        </Paragraph>
-        <Paragraph>
-          Adres: ULU CAMİ MAH. 389 SK. NO:2/18 AKHİSAR / MANİSA
+          Bu sözleşme, teminat ödemesiyle birlikte elektronik ortamda yürürlüğe girer ve ilgili başvuru süreci sona erdiğinde veya iade yapıldığında kendiliğinden sona erer.
         </Paragraph>
       </ContentSection>
 
-      <Emphasis>
-        Kullanıcı, Uygulama'yı kullanarak yukarıdaki tüm maddeleri okuduğunu, anladığını ve kabul ettiğini beyan eder.
-      </Emphasis>
+      <ContentSection>
+        <SectionTitle>7. Uyuşmazlıkların Çözümü</SectionTitle>
+        <Paragraph>
+          Taraflar arasında doğabilecek uyuşmazlıklar öncelikle uzlaşma yoluyla çözülmeye çalışılır.
+          Çözülemeyen durumlarda, Manisa Akhisar Mahkemeleri ve İcra Daireleri yetkilidir.
+        </Paragraph>
+      </ContentSection>
+
+      <ContentSection>
+        <SectionTitle>8. İletişim Bilgileri</SectionTitle>
+        <Paragraph>
+          Arazialcom Gayrimenkul Sanayi ve Ticaret Ltd. Şti.
+          <br />
+          Adres: ULU CAMİİ MAH. 388 SK. NO:29/1B, AKHİSAR / MANİSA
+          <br />
+          Vergi No: 0730982784
+          <br />
+          E-posta: info@arazialcom.org
+        </Paragraph>
+      </ContentSection>
     </PageContainer>
   );
 };
