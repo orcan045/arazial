@@ -230,49 +230,6 @@ const LegalLinks = styled.div`
   }
 `;
 
-const Newsletter = styled.div`
-  margin-top: 1.5rem;
-`;
-
-const NewsletterForm = styled.form`
-  display: flex;
-  flex-direction: column;
-  
-  input {
-    padding: 0.75rem 1rem;
-    border-radius: var(--border-radius-md);
-    border: none;
-    background-color: rgba(255, 255, 255, 0.1);
-    color: white;
-    margin-bottom: 0.75rem;
-    
-    &::placeholder {
-      color: rgba(255, 255, 255, 0.5);
-    }
-    
-    &:focus {
-      outline: none;
-      background-color: rgba(255, 255, 255, 0.15);
-    }
-  }
-  
-  button {
-    padding: 0.75rem 1rem;
-    border-radius: var(--border-radius-md);
-    border: none;
-    background: linear-gradient(90deg, var(--color-gold-dark) 0%, var(--color-gold) 100%);
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    }
-  }
-`;
-
 const PaymentMethods = styled.div`
   display: flex;
   gap: 1rem;
@@ -358,14 +315,6 @@ const Footer = () => {
                 <p>info@arazialcom.com</p>
               </ContactItem>
             </ContactInfo>
-            
-            <Newsletter>
-              <p>Yeni fırsatlardan haberdar olun:</p>
-              <NewsletterForm>
-                <input type="email" placeholder="E-posta adresiniz" required />
-                <button type="submit">Abone Ol</button>
-              </NewsletterForm>
-            </Newsletter>
           </div>
         </FooterTop>
         
