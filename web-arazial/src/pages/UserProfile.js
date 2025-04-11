@@ -452,23 +452,13 @@ const UserProfile = () => {
               </FormGroup>
               
               <FormGroup>
-                <Label htmlFor="email">E-posta Adresi</Label>
-                <Input 
-                  type="email" 
-                  id="email" 
-                  value={user?.email || ''}
-                  disabled
-                />
-              </FormGroup>
-              
-              <FormGroup>
                 <Label htmlFor="phone">Telefon</Label>
                 <Input 
                   type="tel" 
                   id="phone" 
                   name="phone"
                   value={formData.phone}
-                  onChange={handleInputChange}
+                  disabled
                 />
               </FormGroup>
               

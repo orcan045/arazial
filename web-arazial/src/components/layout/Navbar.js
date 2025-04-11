@@ -504,7 +504,6 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [showResetButton, setShowResetButton] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const { user, signOut, isAdmin, loading, reloadUserProfile, refreshAuth } = useAuth();
   const location = useLocation();
@@ -550,71 +549,6 @@ const Navbar = () => {
     setIsUserMenuOpen(false);
     setIsOpen(false);
   }, [user]);
-  
-  // Add a timeout effect to avoid UI getting stuck in loading state
-  useEffect(() => {
-    // If loading takes too long, we'll assume there's a problem and force reset
-    let loadingTimeout;
-    let resetButtonTimeout;
-    
-    if (loading) {
-      loadingTimeout = setTimeout(() => {
-        console.log("Navbar loading timeout reached - force resetting UI state");
-        // Force UI into a consistent state rather than showing perpetual loading
-        setIsUserMenuOpen(false);
-        setIsOpen(false);
-      }, 8000); // 8 seconds max loading time
-      
-      // Show reset button after 5 seconds of loading
-      resetButtonTimeout = setTimeout(() => {
-        setShowResetButton(true);
-      }, 5000);
-    } else {
-      setShowResetButton(false);
-    }
-    
-    return () => {
-      if (loadingTimeout) clearTimeout(loadingTimeout);
-      if (resetButtonTimeout) clearTimeout(resetButtonTimeout);
-    };
-  }, [loading]);
-  
-  // Handler to reset the session
-  const handleResetSession = async () => {
-    console.log("User initiated session reset");
-    try {
-      // First try to force sign out 
-      try {
-        await signOut();
-      } catch (error) {
-        console.error("Error during forced sign out:", error);
-      }
-      
-      // Clear any local storage related to auth
-      localStorage.removeItem('user_profile');
-      localStorage.removeItem('user_profile_time');
-      
-      // Force refresh auth
-      await refreshAuth();
-      
-      // Redirect to home page
-      navigate('/');
-      
-      // If still loading after a moment, suggest page refresh
-      setTimeout(() => {
-        if (loading) {
-          alert("Oturum sıfırlanamadı. Sayfayı yenilemek için tamam'a basın.");
-          window.location.reload();
-        }
-      }, 3000); 
-    } catch (error) {
-      console.error("Session reset failed:", error);
-      alert("Oturum sıfırlanamadı. Sayfayı yenilemek için tamam'a basın.");
-      window.location.reload();
-    } finally {
-      setShowResetButton(false);
-    }
-  };
   
   const handleSignOut = async () => {
     try {
@@ -715,36 +649,13 @@ const Navbar = () => {
         <NavButtonsContainer>
           {loading ? (
             <div style={{ 
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem'
-            }}>
-              <div style={{ 
-                width: '28px', 
-                height: '28px', 
-                borderRadius: '50%', 
-                border: '2px solid var(--color-surface-secondary)',
-                borderTopColor: 'var(--color-primary)',
-                animation: 'navbarSpin 1s linear infinite'
-              }} />
-              
-              {showResetButton && (
-                <button 
-                  onClick={handleResetSession}
-                  style={{
-                    background: 'var(--color-surface-secondary)',
-                    border: 'none',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 'var(--border-radius-md)',
-                    cursor: 'pointer',
-                    fontSize: '0.75rem',
-                    color: 'var(--color-text)'
-                  }}
-                >
-                  Oturumu Sıfırla
-                </button>
-              )}
-            </div>
+              width: '28px', 
+              height: '28px', 
+              borderRadius: '50%', 
+              border: '2px solid var(--color-surface-secondary)',
+              borderTopColor: 'var(--color-primary)',
+              animation: 'navbarSpin 1s linear infinite'
+            }} />
           ) : !user ? (
             <div className="auth-buttons">
               <Button 
@@ -757,10 +668,26 @@ const Navbar = () => {
                   padding: '0.625rem 1.5rem',
                   fontSize: '0.875rem',
                   minHeight: '40px',
-                  fontWeight: '500'
+                  fontWeight: '500',
+                  marginRight: '0.75rem'
                 }}
               >
                 Giriş Yap
+              </Button>
+              <Button 
+                as={Link} 
+                to="/signup" 
+                variant="outline"
+                size="small"
+                minWidth="auto"
+                style={{ 
+                  padding: '0.625rem 1.5rem',
+                  fontSize: '0.875rem',
+                  minHeight: '40px',
+                  fontWeight: '500'
+                }}
+              >
+                Kayıt Ol
               </Button>
             </div>
           ) : null}
@@ -793,6 +720,14 @@ const Navbar = () => {
               onClick={() => setIsOpen(false)}
             >
               Giriş Yap
+            </Button>
+            <Button 
+              as={Link} 
+              to="/signup" 
+              variant="outline"
+              onClick={() => setIsOpen(false)}
+            >
+              Kayıt Ol
             </Button>
           </MobileAuthButtons>
         )}
@@ -829,9 +764,7 @@ const Navbar = () => {
           <div style={{ 
             padding: '2rem',
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '1.25rem'
+            justifyContent: 'center'
           }}>
             <div style={{ 
               width: '36px', 
@@ -841,25 +774,6 @@ const Navbar = () => {
               borderTopColor: 'var(--color-primary)',
               animation: 'navbarSpin 1s linear infinite'
             }} />
-            
-            {showResetButton && (
-              <button 
-                onClick={handleResetSession}
-                style={{
-                  background: 'var(--color-surface-secondary)',
-                  border: 'none',
-                  padding: '0.75rem 1rem',
-                  borderRadius: 'var(--border-radius-md)',
-                  cursor: 'pointer',
-                  width: '100%',
-                  maxWidth: '200px',
-                  color: 'var(--color-text)',
-                  fontWeight: '500'
-                }}
-              >
-                Oturumu Sıfırla
-              </button>
-            )}
           </div>
         ) : user ? (
           <div style={{ 

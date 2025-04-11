@@ -63,7 +63,8 @@ serve(async (req) => {
 
     // Handle both 'phoneNumber' and 'phone' parameters for compatibility
     const phoneNumber = body.phoneNumber || body.phone;
-    const { otp, password } = body;
+    const { otp, password, firstName, lastName } = body;
+    const marketingConsent = body.marketingConsent || false;
     
     console.log('verify-otp: Parsed phone number:', phoneNumber);
     
@@ -201,84 +202,51 @@ serve(async (req) => {
     }
     console.log('verify-otp: OTP marked as verified successfully');
 
-    // Check if a user with this phone number already exists
+    // Check if a user with this phone number already exists in profiles
     console.log('verify-otp: Checking if user exists with phone number:', phoneNumber);
     
-    // First check in profiles table
+    // Check in profiles table
     const { data: existingUsers, error: userQueryError } = await supabaseAdmin
       .from('profiles')
       .select('id')
       .eq('phone_number', phoneNumber);
 
-    // Also check directly in auth.users table for this email
-    const email = `${phoneNumber.replace(/[+]/g, '')}@phone.arazial.com`;
-    const altEmail = `+${phoneNumber.replace(/[+]/g, '')}@phone.arazial.com`;
-    
-    // Check if user exists in auth.users with either email format
-    console.log('verify-otp: Checking user existence in auth.users with email:', email, 'or', altEmail);
-    
-    const { data: authUsers, error: authUserError } = await supabaseAdmin
-      .from('auth_user_emails_view')
-      .select('id')
-      .or(`email.eq.${email},email.eq.${altEmail}`)
-      .limit(1);
-    
-    if (authUserError) {
-      console.error('verify-otp: Error checking auth users:', authUserError);
+    if (userQueryError) {
+      console.error('verify-otp: Error checking profiles:', userQueryError);
     }
+
+    // Create unique identifier for the phone-based user
+    const phoneIdentifier = `${phoneNumber.replace(/[+]/g, '')}@phone.arazial.com`;
     
     let userId;
     let isNewUser = false;
     
-    // First check if user exists in auth.users
-    if (authUsers && authUsers.length > 0) {
-      userId = authUsers[0].user_id;
-      console.log('verify-otp: Existing user found in auth.users with ID:', userId);
-      
-      // Update user password
-      console.log('verify-otp: Updating password for existing user');
-      const { error: updatePwError } = await supabaseAdmin.auth.admin.updateUserById(
-        userId,
-        { password }
-      );
-      
-      if (updatePwError) {
-        console.error('verify-otp: Error updating password:', updatePwError);
-        return new Response(JSON.stringify({ error: 'Error updating password' }), {
-          status: 500,
-          headers: { 
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          },
-        });
-      }
-      
-      // Ensure profile exists for this user (in case it was created without a profile)
-      const { data: profileData } = await supabaseAdmin
-        .from('profiles')
-        .select('id')
-        .eq('id', userId)
-        .limit(1);
-        
-      if (!profileData || profileData.length === 0) {
-        // Let the database trigger handle profile creation
-        console.log('verify-otp: Will let database trigger create profile on next sign-in');
-      }
-    }
-    // Then check profiles table if not found in auth.users
-    else if (!userQueryError && existingUsers && existingUsers.length > 0) {
+    // If we found a user in profiles table
+    if (!userQueryError && existingUsers && existingUsers.length > 0) {
       userId = existingUsers[0].id;
       console.log('verify-otp: Existing user found in profiles with ID:', userId);
       
       // Update user password
       console.log('verify-otp: Updating password for existing user');
-      const { error: updatePwError } = await supabaseAdmin.auth.admin.updateUserById(
-        userId,
-        { password }
-      );
       
-      if (updatePwError) {
-        console.error('verify-otp: Error updating password:', updatePwError);
+      try {
+        const { error: updatePwError } = await supabaseAdmin.auth.admin.updateUserById(
+          userId,
+          { password }
+        );
+        
+        if (updatePwError) {
+          console.error('verify-otp: Error updating password:', updatePwError);
+          return new Response(JSON.stringify({ error: 'Error updating password' }), {
+            status: 500,
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            },
+          });
+        }
+      } catch (err) {
+        console.error('verify-otp: Exception updating password:', err);
         return new Response(JSON.stringify({ error: 'Error updating password' }), {
           status: 500,
           headers: { 
@@ -287,72 +255,141 @@ serve(async (req) => {
           },
         });
       }
+      
+      // Update profile with marketing consent and name details if provided
+      const updateData: Record<string, any> = {
+        updated_at: new Date(),
+        marketing_consent: marketingConsent
+      };
+      
+      // Only add name fields if they are provided
+      if (firstName) updateData.first_name = firstName;
+      if (lastName) updateData.last_name = lastName;
+      
+      console.log('verify-otp: Updating profile for existing user');
+      await supabaseAdmin
+        .from('profiles')
+        .update(updateData)
+        .eq('id', userId);
     }
-    // Create new user if not found in either table
+    // Create new user if not found in profiles
     else {
-      // Create a new user with email derived from phone number
       console.log('verify-otp: No existing user found, creating new user');
       
-      console.log('verify-otp: Creating user with email:', email);
       try {
-        const { data: authData, error: signUpError } = await supabaseAdmin.auth.admin.createUser({
-          email,
-          phone: phoneNumber,
-          password,
-          email_confirm: true, // Auto-confirm the email
-          phone_confirm: true, // Auto-confirm the phone
-          user_metadata: {
-            phone_number: phoneNumber,
-            registration_method: 'phone_otp',
-            display_name: body.display_name || '',
-            first_name: body.first_name || '',
-            last_name: body.last_name || '',
-            full_name: body.display_name || ''
-          }
-        });
-  
-        if (signUpError) {
-          console.error('verify-otp: Error creating user:', signUpError);
+        // Try to create a new user
+        console.log('verify-otp: Creating user with phone identifier:', phoneIdentifier);
+        
+        // First, check if we can sign in with these credentials
+        // This handles the case where the user might exist in auth but not in profiles
+        let signInCheckData = null;
+        try {
+          const { data, error: signInCheckError } = await supabaseAdmin.auth.signInWithPassword({
+            email: phoneIdentifier,
+            password,
+          });
           
-          // If user already exists, try to get the user ID instead
-          if (signUpError.message.includes('already registered') || 
-              signUpError.message.includes('already been registered') ||
-              signUpError.message.includes('email exists')) {
-                
-            console.log('verify-otp: User already exists, trying to get user ID');
-            
-            // Try to get the user by email
-            const { data: existingUser, error: getUserError } = await supabaseAdmin
-              .from('auth_user_emails')  // Must use a view or RLS policy
-              .select('user_id')
-              .eq('email', email)
-              .single();
-              
-            if (existingUser) {
-              userId = existingUser.user_id;
-              console.log('verify-otp: Found existing user ID:', userId);
-              
-              // Update user password
-              console.log('verify-otp: Updating password for existing user');
-              const { error: updatePasswordError } = await supabaseAdmin.auth.admin.updateUserById(
-                userId,
-                { password }
-              );
-              
-              if (updatePasswordError) {
-                console.error('verify-otp: Error updating password:', updatePasswordError);
-              }
-            } else {
-              console.error('verify-otp: Could not retrieve existing user:', getUserError);
-              return new Response(JSON.stringify({ error: 'Error retrieving existing user account' }), {
-                status: 500,
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'Access-Control-Allow-Origin': '*',
-                },
-              });
-            }
+          if (!signInCheckError) {
+            signInCheckData = data;
           } else {
+            console.log('verify-otp: Sign-in check failed, user likely does not exist:', signInCheckError.message);
+          }
+        } catch (err) {
+          console.log('verify-otp: Error during sign-in check, proceeding with new user creation:', err);
+        }
+        
+        if (signInCheckData?.user) {
+          // User exists in auth but not in profiles
+          console.log('verify-otp: User exists in auth but not in profiles:', signInCheckData.user.id);
+          userId = signInCheckData.user.id;
+          
+          // Create missing profile
+          const { error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .insert({
+              id: userId,
+              phone_number: phoneNumber,
+              first_name: firstName,
+              last_name: lastName,
+              marketing_consent: marketingConsent,
+              created_at: new Date(),
+              updated_at: new Date()
+            });
+          
+          if (profileError) {
+            console.error('verify-otp: Error creating profile for existing auth user:', profileError);
+          }
+        } else {
+          // User doesn't exist, create new user
+          console.log('verify-otp: Creating completely new user');
+          
+          // Create new user
+          let authData = null;
+          let signUpError = null;
+          
+          try {
+            // Try creating user with admin.createUser first
+            const result = await supabaseAdmin.auth.admin.createUser({
+              email: phoneIdentifier,
+              password,
+              phone: phoneNumber,
+              email_confirm: true,
+              phone_confirm: true
+            });
+            
+            authData = result.data;
+            signUpError = result.error;
+          } catch (err) {
+            console.error('verify-otp: Exception during createUser:', err);
+            // Keep signUpError null to try alternative approach below
+          }
+          
+          // If the first method failed, try an alternative approach
+          if (signUpError || !authData?.user) {
+            console.log('verify-otp: First user creation method failed, trying alternative approach');
+            
+            try {
+              // Alternative: Use signUp instead of admin.createUser
+              const { data: altData, error: altError } = await supabaseAdmin.auth.signUp({
+                email: phoneIdentifier,
+                password,
+                phone: phoneNumber,
+                options: {
+                  data: {
+                    phone_number: phoneNumber,
+                    registration_method: 'phone_otp'
+                  }
+                }
+              });
+              
+              if (!altError && altData?.user) {
+                console.log('verify-otp: Alternative user creation succeeded');
+                authData = altData;
+                signUpError = null;
+                
+                // Manually confirm the user since we're not using admin.createUser
+                const { error: confirmError } = await supabaseAdmin.auth.admin.updateUserById(
+                  altData.user.id, 
+                  { email_confirm: true, phone_confirm: true }
+                );
+                
+                if (confirmError) {
+                  console.error('verify-otp: Error confirming user:', confirmError);
+                }
+              } else {
+                console.error('verify-otp: Alternative user creation also failed:', altError);
+                signUpError = altError;
+              }
+            } catch (altErr) {
+              console.error('verify-otp: Exception during alternative user creation:', altErr);
+              // Preserve original error if alternative also fails
+              if (!signUpError) signUpError = { message: 'Both user creation methods failed' };
+            }
+          }
+          
+          if (signUpError) {
+            console.error('verify-otp: Error creating user:', signUpError);
+            console.error('verify-otp: Error details:', JSON.stringify(signUpError, null, 2));
             return new Response(JSON.stringify({ error: 'Error creating user account' }), {
               status: 500,
               headers: { 
@@ -361,23 +398,67 @@ serve(async (req) => {
               },
             });
           }
-        } else {
-          console.log('verify-otp: User created successfully:', authData.user.id);
-          userId = authData.user.id;
-          isNewUser = true;
-    
-          // Don't manually create profile, let the database trigger handle it
-          console.log('verify-otp: Letting database trigger create profile');
+          
+          // Set user metadata after creation
+          if (authData?.user) {
+            const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(
+              authData.user.id,
+              {
+                user_metadata: {
+                  phone_number: phoneNumber,
+                  registration_method: 'phone_otp'
+                }
+              }
+            );
+            
+            if (metadataError) {
+              console.error('verify-otp: Error setting user metadata:', metadataError);
+            }
+            
+            console.log('verify-otp: User created successfully:', authData.user.id);
+            userId = authData.user.id;
+            isNewUser = true;
+            
+            // Create a profile for the new user
+            console.log('verify-otp: Creating profile for new user');
+            const { error: profileError } = await supabaseAdmin
+              .from('profiles')
+              .insert({
+                id: userId,
+                phone_number: phoneNumber,
+                first_name: firstName,
+                last_name: lastName,
+                marketing_consent: marketingConsent,
+                created_at: new Date(),
+                updated_at: new Date()
+              });
+              
+            if (profileError) {
+              console.error('verify-otp: Error creating profile:', profileError);
+              // Don't return error here, still proceed with login
+            } else {
+              console.log('verify-otp: Profile created successfully');
+            }
+          } else {
+            console.error('verify-otp: No user data available after creation attempts');
+            return new Response(JSON.stringify({ error: 'Failed to create user account' }), {
+              status: 500,
+              headers: { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+              },
+            });
+          }
+        } catch (error) {
+          console.error('verify-otp: Unexpected error during user creation:', error);
+          return new Response(JSON.stringify({ error: 'Unexpected error during user creation' }), {
+            status: 500,
+            headers: { 
+              'Content-Type': 'application/json',
+              'Access-Control-Allow-Origin': '*',
+            },
+          });
         }
-      } catch (error) {
-        console.error('verify-otp: Unexpected error during user creation:', error);
-        return new Response(JSON.stringify({ error: 'Unexpected error during user creation' }), {
-          status: 500,
-          headers: { 
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-          },
-        });
       }
     }
 
@@ -393,16 +474,17 @@ serve(async (req) => {
       });
     }
     
-    // Instead of generating a magic link, directly sign in the user
-    console.log('verify-otp: Signing in user with email:', email);
+    // Sign in the user directly
+    console.log('verify-otp: Signing in user with phone identifier:', phoneIdentifier);
     
     const { data: signInData, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
-      email,
+      email: phoneIdentifier,
       password,
     });
 
     if (signInError) {
       console.error('verify-otp: Error signing in user:', signInError);
+      console.error('verify-otp: Error details:', JSON.stringify(signInError, null, 2));
       return new Response(JSON.stringify({ 
         error: 'Phone verification successful but automatic login failed. Please login manually.' 
       }), {

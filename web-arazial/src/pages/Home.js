@@ -945,7 +945,7 @@ const Home = () => {
     <>
       <HeroSection>
         <HeroContent>
-          <HeroTitle>Yenilikçi Arsa Müzayedeleri</HeroTitle>
+
           <HeroSubtitle>
           Türkiye'nin dört bir yanındaki değerli araziler için ihale tekliflerinizi verin.  
           </HeroSubtitle>

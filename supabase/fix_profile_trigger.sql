@@ -33,15 +33,24 @@ BEGIN
   )
   VALUES (
     new.id, 
-    COALESCE(new.raw_user_meta_data->>'full_name', ''), 
+    COALESCE(
+      new.raw_user_meta_data->>'full_name',
+      new.raw_user_meta_data->>'display_name',
+      ''
+    ),
     new.email,
-    new.phone,
+    COALESCE(new.phone, new.raw_user_meta_data->>'phone_number'),
     new.created_at, 
     new.created_at,
     'user'
   )
   ON CONFLICT (id) DO UPDATE
   SET 
+    full_name = CASE 
+      WHEN EXCLUDED.full_name IS NOT NULL AND EXCLUDED.full_name != '' 
+      THEN EXCLUDED.full_name
+      ELSE public.profiles.full_name
+    END,
     email = EXCLUDED.email,
     phone_number = EXCLUDED.phone_number,
     updated_at = EXCLUDED.updated_at;

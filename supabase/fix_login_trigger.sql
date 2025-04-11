@@ -10,8 +10,19 @@ BEGIN
   -- This avoids issues where profiles might not exist yet
   UPDATE public.profiles
   SET 
+    full_name = CASE 
+      WHEN new.raw_user_meta_data->>'full_name' IS NOT NULL AND new.raw_user_meta_data->>'full_name' != '' 
+        THEN new.raw_user_meta_data->>'full_name'
+      WHEN new.raw_user_meta_data->>'display_name' IS NOT NULL AND new.raw_user_meta_data->>'display_name' != '' 
+        THEN new.raw_user_meta_data->>'display_name'
+      ELSE public.profiles.full_name
+    END,
     email = new.email,
-    phone_number = new.phone,
+    phone_number = COALESCE(
+      new.phone, 
+      new.raw_user_meta_data->>'phone_number',
+      public.profiles.phone_number
+    ),
     updated_at = now()
   WHERE id = new.id;
     

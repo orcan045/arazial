@@ -493,15 +493,32 @@ export function AuthProvider({ children }) {
   };
   
   // Sign up function
-  const signUp = async (email, password) => {
+  const signUp = async (emailOrOptions, password) => {
     setLoading(true);
     setError(null);
     
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+      let signUpParams;
+      
+      // Check if first parameter is an object (for phone signup) or email string
+      if (typeof emailOrOptions === 'object') {
+        // New format: signUp({ phone, password, options })
+        signUpParams = emailOrOptions;
+      } else {
+        // Legacy format: signUp(email, password)
+        signUpParams = {
+          email: emailOrOptions,
+          password
+        };
+      }
+      
+      console.log('[AuthContext] Signing up with params:', {
+        hasPhone: !!signUpParams.phone,
+        hasEmail: !!signUpParams.email,
+        hasOptions: !!signUpParams.options
       });
+      
+      const { data, error } = await supabase.auth.signUp(signUpParams);
       
       if (error) throw error;
       

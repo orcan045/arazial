@@ -52,6 +52,31 @@ const variants = {
       box-shadow: none;
     }
   `,
+  outline: css`
+    background-color: transparent;
+    color: var(--color-primary);
+    border: 1.5px solid var(--color-primary);
+    box-shadow: 0 1px 3px rgba(15, 52, 96, 0.1);
+    
+    &:hover {
+      background-color: rgba(15, 52, 96, 0.05);
+      transform: translateY(-2px);
+      box-shadow: 0 3px 10px rgba(15, 52, 96, 0.15);
+    }
+    
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 3px rgba(15, 52, 96, 0.1);
+    }
+    
+    &:disabled {
+      border-color: var(--color-text-light);
+      color: var(--color-text-light);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+  `,
   accent: css`
     background-color: var(--color-accent);
     color: white;
