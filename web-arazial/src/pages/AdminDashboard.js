@@ -650,16 +650,16 @@ const TabButton = styled.button`
 const FilterButton = styled.button`
   padding: 0.5rem 1rem;
   border: 1px solid ${props => props.active ? 'var(--color-primary)' : 'var(--color-border)'};
-  background: ${props => props.active ? 'var(--color-primary-light)' : 'white'};
-  color: ${props => props.active ? 'var(--color-primary)' : 'var(--color-text)'};
+  background: ${props => props.active ? 'var(--color-primary)' : 'white'};
+  color: ${props => props.active ? 'white' : 'var(--color-text)'};
   border-radius: var(--border-radius-md);
   cursor: pointer;
   font-size: 0.875rem;
   
   &:hover {
     border-color: var(--color-primary);
-    background: var(--color-primary-light);
-    color: var(--color-primary);
+    background: ${props => props.active ? 'var(--color-primary)' : 'var(--color-primary-light)'};
+    color: ${props => props.active ? 'white' : 'var(--color-primary)'};
   }
 `;
 

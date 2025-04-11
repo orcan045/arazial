@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import Button from '../components/ui/Button';
+import { useNavigate } from 'react-router-dom';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -11,33 +12,7 @@ const PageContainer = styled.div`
 `;
 
 const ProfileHeader = styled.div`
-  display: flex;
-  align-items: center;
   margin-bottom: 3rem;
-  flex-direction: column;
-  
-  @media (min-width: 768px) {
-    flex-direction: row;
-  }
-`;
-
-const AvatarContainer = styled.div`
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-bottom: 1.5rem;
-  
-  @media (min-width: 768px) {
-    margin-bottom: 0;
-    margin-right: 2rem;
-  }
-`;
-
-const Avatar = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 `;
 
 const ProfileInfo = styled.div`
@@ -167,8 +142,36 @@ const EmptyState = styled.div`
   color: var(--color-text-secondary);
 `;
 
+const ErrorMessage = styled.div`
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+`;
+
+const SuccessMessage = styled.div`
+  color: #10b981;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: #ecfdf5;
+  border-radius: var(--border-radius-md);
+`;
+
+/**
+ * UserProfile Component
+ * 
+ * This component handles the user profile page with the following tabs:
+ * - Profile information (user details, contact information)
+ * - Bid history (past bids on auctions)
+ * - Settings (password management, account deletion)
+ * 
+ * The password change functionality uses Supabase Auth to:
+ * 1. Validate the current password by attempting to sign in
+ * 2. Update to a new password if validation succeeds (min 8 characters)
+ */
 const UserProfile = () => {
-  const { user } = useAuth();
+  const { user, updatePassword } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   const [profile, setProfile] = useState(null);
   const [bids, setBids] = useState([]);
@@ -180,6 +183,15 @@ const UserProfile = () => {
     city: '',
     postalCode: ''
   });
+  
+  // Password change state
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [errors, setErrors] = useState({});
+  const [success, setSuccess] = useState({});
   
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -301,6 +313,126 @@ const UserProfile = () => {
     }).format(date);
   };
   
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: null }));
+    }
+  };
+  
+  const validatePasswordForm = () => {
+    const newErrors = {};
+    
+    if (!passwordForm.currentPassword) {
+      newErrors.currentPassword = 'Mevcut şifrenizi giriniz';
+    }
+    
+    if (!passwordForm.newPassword) {
+      newErrors.newPassword = 'Yeni şifrenizi giriniz';
+    } else if (passwordForm.newPassword.length < 8) {
+      newErrors.newPassword = 'Şifre en az 8 karakter olmalıdır';
+    }
+    
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      newErrors.confirmPassword = 'Şifreler eşleşmiyor';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validatePasswordForm()) return;
+    
+    try {
+      setLoading(true);
+      setErrors({});
+      
+      // First verify the current password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: passwordForm.currentPassword,
+      });
+      
+      if (signInError) {
+        console.error('Password verification error:', signInError);
+        
+        // Translate common error messages to Turkish
+        if (signInError.message === 'Invalid login credentials') {
+          setErrors({
+            ...errors,
+            currentPassword: 'Mevcut şifre doğru değil',
+            general: 'Şifre doğrulanamadı. Lütfen mevcut şifrenizi kontrol edin.'
+          });
+        } else if (signInError.message.includes('rate limit')) {
+          setErrors({
+            ...errors,
+            general: 'Çok fazla deneme yapıldı. Lütfen bir süre bekleyip tekrar deneyin.'
+          });
+        } else {
+          setErrors({
+            ...errors,
+            currentPassword: 'Mevcut şifre doğrulanamadı',
+            general: 'Şifre doğrulanamadı. Lütfen mevcut şifrenizi kontrol edin.'
+          });
+        }
+        return;
+      }
+      
+      // If current password is valid, update to the new password
+      const { error } = await updatePassword(passwordForm.newPassword);
+      
+      if (error) throw error;
+      
+      setSuccess({
+        ...success,
+        password: 'Şifreniz başarıyla güncellendi.'
+      });
+      
+      setPasswordForm({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    } catch (error) {
+      console.error('Error updating password:', error);
+      
+      // More detailed error messages based on the error
+      if (error.message?.includes('password')) {
+        setErrors({
+          ...errors,
+          newPassword: 'Yeni şifre gereksinimleri karşılamıyor.',
+          general: 'Şifre güncellenirken bir hata oluştu. Yeni şifreniz en az 8 karakter uzunluğunda olmalıdır.'
+        });
+      } else if (error.message?.includes('rate limit')) {
+        setErrors({
+          ...errors,
+          general: 'Çok fazla deneme yapıldı. Lütfen bir süre bekleyip tekrar deneyin.'
+        });
+      } else if (error.message?.includes('network')) {
+        setErrors({
+          ...errors,
+          general: 'Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.'
+        });
+      } else {
+        setErrors({
+          ...errors,
+          general: 'Şifre güncellenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   const renderTabContent = () => {
     switch (activeTab) {
       case 'profile':
@@ -417,13 +549,52 @@ const UserProfile = () => {
       case 'settings':
         return (
           <SectionContainer>
-            <SectionTitle>Hesap Ayarları</SectionTitle>
-            <FormGroup>
-              <Button variant="secondary">Şifremi Değiştir</Button>
-            </FormGroup>
-            <FormGroup>
-              <Button variant="danger">Hesabımı Sil</Button>
-            </FormGroup>
+            <SectionTitle>Şifre Değiştirme</SectionTitle>
+            
+            {success.password && <SuccessMessage>{success.password}</SuccessMessage>}
+            {errors.general && <ErrorMessage>{errors.general}</ErrorMessage>}
+            
+            <form onSubmit={handlePasswordSubmit}>
+              <FormGroup>
+                <Label htmlFor="currentPassword">Mevcut Şifre</Label>
+                <Input 
+                  type="password" 
+                  id="currentPassword" 
+                  name="currentPassword"
+                  value={passwordForm.currentPassword}
+                  onChange={handlePasswordChange}
+                />
+                {errors.currentPassword && <ErrorMessage>{errors.currentPassword}</ErrorMessage>}
+              </FormGroup>
+              
+              <FormGroup>
+                <Label htmlFor="newPassword">Yeni Şifre</Label>
+                <Input 
+                  type="password" 
+                  id="newPassword" 
+                  name="newPassword"
+                  value={passwordForm.newPassword}
+                  onChange={handlePasswordChange}
+                />
+                {errors.newPassword && <ErrorMessage>{errors.newPassword}</ErrorMessage>}
+              </FormGroup>
+              
+              <FormGroup>
+                <Label htmlFor="confirmPassword">Yeni Şifre (Tekrar)</Label>
+                <Input 
+                  type="password" 
+                  id="confirmPassword" 
+                  name="confirmPassword"
+                  value={passwordForm.confirmPassword}
+                  onChange={handlePasswordChange}
+                />
+                {errors.confirmPassword && <ErrorMessage>{errors.confirmPassword}</ErrorMessage>}
+              </FormGroup>
+              
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Güncelleniyor...' : 'Şifreyi Güncelle'}
+              </Button>
+            </form>
           </SectionContainer>
         );
       default:
@@ -434,12 +605,6 @@ const UserProfile = () => {
   return (
     <PageContainer>
       <ProfileHeader>
-        <AvatarContainer>
-          <Avatar 
-            src={profile?.avatar_url || 'https://via.placeholder.com/150'} 
-            alt={profile?.full_name || 'User'} 
-          />
-        </AvatarContainer>
         <ProfileInfo>
           <UserName>{profile?.full_name || user?.email}</UserName>
           <UserEmail>{user?.email}</UserEmail>

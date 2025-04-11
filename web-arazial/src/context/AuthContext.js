@@ -381,6 +381,16 @@ export function AuthProvider({ children }) {
           message: error.message,
           code: error.code
         }));
+        
+        // NEVER set the raw error message directly
+        // Convert known errors to Turkish
+        if (error.message === 'Invalid login credentials') {
+          setError('Geçersiz giriş bilgileri');
+        } else {
+          // Don't display raw error messages, use a generic Turkish message instead
+          setError('Giriş yapılırken bir hata oluştu');
+        }
+        
         throw error;
       }
       

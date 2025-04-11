@@ -148,6 +148,27 @@ const CountryCode = styled.div`
   margin-top: 0;
 `;
 
+const PasswordInputWrapper = styled.div`
+  position: relative;
+  
+  /* Make the input component take full width */
+  & > div {
+    width: 100%;
+  }
+  
+  /* Style the input to account for the button space */
+  & input {
+    padding-right: 45px;
+  }
+  
+  /* Position the eye button relative to the input field */
+  & > button {
+    /* This positions relative to the input field, not the wrapper */
+    top: 38px !important;
+    transform: none !important;
+  }
+`;
+
 const EyeButton = ({ isVisible, onClick }) => (
   <button
     type="button"
@@ -167,7 +188,8 @@ const EyeButton = ({ isVisible, onClick }) => (
       height: '24px',
       width: '24px',
       padding: 0,
-      marginTop: '10px'
+      zIndex: 5,
+      pointerEvents: 'auto'
     }}
   >
     {isVisible ? (
@@ -374,6 +396,13 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error('[LoginPage] Login error:', error);
+      
+      // Handle errors consistently in Turkish
+      if (error.message === 'Invalid login credentials') {
+        setErrors({ general: 'Geçersiz giriş bilgileri' });
+      } else {
+        setErrors({ general: 'Giriş yapılırken bir hata oluştu' });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -413,6 +442,11 @@ const LoginPage = () => {
         }
       } catch (primaryError) {
         console.error('[LoginPage] Primary phone sign in error:', primaryError);
+        // Handle error consistently with Turkish message
+        if (primaryError.message === 'Invalid login credentials') {
+          setErrors({ general: 'Geçersiz giriş bilgileri' });
+          return;
+        }
       }
       
       // If first attempt failed, try direct login
@@ -427,14 +461,19 @@ const LoginPage = () => {
           if (directSignInError) {
             console.error('[LoginPage] Direct phone sign in error:', directSignInError);
             
-            // Check if this is a "user not found" error, and provide helpful feedback
+            // Check for specific errors and provide helpful Turkish feedback
             if (directSignInError.message.includes('email/password')) {
               setErrors({
-                general: 'Bu telefon numarası ile kayıtlı bir hesap bulunamadı veya şifre hatalı.'
+                general: 'Bu telefon numarası ile kayıtlı bir hesap bulunamadı veya şifre hatalı'
+              });
+            } else if (directSignInError.message === 'Invalid login credentials') {
+              setErrors({
+                general: 'Geçersiz giriş bilgileri'
               });
             } else {
+              // Never show the raw error message
               setErrors({
-                general: directSignInError.message
+                general: 'Giriş yapılırken bir hata oluştu'
               });
             }
           } else if (directSignIn?.session) {
@@ -444,6 +483,7 @@ const LoginPage = () => {
           }
         } catch (directError) {
           console.error('[LoginPage] Direct sign in exception:', directError);
+          setErrors({ general: 'Giriş yapılırken bir hata oluştu' });
         }
       }
       
@@ -591,7 +631,7 @@ const LoginPage = () => {
           </div>
           
           <AuthForm onSubmit={handlePasswordSubmit}>
-            <div style={{ position: 'relative' }}>
+            <PasswordInputWrapper>
               <Input
                 id="password"
                 label="Şifre"
@@ -602,7 +642,7 @@ const LoginPage = () => {
                 autoFocus
               />
               <EyeButton isVisible={showPassword} onClick={togglePasswordVisibility} />
-            </div>
+            </PasswordInputWrapper>
             
             <div style={{ textAlign: 'right' }}>
               <Link 
@@ -682,7 +722,7 @@ const LoginPage = () => {
             
             <div style={{ marginBottom: '1rem' }}>
               <div style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>Hesap oluşturmak için şifre belirleyin</div>
-              <div style={{ position: 'relative' }}>
+              <PasswordInputWrapper>
                 <Input
                   id="password"
                   label="Şifre"
@@ -692,9 +732,9 @@ const LoginPage = () => {
                   error={errors.password}
                 />
                 <EyeButton isVisible={showPassword} onClick={togglePasswordVisibility} />
-              </div>
+              </PasswordInputWrapper>
               
-              <div style={{ position: 'relative' }}>
+              <PasswordInputWrapper>
                 <Input
                   id="confirmPassword"
                   label="Şifre (Tekrar)"
@@ -704,7 +744,7 @@ const LoginPage = () => {
                   error={errors.confirmPassword}
                 />
                 <EyeButton isVisible={showConfirmPassword} onClick={toggleConfirmPasswordVisibility} />
-              </div>
+              </PasswordInputWrapper>
             </div>
             
             <CheckboxContainer>
@@ -765,7 +805,7 @@ const LoginPage = () => {
           </div>
           
           <AuthForm onSubmit={handleNewEmailUserSubmit}>
-            <div style={{ position: 'relative' }}>
+            <PasswordInputWrapper>
               <Input
                 id="password"
                 label="Şifre"
@@ -776,9 +816,9 @@ const LoginPage = () => {
                 autoFocus
               />
               <EyeButton isVisible={showPassword} onClick={togglePasswordVisibility} />
-            </div>
+            </PasswordInputWrapper>
             
-            <div style={{ position: 'relative' }}>
+            <PasswordInputWrapper>
               <Input
                 id="confirmPassword"
                 label="Şifre (Tekrar)"
@@ -788,7 +828,7 @@ const LoginPage = () => {
                 error={errors.confirmPassword}
               />
               <EyeButton isVisible={showConfirmPassword} onClick={toggleConfirmPasswordVisibility} />
-            </div>
+            </PasswordInputWrapper>
             
             <CheckboxContainer>
               <Checkbox 
@@ -942,7 +982,7 @@ const LoginPage = () => {
           if (signInError) {
             console.log('[LoginPage] Sign-in error message:', signInError.message);
             
-            // If we get 'Invalid login credentials', it usually means the user exists
+            // First check the email existence in the earlier part of the file
             if (signInError.message.includes('Invalid login credentials')) {
               console.log('[LoginPage] Email exists based on error message - email is REGISTERED');
               setUserExists(true);
@@ -1120,7 +1160,8 @@ const LoginPage = () => {
       setAuthStep('otp');
     } catch (error) {
       console.error('Error sending OTP:', error);
-      setErrors({ general: error.message || 'Doğrulama kodu gönderilemedi. Lütfen tekrar deneyin.' });
+      // Always show Turkish error message
+      setErrors({ general: 'Doğrulama kodu gönderilemedi. Lütfen tekrar deneyin.' });
     } finally {
       setIsLoading(false);
     }
@@ -1196,7 +1237,8 @@ const LoginPage = () => {
       
       if (error) {
         console.error('Error verifying OTP:', error);
-        setErrors({ general: 'OTP doğrulaması başarısız oldu: ' + error.message });
+        // Always use Turkish error message
+        setErrors({ general: 'Doğrulama başarısız oldu. Lütfen tekrar deneyin.' });
         return;
       }
       
@@ -1227,6 +1269,8 @@ const LoginPage = () => {
           }
         } catch (directError) {
           console.error('Direct sign in error:', directError);
+          // Use Turkish error message
+          setErrors({ general: 'Giriş yapılırken bir hata oluştu' });
         }
       }
     } catch (error) {
@@ -1256,11 +1300,20 @@ const LoginPage = () => {
     try {
       // For email login
       if (loginMethod === 'email') {
-        const data = await signIn(formattedIdentifier, password);
-        
-        if (data?.session?.user) {
-          console.log('[LoginPage] Email sign in successful:', data.session.user.id);
-          setLoginAttempted(true);
+        try {
+          const data = await signIn(formattedIdentifier, password);
+          
+          if (data?.session?.user) {
+            console.log('[LoginPage] Email sign in successful:', data.session.user.id);
+            setLoginAttempted(true);
+          }
+        } catch (error) {
+          console.error('[LoginPage] Email login error:', error);
+          if (error.message === 'Invalid login credentials') {
+            setErrors({ general: 'Geçersiz giriş bilgileri' });
+          } else {
+            setErrors({ general: 'Giriş yapılırken bir hata oluştu' });
+          }
         }
       } 
       // For phone login
@@ -1278,6 +1331,12 @@ const LoginPage = () => {
         } catch (primaryError) {
           console.error('[LoginPage] Primary phone login error:', primaryError);
           
+          // Handle specific error case
+          if (primaryError.message === 'Invalid login credentials') {
+            setErrors({ general: 'Geçersiz giriş bilgileri' });
+            return;
+          }
+          
           // Try direct login as fallback
           try {
             const { data: directSignIn, error: directSignInError } = await supabase.auth.signInWithPassword({
@@ -1288,8 +1347,10 @@ const LoginPage = () => {
             if (directSignInError) {
               if (directSignInError.message.includes('email/password')) {
                 setErrors({ password: 'Hatalı şifre, lütfen tekrar deneyin' });
+              } else if (directSignInError.message === 'Invalid login credentials') {
+                setErrors({ general: 'Geçersiz giriş bilgileri' });
               } else {
-                setErrors({ general: directSignInError.message });
+                setErrors({ general: 'Giriş yapılırken bir hata oluştu' });
               }
             } else if (directSignIn?.session) {
               loginSuccess = true;
@@ -1297,16 +1358,17 @@ const LoginPage = () => {
             }
           } catch (directError) {
             console.error('[LoginPage] Direct sign in error:', directError);
+            setErrors({ general: 'Giriş yapılırken bir hata oluştu' });
           }
         }
         
         if (!loginSuccess) {
-          setErrors({ general: 'Giriş yapılamadı, lütfen şifrenizi kontrol edin.' });
+          setErrors({ general: 'Giriş yapılamadı, lütfen şifrenizi kontrol edin' });
         }
       }
     } catch (error) {
       console.error('[LoginPage] Login error:', error);
-      setErrors({ general: 'Giriş yapılırken bir hata oluştu.' });
+      setErrors({ general: 'Giriş yapılırken bir hata oluştu' });
     } finally {
       setIsLoading(false);
     }
@@ -1352,16 +1414,22 @@ const LoginPage = () => {
       
       if (error) {
         console.error('[LoginPage] Registration error:', error);
-        setErrors({ general: 'Kayıt işlemi sırasında bir hata oluştu: ' + error.message });
+        // Use a generic Turkish error message
+        setErrors({ general: 'Kayıt işlemi sırasında bir hata oluştu' });
         return;
       }
       
       if (data?.user) {
         if (data.user.confirmed_at) {
           // User is confirmed immediately - sign in
-          const signInData = await signIn(formattedIdentifier, password);
-          if (signInData?.session) {
-            setLoginAttempted(true);
+          try {
+            const signInData = await signIn(formattedIdentifier, password);
+            if (signInData?.session) {
+              setLoginAttempted(true);
+            }
+          } catch (signInError) {
+            console.error('[LoginPage] Error signing in after registration:', signInError);
+            setErrors({ general: 'Giriş yapılırken bir hata oluştu' });
           }
         } else {
           // User needs to confirm email
@@ -1370,7 +1438,7 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error('[LoginPage] Error during registration:', error);
-      setErrors({ general: 'Kayıt işlemi sırasında bir hata oluştu.' });
+      setErrors({ general: 'Kayıt işlemi sırasında bir hata oluştu' });
     } finally {
       setIsLoading(false);
     }
@@ -1394,8 +1462,6 @@ const LoginPage = () => {
         <Title>Giriş Yap</Title>
         <Subtitle>Arazi ihale platformuna giriş yapın</Subtitle>
       </AuthHeader>
-      
-      {error && <ErrorMessage>{error}</ErrorMessage>}
       
       {renderForm()}
     </AuthContainer>

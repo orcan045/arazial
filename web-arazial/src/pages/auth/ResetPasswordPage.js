@@ -66,6 +66,29 @@ const InputWrapper = styled.div`
   width: 100%;
 `;
 
+// Add this wrapper for password inputs
+const PasswordInputWrapper = styled.div`
+  position: relative;
+  margin-bottom: 1.5rem;
+  
+  /* Make the input component take full width */
+  & > div {
+    width: 100%;
+  }
+  
+  /* Style the input to account for the button space */
+  & input {
+    padding-right: 45px;
+  }
+  
+  /* Position the eye button relative to the input field specifically */
+  & > button {
+    /* This positions relative to the input field, not the wrapper */
+    top: 38px !important;
+    transform: none !important;
+  }
+`;
+
 const Input = styled.div`
   margin-bottom: 1.5rem;
   
@@ -165,7 +188,8 @@ const EyeButton = ({ isVisible, onClick }) => (
     style={{
       position: 'absolute',
       right: '12px',
-      top: '38px', // Positioned to align with the input field
+      top: '50%',
+      transform: 'translateY(-50%)',
       background: 'none',
       border: 'none',
       cursor: 'pointer',
@@ -176,7 +200,8 @@ const EyeButton = ({ isVisible, onClick }) => (
       height: '24px',
       width: '24px',
       padding: 0,
-      zIndex: 2
+      zIndex: 5,
+      pointerEvents: 'auto'
     }}
   >
     {isVisible ? (
@@ -400,7 +425,7 @@ const ResetPasswordPage = () => {
             </div>
           )}
           
-          <InputWrapper>
+          <PasswordInputWrapper>
             <Input error={errors.password || (errorMessage && errorMessage.includes('eski şifrenizle aynı olamaz'))}>
               <label htmlFor="password">Yeni Şifre</label>
               <input
@@ -423,9 +448,9 @@ const ResetPasswordPage = () => {
               </div>
             </Input>
             <EyeButton isVisible={showPassword} onClick={togglePasswordVisibility} />
-          </InputWrapper>
+          </PasswordInputWrapper>
           
-          <InputWrapper>
+          <PasswordInputWrapper>
             <Input error={errors.confirmPassword}>
               <label htmlFor="confirmPassword">Yeni Şifre Tekrar</label>
               <input
@@ -438,7 +463,7 @@ const ResetPasswordPage = () => {
               {errors.confirmPassword && <div className="error-message">{errors.confirmPassword}</div>}
             </Input>
             <EyeButton isVisible={showConfirmPassword} onClick={toggleConfirmPasswordVisibility} />
-          </InputWrapper>
+          </PasswordInputWrapper>
           
           <Button type="submit" fullWidth loading={isLoading}>
             {isLoading ? (

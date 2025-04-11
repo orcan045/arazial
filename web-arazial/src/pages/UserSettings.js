@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../supabaseClient';
 import Button from '../components/ui/Button';
+import { useLocation } from 'react-router-dom';
 
 const PageContainer = styled.div`
   max-width: 900px;
@@ -135,8 +136,10 @@ const DeleteAccountButton = styled(Button)`
 `;
 
 const UserSettings = () => {
-  const { user, updatePassword } = useAuth();
-  const [activeTab, setActiveTab] = useState('notifications');
+  const { user, updatePassword, resetPassword } = useAuth();
+  const location = useLocation();
+  const initialTab = location.state?.activeTab || 'notifications';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(false);
   const [userSettings, setUserSettings] = useState({
     emailNotifications: true,
@@ -153,6 +156,7 @@ const UserSettings = () => {
   
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState({});
+  const [passwordResetSent, setPasswordResetSent] = useState(false);
   
   useEffect(() => {
     const fetchUserSettings = async () => {
@@ -258,8 +262,21 @@ const UserSettings = () => {
     
     if (!passwordForm.newPassword) {
       newErrors.newPassword = 'Yeni şifrenizi giriniz';
-    } else if (passwordForm.newPassword.length < 8) {
-      newErrors.newPassword = 'Şifre en az 8 karakter olmalıdır';
+    } else {
+      // Enhanced password validation
+      const minLength = passwordForm.newPassword.length >= 8;
+      const hasUpperCase = /[A-Z]/.test(passwordForm.newPassword);
+      const hasLowerCase = /[a-z]/.test(passwordForm.newPassword);
+      const hasNumber = /[0-9]/.test(passwordForm.newPassword);
+      const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(passwordForm.newPassword);
+      
+      if (!minLength) {
+        newErrors.newPassword = 'Şifre en az 8 karakter olmalıdır';
+      } else if (!(hasUpperCase && hasLowerCase && hasNumber)) {
+        newErrors.newPassword = 'Şifre en az bir büyük harf, bir küçük harf ve bir rakam içermelidir';
+      } else if (!hasSpecialChar) {
+        newErrors.newPassword = 'Şifre en az bir özel karakter içermelidir (!@#$%^&*()_+-=[]{};\'"\\|,.<>/?)';
+      }
     }
     
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -277,7 +294,40 @@ const UserSettings = () => {
     
     try {
       setLoading(true);
+      setErrors({});
       
+      // First verify the current password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: passwordForm.currentPassword,
+      });
+      
+      if (signInError) {
+        console.error('Password verification error:', signInError);
+        
+        // Translate common error messages to Turkish
+        if (signInError.message === 'Invalid login credentials') {
+          setErrors({
+            ...errors,
+            currentPassword: 'Mevcut şifre doğru değil',
+            general: 'Şifre doğrulanamadı. Lütfen mevcut şifrenizi kontrol edin.'
+          });
+        } else if (signInError.message.includes('rate limit')) {
+          setErrors({
+            ...errors,
+            general: 'Çok fazla deneme yapıldı. Lütfen bir süre bekleyip tekrar deneyin.'
+          });
+        } else {
+          setErrors({
+            ...errors,
+            currentPassword: 'Mevcut şifre doğrulanamadı',
+            general: 'Şifre doğrulanamadı. Lütfen mevcut şifrenizi kontrol edin.'
+          });
+        }
+        return;
+      }
+      
+      // If current password is valid, update to the new password
       const { error } = await updatePassword(passwordForm.newPassword);
       
       if (error) throw error;
@@ -294,9 +344,54 @@ const UserSettings = () => {
       });
     } catch (error) {
       console.error('Error updating password:', error);
+      
+      // More detailed error messages based on the error
+      if (error.message?.includes('password')) {
+        setErrors({
+          ...errors,
+          newPassword: 'Yeni şifre gereksinimleri karşılamıyor.',
+          general: 'Şifre güncellenirken bir hata oluştu. Yeni şifreniz en az 6 karakter uzunluğunda olmalı ve yeterince güçlü olmalıdır.'
+        });
+      } else if (error.message?.includes('rate limit')) {
+        setErrors({
+          ...errors,
+          general: 'Çok fazla deneme yapıldı. Lütfen bir süre bekleyip tekrar deneyin.'
+        });
+      } else if (error.message?.includes('network')) {
+        setErrors({
+          ...errors,
+          general: 'Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin ve tekrar deneyin.'
+        });
+      } else {
+        setErrors({
+          ...errors,
+          general: 'Şifre güncellenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleResetPassword = async () => {
+    try {
+      setLoading(true);
+      
+      const { error } = await resetPassword(user.email);
+      
+      if (error) throw error;
+      
+      setPasswordResetSent(true);
+      
+      setSuccess({
+        ...success,
+        reset: 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.'
+      });
+    } catch (error) {
+      console.error('Error sending password reset:', error);
       setErrors({
         ...errors,
-        general: 'Şifre güncellenirken bir hata oluştu.'
+        reset: 'Şifre sıfırlama bağlantısı gönderilirken bir hata oluştu.'
       });
     } finally {
       setLoading(false);
@@ -399,7 +494,9 @@ const UserSettings = () => {
               <SectionTitle>Şifre Değiştirme</SectionTitle>
               
               {success.password && <SuccessMessage>{success.password}</SuccessMessage>}
+              {success.reset && <SuccessMessage>{success.reset}</SuccessMessage>}
               {errors.general && <ErrorMessage>{errors.general}</ErrorMessage>}
+              {errors.reset && <ErrorMessage>{errors.reset}</ErrorMessage>}
               
               <form onSubmit={handlePasswordSubmit}>
                 <FormGroup>
@@ -442,6 +539,20 @@ const UserSettings = () => {
                   {loading ? 'Güncelleniyor...' : 'Şifreyi Güncelle'}
                 </Button>
               </form>
+              
+              <div style={{ marginTop: '2rem', borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
+                <p style={{ marginBottom: '1rem', fontSize: '0.9rem' }}>
+                  Şifrenizi mi unuttunuz? E-posta adresinize şifre sıfırlama bağlantısı gönderebiliriz.
+                </p>
+                <Button 
+                  type="button" 
+                  variant="secondary" 
+                  onClick={handleResetPassword} 
+                  disabled={loading || passwordResetSent}
+                >
+                  {passwordResetSent ? 'Gönderildi' : 'Şifre Sıfırlama Bağlantısı Gönder'}
+                </Button>
+              </div>
             </SectionContainer>
           </>
         );
