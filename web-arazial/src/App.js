@@ -17,6 +17,7 @@ import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import Dashboard from './pages/Dashboard';
 import AuctionDetail from './pages/AuctionDetail';
 import Auctions from './pages/Auctions';
+import Home from './pages/Home';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import UserProfile from './pages/UserProfile';
@@ -417,9 +418,14 @@ const App = () => {
             path="/" 
             element={
               <Layout>
-                <Auctions />
+                <Home />
               </Layout>
             } 
+          />
+          
+          <Route 
+            path="/auctions" 
+            element={<Navigate to="/" />} 
           />
           
           <Route 
