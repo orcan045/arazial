@@ -263,30 +263,38 @@ const CardContent = styled.div`
 
 const PropertyGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
-  
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
 `;
 
 const PropertyItem = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.25rem;
+  }
 `;
 
 const PropertyLabel = styled.label`
   font-size: 0.875rem;
   color: var(--color-text-secondary);
   display: block;
+  
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+  }
 `;
 
 const PropertyValue = styled.div`
   font-size: 1rem;
   font-weight: 500;
   color: var(--color-text);
+  
+  @media (max-width: 768px) {
+    font-size: 0.875rem;
+  }
 `;
 
 const HighlightedValue = styled(PropertyValue)`
@@ -1837,9 +1845,9 @@ const AuctionDetail = () => {
         <div className="mobile-bid-section" style={{ 
           width: '100%', 
           backgroundColor: 'white',
-          borderRadius: '8px',
-          margin: '0.5rem 0',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+          margin: 0,
+          padding: 0,
+          boxShadow: 'none'
         }}>
           <BidCard 
             isOfferListing={isOfferListing}
@@ -1868,11 +1876,8 @@ const AuctionDetail = () => {
           />
         </div>
         
-        {/* Add padding at the bottom to account for fixed bid card */}
-        <div style={{ paddingBottom: '80px' }}></div>
-        
         {/* 3. TITLE AND DETAILS */}
-        <div className="mobile-header-section" style={{ padding: '0 1rem', marginTop: '0' }}>
+        <div className="mobile-header-section" style={{ padding: '0 1rem', marginTop: 0 }}>
           <AuctionTitle>{auction.title}</AuctionTitle>
           
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -1888,7 +1893,7 @@ const AuctionDetail = () => {
         </div>
         
         {/* 4. PROPERTY DETAILS */}
-        <div className="mobile-details-section" style={{ padding: '0 1rem', marginTop: '0.5rem' }}>
+        <div className="mobile-details-section" style={{ padding: '0 1rem', marginTop: 0 }}>
           <Card className="details-card">
             <CardContent>
               <PropertyGrid>
