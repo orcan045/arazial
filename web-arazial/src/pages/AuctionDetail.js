@@ -1077,28 +1077,26 @@ const BidCard = ({
                 )}
                 {user && (
                   <>
-                    {!isMobile && (
-                      <PropertyLabel htmlFor="bidAmount">Teklifiniz (Min: {formatPrice(getMinimumBidAmount())})</PropertyLabel>
-                    )}
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <OfferInput 
-                        type="number"
-                        id="bidAmount"
-                        value={bidAmount === '' ? '' : bidAmount || getMinimumBidAmount()}
-                        onChange={(e) => setBidAmount(e.target.value === '' ? '' : e.target.value)}
-                        placeholder={isMobile ? `Min. ${formatPrice(getMinimumBidAmount())}` : `Min. ${formatPrice(getMinimumBidAmount())}`}
-                        step="any"
-                        disabled={submitLoading || authLoading}
-                        style={{ margin: 0, flex: 1 }}
-                      />
-                      <OfferButton 
-                        type="submit" 
-                        disabled={submitLoading || authLoading}
-                        style={{ marginTop: 0, width: 'auto' }}
-                      >
-                        {submitLoading ? <LoadingIcon /> : 'Teklif Ver'}
-                      </OfferButton>
+                    <div style={{ 
+                      display: 'flex', 
+                      gap: '0.5rem', 
+                      alignItems: 'center',
+                      backgroundColor: 'rgba(var(--color-primary-rgb), 0.05)',
+                      padding: '1rem',
+                      borderRadius: 'var(--border-radius-md)',
+                      marginBottom: '0.75rem'
+                    }}>
+                      <div style={{ flex: 1, textAlign: 'center', fontWeight: '600', fontSize: '1.125rem' }}>
+                        Sonraki Teklif: {formatPrice(getMinimumBidAmount())}
+                      </div>
                     </div>
+                    <OfferButton 
+                      type="submit" 
+                      disabled={submitLoading || authLoading}
+                      style={{ width: '100%', marginTop: 0 }}
+                    >
+                      {submitLoading ? <LoadingIcon /> : 'Teklif Ver'}
+                    </OfferButton>
                     {bidError && <p style={{ color: 'red', fontSize: '0.875rem', marginTop: '0.5rem', marginBottom: '0' }}>{bidError}</p>}
                   </>
                 )}
@@ -1439,17 +1437,10 @@ const AuctionDetail = () => {
       return;
     }
     
-    // Use the minimum bid amount if no amount is entered
-    const amount = parseFloat(bidAmount) || getMinimumBidAmount();
-    const minimumBid = getMinimumBidAmount();
+    const amount = getMinimumBidAmount();
     
-    if (isNaN(amount) || amount <= 0) {
-      setBidError('Geçerli bir teklif miktarı girin.');
-      return;
-    }
-    
-    if (amount < minimumBid) {
-      setBidError(`Minimum teklif ${formatPrice(minimumBid)} olmalıdır.`);
+    if (amount <= 0) {
+      setBidError('Geçerli bir teklif miktarı bulunamadı.');
       return;
     }
     
@@ -1481,7 +1472,6 @@ const AuctionDetail = () => {
         }
       }
       
-      setBidAmount('');
       await refreshBids();
       
     } catch (error) {
