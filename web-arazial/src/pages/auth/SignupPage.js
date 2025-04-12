@@ -680,7 +680,7 @@ const SignupPage = () => {
         </svg>
         Anasayfaya Dön
       </BackLink>
-      <Header>Tapu.com'a Katıl</Header>
+      <Header>Arazialcom'a Katıl</Header>
       <Description>
         Hoş geldiniz, aşağıdaki formu doldurarak ücretsiz üye olabilirsiniz.
       </Description>
