@@ -1622,8 +1622,14 @@ const AuctionDetail = () => {
     const highestBid = bids[0]?.amount || 0;
     const startPrice = auction.start_price || 0;
     const minIncrement = auction.min_increment || 1;
-    const currentPrice = Math.max(highestBid, startPrice);
-    return currentPrice === startPrice ? startPrice : currentPrice + minIncrement; // Can bid start price initially
+    
+    // If there are no bids, return the start price
+    if (highestBid === 0) {
+      return startPrice;
+    }
+    
+    // Otherwise, return highest bid + minimum increment
+    return highestBid + minIncrement;
   }, [auction, bids]);
 
   const handleTimerComplete = useCallback(() => {
