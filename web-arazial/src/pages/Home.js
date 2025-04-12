@@ -198,7 +198,7 @@ const SearchButton = styled(Button)`
 
 const TabsContainer = styled.div`
   display: flex;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -213,6 +213,7 @@ const TabsContainer = styled.div`
   @media (max-width: 768px) {
     padding: 0;
     width: 100%;
+    margin-bottom: 1rem;
   }
 `;
 
@@ -243,13 +244,13 @@ const TabButton = styled.button`
 const StatusTabs = styled.div`
   display: flex;
   gap: 0.75rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   padding-top: 0.5rem;
   
   @media (max-width: 768px) {
     overflow-x: auto;
     white-space: nowrap;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     padding-top: 0;
   }
 `;
