@@ -9,11 +9,11 @@ const HeroSection = styled.section`
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 10rem 2rem;
+  padding: 8rem 2rem 6rem;
   background: linear-gradient(135deg, rgba(7, 30, 61, 0.92), rgba(7, 20, 41, 0.97)), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80') center/cover no-repeat;
   background-attachment: fixed;
   color: white;
-  min-height: 92vh;
+  min-height: 80vh;
   width: 100%;
   box-sizing: border-box;
   margin: 0;
@@ -36,15 +36,18 @@ const HeroSection = styled.section`
     bottom: -2px;
     left: 0;
     width: 100%;
-    height: 120px;
+    height: 80px;
     background-color: white;
-    clip-path: polygon(0 60%, 100% 0, 100% 100%, 0% 100%);
+    clip-path: polygon(0 40%, 100% 0, 100% 100%, 0% 100%);
   }
   
-  @media (min-width: 768px) {
-    padding-top: 12rem;
-    padding-bottom: 14rem;
-    background-attachment: fixed;
+  @media (max-width: 768px) {
+    min-height: 60vh;
+    padding: 6rem 1.5rem 4rem;
+    
+    &::after {
+      height: 50px;
+    }
   }
 `;
 
@@ -451,6 +454,24 @@ const CTAButtonGroup = styled.div`
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
+`;
+
+const PageContainer = styled.div`
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 2rem;
+  background-color: #f9fafb;
+  border-radius: 16px;
+  margin-top: -2rem;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 10;
+  
+  @media (max-width: 768px) {
+    padding: 1rem;
+    margin-top: -1rem;
+    border-radius: 16px 16px 0 0;
+  }
 `;
 
 const LandingPage = () => {
