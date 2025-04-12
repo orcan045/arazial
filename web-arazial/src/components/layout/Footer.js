@@ -223,20 +223,31 @@ const ContactInfo = styled.div`
 const ContactItem = styled.div`
   display: flex;
   align-items: flex-start;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
   
   svg {
-    width: 20px;
-    height: 20px;
-    margin-right: 0.75rem;
-    margin-top: 3px;
-    color: var(--color-gold);
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 1rem;
+    margin-top: 0.25rem;
+    color: var(--color-primary);
+    flex-shrink: 0;
   }
   
   p {
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.6;
   }
+`;
+
+const CompanyName = styled.div`
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.5rem;
+`;
+
+const Address = styled.div`
+  color: var(--color-text-secondary);
 `;
 
 const CopyrightText = styled.p`
@@ -330,7 +341,10 @@ const Footer = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <p>ARAZIAL EMLAK YATIRIM DANIŞMANLIK A.Ş.<br />ULU CAMİİ MAH. 388 SK. NO:29/1B<br />AKHİSAR / MANİSA</p>
+                <div>
+                  <CompanyName>ARAZIAL EMLAK YATIRIM DANIŞMANLIK A.Ş.</CompanyName>
+                  <Address>ULU CAMİİ MAH. 388 SK. NO:29/1B<br />AKHİSAR / MANİSA</Address>
+                </div>
               </ContactItem>
               <ContactItem>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
