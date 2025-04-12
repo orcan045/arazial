@@ -42,11 +42,12 @@ const HeroSection = styled.section`
   }
   
   @media (max-width: 768px) {
-    min-height: 60vh;
-    padding: 6rem 1.5rem 4rem;
+    min-height: auto;
+    padding: 6rem 1.5rem 3rem;
+    justify-content: flex-start;
     
     &::after {
-      height: 50px;
+      height: 40px;
     }
   }
 `;
@@ -56,6 +57,10 @@ const HeroContent = styled.div`
   max-width: 1000px;
   margin: 0 auto;
   z-index: 2;
+  
+  @media (max-width: 768px) {
+    margin-bottom: 1rem;
+  }
 `;
 
 const HeroTitle = styled.h1`
@@ -96,8 +101,9 @@ const HeroSubtitle = styled.p`
   color: rgba(255, 255, 255, 0.95);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
   
-  @media (min-width: 768px) {
-    font-size: 1.5rem;
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    margin-bottom: 2rem;
   }
 `;
 
@@ -112,6 +118,10 @@ const ButtonGroup = styled.div`
   
   @media (min-width: 640px) {
     flex-direction: row;
+  }
+  
+  @media (max-width: 768px) {
+    margin-bottom: 1rem;
   }
 `;
 
@@ -166,7 +176,7 @@ const ScrollIndicator = styled.div`
   cursor: pointer;
   
   @media (max-width: 768px) {
-    bottom: 120px;
+    display: none;
   }
 `;
 

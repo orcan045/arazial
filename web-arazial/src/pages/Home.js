@@ -27,10 +27,11 @@ const HeroSection = styled.section`
   position: relative;
   
   @media (max-width: 768px) {
-    height: 480px;
+    height: auto;
+    min-height: 320px;
     padding: 1rem;
     justify-content: flex-start;
-    padding-top: 3rem;
+    padding-top: 2rem;
   }
 `;
 
@@ -303,7 +304,7 @@ const PopularSearches = styled.div`
   
   @media (max-width: 768px) {
     margin-top: 0.5rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
     
     a {
       margin-right: 1rem;
@@ -315,6 +316,7 @@ const PopularSearches = styled.div`
 const PageContainer = styled.div`
   max-width: 1400px;
   margin: 0 auto;
+  width: 100%;
   padding: 2rem 2rem;
   background-color: #f9fafb;
   border-radius: 16px;
@@ -324,9 +326,10 @@ const PageContainer = styled.div`
   z-index: 10;
   
   @media (max-width: 768px) {
-    padding: 1.5rem 1rem;
-    margin-top: -2rem;
-    border-radius: 16px 16px 0 0;
+    padding: 1rem;
+    margin-top: 0;
+    border-radius: 0;
+    box-shadow: none;
   }
 `;
 
