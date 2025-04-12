@@ -1901,10 +1901,6 @@ const AuctionDetail = () => {
                   <PropertyValue>{auction.area_size ? `${auction.area_size} ${auction.area_unit || 'm²'}` : '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
-                  <PropertyLabel>İmar Durumu</PropertyLabel>
-                  <PropertyValue>{auction.imar_durumu || '-'}</PropertyValue>
-                </PropertyItem>
-                <PropertyItem>
                   <PropertyLabel>Ada No</PropertyLabel>
                   <PropertyValue>{auction.ada_no || '-'}</PropertyValue>
                 </PropertyItem>
@@ -2006,10 +2002,6 @@ const AuctionDetail = () => {
                 <PropertyItem>
                   <PropertyLabel>Alan (m²)</PropertyLabel>
                   <PropertyValue>{auction.area_size ? `${auction.area_size} ${auction.area_unit || 'm²'}` : '-'}</PropertyValue>
-                </PropertyItem>
-                <PropertyItem>
-                  <PropertyLabel>İmar Durumu</PropertyLabel>
-                  <PropertyValue>{auction.imar_durumu || '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>Ada No</PropertyLabel>

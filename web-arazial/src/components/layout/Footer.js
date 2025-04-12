@@ -251,22 +251,6 @@ const LegalLinks = styled.div`
   }
 `;
 
-const PaymentMethods = styled.div`
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  
-  img {
-    height: 24px;
-    opacity: 0.6;
-    transition: opacity 0.2s ease;
-    
-    &:hover {
-      opacity: 1;
-    }
-  }
-`;
-
 const Divider = styled.div`
   height: 1px;
   background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
@@ -343,13 +327,6 @@ const Footer = () => {
         </FooterTop>
         
         <Divider />
-        
-        <PaymentMethods>
-          <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" />
-          <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" />
-          <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/American_Express_logo_%282018%29.svg" alt="American Express" />
-          <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" />
-        </PaymentMethods>
         
         <FooterBottom>
           <CopyrightText>
