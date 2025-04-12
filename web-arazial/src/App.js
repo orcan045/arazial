@@ -439,213 +439,41 @@ const App = () => {
   }
   
   return (
-    <Router>
-      <AuthProvider>
-        <GlobalStyles />
+    <AuthProvider>
+      <GlobalStyles />
+      <Router>
         <Routes>
-          {/* Public Routes */}
-          <Route 
-            path="/" 
-            element={
-              <Layout>
-                <Home />
-              </Layout>
-            } 
-          />
-          
-          <Route 
-            path="/auctions" 
-            element={<Navigate to="/" />} 
-          />
-          
-          <Route 
-            path="/about" 
-            element={
-              <Layout>
-                <About />
-              </Layout>
-            } 
-          />
-          
-          <Route 
-            path="/contact" 
-            element={
-              <Layout>
-                <Contact />
-              </Layout>
-            } 
-          />
-          
-          <Route 
-            path="/sss" 
-            element={
-              <Layout>
-                <FAQ />
-              </Layout>
-            } 
-          />
-          
-          <Route 
-            path="/privacy-policy" 
-            element={
-              <Layout>
-                <PrivacyPolicy />
-              </Layout>
-            } 
-          />
-          
-          <Route 
-            path="/terms-of-use" 
-            element={
-              <Layout>
-                <TermsOfUse />
-              </Layout>
-            } 
-          />
-          
-          <Route 
-            path="/cookies" 
-            element={
-              <Layout>
-                <CookiePolicy />
-              </Layout>
-            } 
-          />
-          
-          <Route 
-            path="/legal" 
-            element={
-              <Layout>
-                <LegalNotices />
-              </Layout>
-            } 
-          />
-          
-          <Route 
-            path="/security" 
-            element={
-              <Layout>
-                <Security />
-              </Layout>
-            } 
-          />
-          
           {/* Auth Routes */}
-          <Route 
-            path="/login" 
-            element={
-              <AuthLayout>
-                <LoginPage />
-              </AuthLayout>
-            } 
-          />
-          
-          <Route 
-            path="/signup" 
-            element={
-              <AuthLayout>
-                <SignupPage />
-              </AuthLayout>
-            } 
-          />
-          
-          <Route 
-            path="/forgot-password" 
-            element={
-              <AuthLayout>
-                <ForgotPasswordPage />
-              </AuthLayout>
-            } 
-          />
-          
-          <Route 
-            path="/reset-password" 
-            element={
-              <AuthLayout>
-                <ResetPasswordPage />
-              </AuthLayout>
-            } 
-          />
+          <Route path="/login" element={<AuthLayout><LoginPage /></AuthLayout>} />
+          <Route path="/signup" element={<AuthLayout><SignupPage /></AuthLayout>} />
+          <Route path="/forgot-password" element={<AuthLayout><ForgotPasswordPage /></AuthLayout>} />
+          <Route path="/reset-password" element={<AuthLayout><ResetPasswordPage /></AuthLayout>} />
           
           {/* Protected Routes */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <Dashboard />
-                </Layout>
-              </ProtectedRoute>
-            } 
-          />
+          <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Layout><UserProfile /></Layout></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Layout><UserSettings /></Layout></ProtectedRoute>} />
           
-          <Route 
-            path="/profile" 
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <UserProfile />
-                </Layout>
-              </ProtectedRoute>
-            } 
-          />
+          {/* Admin Routes */}
+          <Route path="/admin/*" element={<AdminRoute><Layout><AdminDashboard /></Layout></AdminRoute>} />
           
-          <Route 
-            path="/settings" 
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <UserSettings />
-                </Layout>
-              </ProtectedRoute>
-            } 
-          />
-          
-          <Route 
-            path="/admin/dashboard" 
-            element={
-              <AdminRoute>
-                <Layout>
-                  <AdminDashboard />
-                </Layout>
-              </AdminRoute>
-            } 
-          />
-          
-          <Route 
-            path="/admin" 
-            element={<Navigate to="/admin/dashboard" />} 
-          />
-          
-          <Route 
-            path="/auctions/:id" 
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <AuctionDetail />
-                </Layout>
-              </ProtectedRoute>
-            } 
-          />
-          
-          <Route 
-            path="/payment-callback" 
-            element={
-              <ProtectedRoute>
-                <PaymentCallback />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Catch all redirect */}
-          <Route 
-            path="*" 
-            element={<Navigate to="/" />} 
-          />
+          {/* Public Routes */}
+          <Route path="/" element={<Layout><Home /></Layout>} />
+          <Route path="/about" element={<Layout><About /></Layout>} />
+          <Route path="/contact" element={<Layout><Contact /></Layout>} />
+          <Route path="/auctions" element={<Layout><Auctions /></Layout>} />
+          <Route path="/auctions/:id" element={<Layout><AuctionDetail /></Layout>} />
+          <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
+          <Route path="/terms-of-use" element={<Layout><TermsOfUse /></Layout>} />
+          <Route path="/payment-callback" element={<Layout><PaymentCallback /></Layout>} />
+          <Route path="/faq" element={<Layout><FAQ /></Layout>} />
+          <Route path="/cookies" element={<Layout><CookiePolicy /></Layout>} />
+          <Route path="/legal" element={<Layout><LegalNotices /></Layout>} />
+          <Route path="/security" element={<Layout><Security /></Layout>} />
         </Routes>
-      </AuthProvider>
-    </Router>
+      </Router>
+    </AuthProvider>
   );
-}
+};
 
 export default App;

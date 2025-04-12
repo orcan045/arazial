@@ -2,25 +2,25 @@ import { createGlobalStyle } from 'styled-components';
 
 const GlobalStyles = createGlobalStyle`
   :root {
-    /* Primary Colors - Refined blue palette */
-    --color-primary: #0F3460;
-    --color-primary-light: #1A4D8C;
-    --color-primary-dark: #071E3D;
+    /* Primary Colors - Corporate Navy Blue */
+    --color-primary: #1D3557;
+    --color-primary-light: #2A4A7F;
+    --color-primary-dark: #002F6C;
     
-    /* Secondary Colors */
-    --color-accent: #E94560;
-    --color-gold: #D4AF37;
-    --color-gold-light: #E6C458;
-    --color-gold-dark: #B89328;
+    /* Secondary Colors - Golden Accent */
+    --color-accent: #F4A261;
+    --color-gold: #DAA520;
+    --color-gold-light: #E8B94F;
+    --color-gold-dark: #C69214;
     
-    /* Neutral Palette - refined */
-    --color-surface: #ffffff;
-    --color-background: #f9fafb;
-    --color-surface-secondary: #f3f4f6;
+    /* Neutral Palette - Elegant Background */
+    --color-surface: #FFFFFF;
+    --color-background: #F8F9FA;
+    --color-surface-secondary: #F3F4F6;
     --color-surface-tertiary: #EBEEF2;
     
     /* Text Colors */
-    --color-text: #0A0F1C;
+    --color-text: #1D3557;
     --color-text-secondary: #4B5563;
     --color-text-tertiary: #6B7280;
     --color-text-light: #9CA3AF;
@@ -28,12 +28,12 @@ const GlobalStyles = createGlobalStyle`
     /* Status Colors */
     --color-error: #E63946;
     --color-success: #00A67E;
-    --color-warning: #FF9800;
-    --color-info: #3B82F6;
+    --color-warning: #F4A261;
+    --color-info: #457B9D;
     
     /* Form Colors */
-    --color-border: #cbd5e1;
-    --color-bg-input: #ffffff;
+    --color-border: #D1D5DB;
+    --color-bg-input: #FFFFFF;
     --color-text-placeholder: #9CA3AF;
     --color-disabled: #E5E7EB;
     --color-error-bg: #FEF2F2;
