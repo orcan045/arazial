@@ -266,7 +266,10 @@ const Footer = () => {
       <FooterContent>
         <FooterTop>
           <FooterSection>
-            <h3>arazialcom</h3>
+            <FooterLogo to="/">
+              <img src={logoImage} alt="arazialcom logo" />
+              <span>arazialcom</span>
+            </FooterLogo>
             <ul>
               <li>
                 <Link to="/about">Hakkımızda</Link>
