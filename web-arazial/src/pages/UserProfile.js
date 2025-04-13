@@ -24,11 +24,6 @@ const UserName = styled.h1`
   margin-bottom: 0.5rem;
 `;
 
-const UserEmail = styled.p`
-  color: var(--color-text-secondary);
-  margin-bottom: 1rem;
-`;
-
 const MemberSince = styled.p`
   font-size: 0.875rem;
   color: var(--color-text-secondary);
@@ -597,7 +592,6 @@ const UserProfile = () => {
       <ProfileHeader>
         <ProfileInfo>
           <UserName>{profile?.full_name || user?.email}</UserName>
-          <UserEmail>{user?.email}</UserEmail>
           <MemberSince>
             {profile?.created_at ? `Üyelik Tarihi: ${formatDate(profile.created_at)}` : ''}
           </MemberSince>
