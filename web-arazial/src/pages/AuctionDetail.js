@@ -71,12 +71,16 @@ const AuctionTitle = styled.h1`
 `;
 
 const AuctionLocation = styled.div`
-  color: var(--color-text-secondary);
-  font-size: 0.75rem;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0;
+  background-color: rgba(var(--color-primary-rgb), 0.05);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--border-radius-full);
   
   svg {
     color: var(--color-primary);
@@ -1804,7 +1808,7 @@ const AuctionDetail = () => {
           </AuctionStatus>
           
           <AuctionLocation>
-            <LocationIcon /> {auction.location || 'Konum belirtilmemiş'}
+            <LocationIcon /> {auction.location?.split(',').reverse().join(', ').trim() || 'Konum belirtilmemiş'}
           </AuctionLocation>
         </div>
       </DesktopHeader>
@@ -1901,7 +1905,7 @@ const AuctionDetail = () => {
             </AuctionStatus>
             
             <AuctionLocation>
-              <LocationIcon /> {auction.location || 'Konum belirtilmemiş'}
+              <LocationIcon /> {auction.location?.split(',').reverse().join(', ').trim() || 'Konum belirtilmemiş'}
             </AuctionLocation>
           </div>
         </div>
