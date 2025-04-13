@@ -66,6 +66,7 @@ const AuctionTitle = styled.h1`
   @media (max-width: 768px) {
     font-size: 1.125rem;
     margin-top: 0;
+    margin-bottom: 0.75rem;
   }
 `;
 
@@ -1890,7 +1891,7 @@ const AuctionDetail = () => {
         </div>
         
         {/* 3. TITLE AND DETAILS */}
-        <div className="mobile-header-section" style={{ padding: '0 1rem', marginTop: 0 }}>
+        <div className="mobile-header-section" style={{ padding: '0.75rem 1rem', marginTop: 0 }}>
           <AuctionTitle>{auction.title}</AuctionTitle>
           
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -1911,20 +1912,20 @@ const AuctionDetail = () => {
             <CardContent>
               <PropertyGrid>
                 <PropertyItem>
-                  <PropertyLabel>Emlak Tipi</PropertyLabel>
-                  <PropertyValue>{auction.emlak_tipi || '-'}</PropertyValue>
-                </PropertyItem>
-                <PropertyItem>
-                  <PropertyLabel>Alan (m²)</PropertyLabel>
-                  <PropertyValue>{auction.area_size ? `${auction.area_size} ${auction.area_unit || 'm²'}` : '-'}</PropertyValue>
-                </PropertyItem>
-                <PropertyItem>
                   <PropertyLabel>Ada No</PropertyLabel>
                   <PropertyValue>{auction.ada_no || '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>Parsel No</PropertyLabel>
                   <PropertyValue>{auction.parsel_no || '-'}</PropertyValue>
+                </PropertyItem>
+                <PropertyItem>
+                  <PropertyLabel>Emlak Tipi</PropertyLabel>
+                  <PropertyValue>{auction.emlak_tipi || '-'}</PropertyValue>
+                </PropertyItem>
+                <PropertyItem>
+                  <PropertyLabel>Alan (m²)</PropertyLabel>
+                  <PropertyValue>{auction.area_size ? `${auction.area_size} ${auction.area_unit || 'm²'}` : '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>İlan Sahibi</PropertyLabel>
@@ -2014,20 +2015,20 @@ const AuctionDetail = () => {
             <CardContent>
               <PropertyGrid>
                 <PropertyItem>
-                  <PropertyLabel>Emlak Tipi</PropertyLabel>
-                  <PropertyValue>{auction.emlak_tipi || '-'}</PropertyValue>
-                </PropertyItem>
-                <PropertyItem>
-                  <PropertyLabel>Alan (m²)</PropertyLabel>
-                  <PropertyValue>{auction.area_size ? `${auction.area_size} ${auction.area_unit || 'm²'}` : '-'}</PropertyValue>
-                </PropertyItem>
-                <PropertyItem>
                   <PropertyLabel>Ada No</PropertyLabel>
                   <PropertyValue>{auction.ada_no || '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>Parsel No</PropertyLabel>
                   <PropertyValue>{auction.parsel_no || '-'}</PropertyValue>
+                </PropertyItem>
+                <PropertyItem>
+                  <PropertyLabel>Emlak Tipi</PropertyLabel>
+                  <PropertyValue>{auction.emlak_tipi || '-'}</PropertyValue>
+                </PropertyItem>
+                <PropertyItem>
+                  <PropertyLabel>Alan (m²)</PropertyLabel>
+                  <PropertyValue>{auction.area_size ? `${auction.area_size} ${auction.area_unit || 'm²'}` : '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>İlan Sahibi</PropertyLabel>
