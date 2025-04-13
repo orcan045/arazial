@@ -208,6 +208,13 @@ const Card = styled.section`
       width: 100%;
       box-shadow: none;
     }
+    
+    &.details-card {
+      margin: 0;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 0;
+    }
   }
   
   /* Special styling for the bid card on mobile */
@@ -216,14 +223,8 @@ const Card = styled.section`
     @media (max-width: 1023px) {
       position: static;
       z-index: 1;
-      margin-bottom: 1rem;
-      border-radius: 8px;
-    }
-    
-    /* Ensure no elements in the bid card add extra space */
-    & > div > *:last-child {
-      margin-bottom: 0 !important;
-      padding-bottom: 0 !important;
+      margin-bottom: 0;
+      border-radius: 0;
     }
   }
   
@@ -259,12 +260,24 @@ const CardContent = styled.div`
   .bid-card & {
     padding-bottom: 0 !important;
   }
+
+  @media (max-width: 768px) {
+    .details-card & {
+      padding: 0.25rem;
+    }
+  }
 `;
 
 const PropertyGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.25rem;
+  }
 `;
 
 const PropertyItem = styled.div`
@@ -1893,7 +1906,7 @@ const AuctionDetail = () => {
         </div>
         
         {/* 4. PROPERTY DETAILS */}
-        <div className="mobile-details-section" style={{ padding: '0 1rem', marginTop: 0 }}>
+        <div className="mobile-details-section" style={{ padding: 0, margin: 0 }}>
           <Card className="details-card">
             <CardContent>
               <PropertyGrid>
