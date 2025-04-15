@@ -474,11 +474,6 @@ const Dashboard = () => {
   
   return (
     <DashboardContainer>
-      <DashboardHeader>
-        <WelcomeMessage>Hoş Geldiniz, {user?.email}</WelcomeMessage>
-        <Subtitle>Tekliflerinizi ve ihalelerinizi yönetin</Subtitle>
-      </DashboardHeader>
-      
       <StatsGrid>
         <StatCard>
           <StatTitle>Toplam Teklif</StatTitle>
