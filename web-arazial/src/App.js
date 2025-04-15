@@ -466,7 +466,7 @@ const App = () => {
           <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
           <Route path="/terms-of-use" element={<Layout><TermsOfUse /></Layout>} />
           <Route path="/payment-callback" element={<Layout><PaymentCallback /></Layout>} />
-          <Route path="/faq" element={<Layout><FAQ /></Layout>} />
+          <Route path="/sss" element={<Layout><FAQ /></Layout>} />
           <Route path="/cookies" element={<Layout><CookiePolicy /></Layout>} />
           <Route path="/legal" element={<Layout><LegalNotices /></Layout>} />
           <Route path="/security" element={<Layout><Security /></Layout>} />

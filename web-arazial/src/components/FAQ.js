@@ -24,6 +24,11 @@ const FAQTitle = styled.h1`
   color: var(--color-text);
   margin-bottom: 3rem;
   letter-spacing: -0.025em;
+  
+  @media (max-width: 640px) {
+    font-size: 1.75rem;
+    margin-bottom: 2rem;
+  }
 `;
 
 const FAQList = styled.div`
@@ -32,11 +37,20 @@ const FAQList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  
+  @media (max-width: 640px) {
+    gap: 1.5rem;
+    padding: 0 0.5rem;
+  }
 `;
 
 const FAQItem = styled.div`
   border-bottom: 1px solid var(--color-surface-secondary);
   padding-bottom: 2rem;
+  
+  @media (max-width: 640px) {
+    padding-bottom: 1.5rem;
+  }
   
   &:last-child {
     border-bottom: none;
@@ -49,8 +63,9 @@ const Question = styled.h2`
   color: var(--color-text);
   margin-bottom: 1rem;
   
-  @media (min-width: 640px) {
-    font-size: 1.5rem;
+  @media (max-width: 640px) {
+    font-size: 1.125rem;
+    margin-bottom: 0.75rem;
   }
 `;
 
@@ -58,6 +73,11 @@ const Answer = styled.p`
   color: var(--color-text-secondary);
   line-height: 1.75;
   white-space: pre-line;
+  
+  @media (max-width: 640px) {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
 `;
 
 const FAQ = () => {
