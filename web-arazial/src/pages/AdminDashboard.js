@@ -1058,6 +1058,7 @@ function AdminDashboard() {
     startingPrice: '',
     minIncrement: '',
     offerIncrement: '',
+    deposit_amount: '', // <-- Add deposit_amount here
     startDate: '',
     endDate: '',
     startTime: '12:00',
@@ -1371,6 +1372,7 @@ function AdminDashboard() {
       const price = auctionForm.startingPrice ? parseFloat(auctionForm.startingPrice.replace(',', '.')) : 0;
       const minIncrement = auctionForm.minIncrement ? parseFloat(auctionForm.minIncrement.replace(',', '.')) : 0;
       const offerIncrement = auctionForm.offerIncrement ? parseFloat(auctionForm.offerIncrement.replace(',', '.')) : 0;
+      const depositAmount = auctionForm.deposit_amount ? parseFloat(auctionForm.deposit_amount.replace(',', '.')) : 0; // <-- Parse deposit amount
 
       // Create combined location string with city and location details
       const locationString = auctionForm.city 
@@ -1402,7 +1404,8 @@ function AdminDashboard() {
         area_unit: auctionForm.area_unit || 'm2', // ADDED area_unit
         emlak_tipi: auctionForm.emlak_tipi,
         imar_durumu: auctionForm.imar_durumu,
-        ilan_sahibi: auctionForm.ilan_sahibi
+        ilan_sahibi: auctionForm.ilan_sahibi,
+        deposit_amount: depositAmount, // <-- Add deposit_amount to data
       };
       
       console.log("Attempting to create auction with data:", auctionData);
@@ -1441,6 +1444,7 @@ function AdminDashboard() {
         startingPrice: '',
         minIncrement: '',
         offerIncrement: '',
+        deposit_amount: '', // <-- Reset deposit_amount
         startDate: '',
         endDate: '',
         startTime: '12:00',
@@ -1737,10 +1741,12 @@ function AdminDashboard() {
         area_unit: auctionData.area_unit || 'm2', // ADDED area_unit
         emlak_tipi: auctionData.emlak_tipi || '',
         imar_durumu: auctionData.imar_durumu || '',
-        ilan_sahibi: auctionData.ilan_sahibi || ''
+        ilan_sahibi: auctionData.ilan_sahibi || '',
+        deposit_amount: auctionData.deposit_amount || '', // <-- Add deposit_amount to data
       });
 
       setSelectedAuctionId(auctionId);
+      setDepositAmount(auctionData.deposit_amount || ''); // <-- Set deposit amount for edit form
 
       // 2. Fetch Bids OR Offers based on type
       if (auctionData.listing_type === 'auction') {
@@ -1926,6 +1932,7 @@ function AdminDashboard() {
       const price = auctionForm.startingPrice ? parseFloat(auctionForm.startingPrice.replace(',', '.')) : 0;
       const minIncrement = auctionForm.minIncrement ? parseFloat(auctionForm.minIncrement.replace(',', '.')) : 0;
       const offerIncrement = auctionForm.offerIncrement ? parseFloat(auctionForm.offerIncrement.replace(',', '.')) : 0;
+      const depositAmount = auctionForm.deposit_amount ? parseFloat(auctionForm.deposit_amount.replace(',', '.')) : 0; // <-- Parse deposit amount for update
 
       // Create combined location string with city and location details
       const locationString = auctionForm.city 
@@ -1953,7 +1960,8 @@ function AdminDashboard() {
         area_unit: auctionForm.area_unit || 'm2', // ADDED area_unit
         emlak_tipi: auctionForm.emlak_tipi,
         imar_durumu: auctionForm.imar_durumu,
-        ilan_sahibi: auctionForm.ilan_sahibi
+        ilan_sahibi: auctionForm.ilan_sahibi,
+        deposit_amount: depositAmount, // <-- Add deposit_amount to update data
       };
       
       console.log("Attempting to update auction with data:", auctionData);
@@ -3141,7 +3149,21 @@ function AdminDashboard() {
                   />
                 </FormGroup>
               </FormRow>
-              
+              <FormRow>
+                <FormGroup> 
+                  <Label htmlFor="deposit_amount">Teminat Tutarı (TL)</Label>
+                  <Input 
+                    type="number" 
+                    id="deposit_amount" 
+                    name="deposit_amount"
+                    value={auctionForm.deposit_amount}
+                    onChange={handleAuctionFormChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="Örn: 1000"
+                  />
+                </FormGroup>
+              </FormRow>
               {/* Dates & Times */}
               <FormRow>
                 <FormGroup>
@@ -3350,6 +3372,8 @@ function AdminDashboard() {
                   <option value="completed">Tamamlandı</option>
                 </Select>
               </FormGroup>
+              
+
               
               <Button type="submit" disabled={uploading}>İhaleyi Oluştur</Button>
             </form>
@@ -3694,6 +3718,22 @@ function AdminDashboard() {
                   <option value="completed">Tamamlandı</option> {/* Enable completed for editing */} 
                 </Select>
               </FormGroup>
+              
+              <FormRow>
+                <FormGroup> 
+                  <Label htmlFor="deposit_amount">Teminat Tutarı (TL)</Label>
+                  <Input 
+                    type="number" 
+                    id="deposit_amount" 
+                    name="deposit_amount"
+                    value={auctionForm.deposit_amount}
+                    onChange={handleAuctionFormChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="Örn: 1000"
+                  />
+                </FormGroup>
+              </FormRow>
               
               <Button type="submit" disabled={uploading}>İlanı Güncelle</Button>
             </form>

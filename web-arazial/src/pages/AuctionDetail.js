@@ -1116,6 +1116,19 @@ const BidCard = ({
                         Sonraki Teklif: {formatPrice(getMinimumBidAmount())}
                       </div>
                     </div>
+                    <div style={{ 
+                      display: 'flex', 
+                      gap: '0.5rem', 
+                      alignItems: 'center',
+                      backgroundColor: 'rgba(var(--color-primary-rgb), 0.05)',
+                      padding: '1rem',
+                      borderRadius: 'var(--border-radius-md)',
+                      marginBottom: '0.75rem'
+                    }}>
+                      <div style={{ flex: 1, textAlign: 'center', fontWeight: '600', fontSize: '1.125rem' }}>
+                        Teminat Tutarı: {formatPrice(auction.deposit_amount || 0)}
+                      </div>
+                    </div>
                     <OfferButton 
                       type="submit" 
                       disabled={submitLoading || authLoading}

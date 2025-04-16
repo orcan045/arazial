@@ -1011,7 +1011,7 @@ const Home = () => {
               $isActive={listingType === 'auction'} 
               onClick={() => handleListingTypeChange('auction')}
             >
-              Müzayedeler
+              
             </TabButton>
             <TabButton 
               $isActive={listingType === 'offer'} 
@@ -1027,7 +1027,7 @@ const Home = () => {
                 active={auctionStatus === 'active'}
                 onClick={() => handleStatusChange('active')}
               >
-                Aktif Müzayedeler
+                Aktif Açık Arttırmalar
               </StatusTab>
               <StatusTab
                 active={auctionStatus === 'upcoming'}
@@ -1059,14 +1059,14 @@ const Home = () => {
               ))
             ) : getPaginatedAuctions().length === 0 ? (
               <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem 0' }}>
-                <p>Arama kriterlerinize uygun aktif emlak müzayedesi bulunamadı.</p>
+                <p>Arama kriterlerinize uygun aktif emlak açık arttırma bulunamadı.</p>
                 <Button 
                   variant="secondary" 
                   size="small" 
                   onClick={resetFilters}
                   style={{ marginTop: '1rem' }}
                 >
-                  Tüm Müzayedeleri Göster
+                  Tüm Açık Arttırmaları Göster
                 </Button>
               </div>
             ) : (
@@ -1082,7 +1082,7 @@ const Home = () => {
                     </AuctionStatusBadge>
                     {listingType === 'new' && (
                       <AuctionTypeTag>
-                        {listing._display_type === 'offer' ? 'Pazarlık' : 'Müzayede'}
+                        {listing._display_type === 'offer' ? 'Pazarlık' : 'Açık Arttırma'}
                       </AuctionTypeTag>
                     )}
                   </AuctionImage>
