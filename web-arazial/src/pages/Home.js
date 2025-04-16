@@ -1011,7 +1011,7 @@ const Home = () => {
               $isActive={listingType === 'auction'} 
               onClick={() => handleListingTypeChange('auction')}
             >
-              
+              Açık Arttırma
             </TabButton>
             <TabButton 
               $isActive={listingType === 'offer'} 
