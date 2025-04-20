@@ -1215,9 +1215,9 @@ const DocumentIcon = () => (
 
 const RefreshIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="1 4 1 10 7 10"/>
-    <polyline points="23 20 23 14 17 14"/>
-    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+    <polyline points="1 4 1 10 7 10"></polyline>
+    <polyline points="23 20 23 14 17 14"></polyline>
+    <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
   </svg>
 );
 
@@ -1418,6 +1418,37 @@ const ContentControls = styled.div`
     padding: 0 0.75rem;
   }
 `;
+
+// Function to get formatted location with city first
+const getFormattedLocation = (auction) => {
+  // If location is an object with city and district
+  if (auction.location && typeof auction.location === 'object') {
+    const city = auction.location.city;
+    const district = auction.location.district;
+    if (city && district) return `${city}, ${district}`;
+    if (city) return city;
+  }
+  
+  // If location is a string and has commas, assume district/city format and reverse it
+  if (auction.location && typeof auction.location === 'string' && auction.location.includes(',')) {
+    return auction.location.split(',').reverse().join(', ').trim();
+  }
+  
+  // If just a string without commas, return as is
+  if (auction.location && typeof auction.location === 'string') {
+    return auction.location;
+  }
+  
+  // If separate city/district fields
+  if (auction.city || auction.district) {
+    const parts = [];
+    if (auction.city) parts.push(auction.city);
+    if (auction.district) parts.push(auction.district);
+    return parts.join(', ');
+  }
+  
+  return 'Konum bilgisi yok';
+};
 
 const Auctions = () => {
   const navigate = useNavigate();
@@ -2039,7 +2070,7 @@ const Auctions = () => {
           <AuctionTitle>{auction.title || 'Arsa'}</AuctionTitle>
           <AuctionLocation>
             <LocationIcon />
-            {auction.location || 'Konum bilgisi yok'}
+            {getFormattedLocation(auction)}
           </AuctionLocation>
           
           <PropertyInfoGrid>
@@ -2339,7 +2370,7 @@ const Auctions = () => {
           <AuctionTitle>{auction.title || 'Arsa'}</AuctionTitle>
           <AuctionLocation>
             <LocationIcon />
-            {auction.location || 'Konum bilgisi yok'}
+            {getFormattedLocation(auction)}
           </AuctionLocation>
           
           <PropertyInfoGrid>

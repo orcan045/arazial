@@ -903,7 +903,12 @@ const Home = () => {
       if (city) return city;
     }
     
-    // If location is a string
+    // If location is a string with commas, split and reverse to put city first
+    if (auction.location && typeof auction.location === 'string' && auction.location.includes(',')) {
+      return auction.location.split(',').reverse().join(', ').trim();
+    }
+    
+    // If location is a simple string without commas
     if (auction.location && typeof auction.location === 'string') {
       return auction.location;
     }
@@ -915,9 +920,9 @@ const Home = () => {
       // If we also have city/district
       if (auction.city || auction.district) {
         const parts = [];
+        if (auction.city) parts.push(auction.city);
         if (auction.district) parts.push(auction.district);
-        if (parts.length === 0 && auction.city) parts.push(auction.city);
-        if (neighborhood) parts.unshift(neighborhood);
+        if (neighborhood) parts.push(neighborhood);
         return parts.join(', ');
       }
       
@@ -927,17 +932,17 @@ const Home = () => {
     // If separate city/district fields
     if (auction.city || auction.district) {
       const parts = [];
-      if (auction.district) parts.push(auction.district);
       if (auction.city) parts.push(auction.city);
+      if (auction.district) parts.push(auction.district);
       return parts.join(', ');
     }
     
     // If we have address but no location
     if (auction.address && typeof auction.address === 'string') {
-      // Try to keep it short by just taking the first part
+      // Split by comma and reverse to put city first
       const addressParts = auction.address.split(',');
       if (addressParts.length > 1) {
-        return `${addressParts[0].trim()}, ${addressParts[1].trim()}`;
+        return addressParts.reverse().join(', ').trim();
       }
       return auction.address;
     }

@@ -1024,6 +1024,33 @@ const BidCard = ({
 }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showAuthLoading, setShowAuthLoading] = useState(false);
+  const [shareMessage, setShareMessage] = useState("");
+  
+  // Handle share functionality
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareTitle = auction?.title || 'Arazi İlanı';
+    const shareText = `${shareTitle} - ${formatPrice(getMinimumBidAmount())} başlangıç fiyatıyla!`;
+    
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        setShareMessage("");
+      } else {
+        // Fallback to copy to clipboard
+        await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+        setShareMessage("Link panoya kopyalandı!");
+        setTimeout(() => setShareMessage(""), 2000);
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      setShareMessage("");
+    }
+  };
   
   // Add delay before showing auth loading message
   useEffect(() => {
@@ -1104,29 +1131,63 @@ const BidCard = ({
                 {user && (
                   <>
                     <div style={{ 
-                      display: 'flex', 
-                      gap: '0.5rem', 
-                      alignItems: 'center',
                       backgroundColor: 'rgba(var(--color-primary-rgb), 0.05)',
-                      padding: '1rem',
                       borderRadius: 'var(--border-radius-md)',
-                      marginBottom: '0.75rem'
+                      border: '1px solid rgba(var(--color-primary-rgb), 0.1)',
+                      marginBottom: '0.75rem',
+                      overflow: 'hidden'
                     }}>
-                      <div style={{ flex: 1, textAlign: 'center', fontWeight: '600', fontSize: '1.125rem' }}>
-                        Sonraki Teklif: {formatPrice(getMinimumBidAmount())}
+                      <div style={{ 
+                        display: 'flex', 
+                        gap: '0.5rem', 
+                        alignItems: 'center',
+                        padding: '0.75rem 1rem 0.5rem 1rem',
+                      }}>
+                        <div style={{ flex: 1, textAlign: 'center', fontWeight: '600', fontSize: '1.125rem' }}>
+                          Sonraki Teklif: {formatPrice(getMinimumBidAmount())}
+                        </div>
                       </div>
-                    </div>
-                    <div style={{ 
-                      display: 'flex', 
-                      gap: '0.5rem', 
-                      alignItems: 'center',
-                      backgroundColor: 'rgba(var(--color-primary-rgb), 0.05)',
-                      padding: '1rem',
-                      borderRadius: 'var(--border-radius-md)',
-                      marginBottom: '0.75rem'
-                    }}>
-                      <div style={{ flex: 1, textAlign: 'center', fontWeight: '600', fontSize: '1.125rem' }}>
-                        Teminat Tutarı: {formatPrice(auction.deposit_amount || 0)}
+                      
+                      <div style={{ 
+                        display: 'flex', 
+                        gap: '0.5rem', 
+                        alignItems: 'center',
+                        borderTop: '1px dashed rgba(var(--color-primary-rgb), 0.15)',
+                        padding: '0.5rem 1rem 0.75rem 1rem',
+                        justifyContent: 'space-between'
+                      }}>
+                        <div style={{ fontWeight: '600', fontSize: '1.125rem', textAlign: 'left' }}>
+                          Teminat Tutarı: {formatPrice(auction.deposit_amount || 0)}
+                        </div>
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleShare();
+                          }} 
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
+                            color: 'var(--color-primary)',
+                            border: 'none',
+                            borderRadius: '4px',
+                            padding: '0.5rem 0.75rem',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="18" cy="5" r="3"></circle>
+                            <circle cx="6" cy="12" r="3"></circle>
+                            <circle cx="18" cy="19" r="3"></circle>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                          </svg>
+                          Paylaş
+                        </button>
                       </div>
                     </div>
                     <OfferButton 
@@ -1136,6 +1197,20 @@ const BidCard = ({
                     >
                       {submitLoading ? <LoadingIcon /> : 'Teklif Ver'}
                     </OfferButton>
+                    {shareMessage && (
+                      <div style={{ 
+                        textAlign: 'center', 
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)', 
+                        color: 'rgb(5, 150, 105)', 
+                        padding: '0.5rem',
+                        borderRadius: '4px',
+                        fontSize: '0.875rem',
+                        marginTop: '0.5rem',
+                        marginBottom: '0.5rem'
+                      }}>
+                        {shareMessage}
+                      </div>
+                    )}
                     {bidError && <p style={{ color: 'red', fontSize: '0.875rem', marginTop: '0.5rem', marginBottom: '0' }}>{bidError}</p>}
                   </>
                 )}
