@@ -10,25 +10,13 @@ const HeroSection = styled.section`
   justify-content: center;
   text-align: center;
   padding: 8rem 2rem 6rem;
-  background: linear-gradient(135deg, rgba(7, 30, 61, 0.92), rgba(7, 20, 41, 0.97)), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80') center/cover no-repeat;
-  background-attachment: fixed;
-  color: white;
+  background-color: white;
+  color: var(--color-text-primary);
   min-height: 80vh;
   width: 100%;
   box-sizing: border-box;
   margin: 0;
   overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at center, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.5) 100%);
-    z-index: 1;
-  }
   
   &::after {
     content: '';
@@ -37,7 +25,7 @@ const HeroSection = styled.section`
     left: 0;
     width: 100%;
     height: 80px;
-    background-color: white;
+    background-color: #f9fafb;
     clip-path: polygon(0 40%, 100% 0, 100% 100%, 0% 100%);
   }
   
@@ -68,8 +56,7 @@ const HeroTitle = styled.h1`
   font-weight: 800;
   margin-bottom: 1.5rem;
   line-height: 1.2;
-  color: white;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  color: var(--color-text-primary);
   
   @media (min-width: 768px) {
     font-size: 4.5rem;
@@ -98,8 +85,7 @@ const HeroSubtitle = styled.p`
   max-width: 700px;
   margin: 0 auto 3rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.95);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  color: var(--color-text-secondary);
   
   @media (max-width: 768px) {
     font-size: 1rem;
@@ -183,9 +169,8 @@ const ScrollIndicator = styled.div`
 const ScrollText = styled.span`
   font-size: 0.875rem;
   margin-bottom: 0.75rem;
-  color: white;
+  color: var(--color-text-secondary);
   opacity: 0.9;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   font-weight: 500;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -194,7 +179,7 @@ const ScrollText = styled.span`
 const ScrollIcon = styled.div`
   width: 30px;
   height: 50px;
-  border: 2px solid rgba(255, 255, 255, 0.8);
+  border: 2px solid var(--color-text-secondary);
   border-radius: 15px;
   position: relative;
   
@@ -205,7 +190,7 @@ const ScrollIcon = styled.div`
     left: 50%;
     width: 6px;
     height: 6px;
-    background-color: white;
+    background-color: var(--color-text-secondary);
     border-radius: 50%;
     transform: translateX(-50%);
     animation: scroll 2s infinite;

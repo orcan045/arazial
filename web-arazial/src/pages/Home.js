@@ -10,18 +10,12 @@ import Button from '../components/ui/Button';
 // Hero section and modern homepage styling
 const HeroSection = styled.section`
   height: 600px;
-  background-image: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.4),
-    rgba(0, 0, 0, 0.6)
-  ), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1932&q=80&u=sYffw0LNr7s');
-  background-position: center;
-  background-size: cover;
+  background-color: white;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: white;
+  color: var(--color-text-primary);
   padding: 2rem;
   text-align: center;
   position: relative;
@@ -43,31 +37,28 @@ const HeroContent = styled.div`
 `;
 
 const HeroTitle = styled.h1`
-  font-size: 3.5rem;
+  font-size: 2.75rem;
   font-weight: 700;
-  color: white;
   margin-bottom: 1.5rem;
-  max-width: 800px;
   line-height: 1.2;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  color: var(--color-text-primary);
   
   @media (max-width: 768px) {
-    font-size: 2.25rem;
+    font-size: 2rem;
     margin-bottom: 1rem;
   }
 `;
 
 const HeroSubtitle = styled.p`
   font-size: 1.25rem;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 2.5rem;
-  max-width: 700px;
-  line-height: 1.6;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  margin-bottom: 2rem;
+  max-width: 600px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
   
   @media (max-width: 768px) {
     font-size: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
   }
 `;
 
@@ -284,20 +275,20 @@ const PopularSearches = styled.div`
   margin-top: 1.5rem;
   
   span {
-    color: white;
+    color: var(--color-text-secondary);
     font-size: 0.9rem;
     margin-right: 0.5rem;
   }
   
   a {
-    color: white;
+    color: var(--color-primary);
     margin-right: 1.5rem;
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s;
     
     &:hover {
-      color: var(--color-primary-light);
+      color: var(--color-primary-dark);
       text-decoration: underline;
     }
   }
@@ -954,9 +945,12 @@ const Home = () => {
     <>
       <HeroSection>
         <HeroContent>
-
+          <HeroTitle>
+            Türkiye'nin dört bir yanındaki değerli araziler için ihale tekliflerinizi verin.
+          </HeroTitle>
+          
           <HeroSubtitle>
-          Türkiye'nin dört bir yanındaki değerli araziler için ihale tekliflerinizi verin.  
+            Türkiye'nin dört bir yanındaki değerli araziler için ihale tekliflerinizi verin.
           </HeroSubtitle>
           
           <SearchContainer>
