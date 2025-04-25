@@ -200,8 +200,8 @@ const MobileMenu = styled.div`
   right: ${props => props.$isOpen ? '0' : '-100%'};
   width: 100%;
   max-width: 320px;
-  height: 100%;
-  max-height: -webkit-fill-available; /* Fix for iOS Safari */
+  height: 100vh;
+  min-height: -webkit-fill-available; /* Fix for iOS Safari */
   background-color: white;
   z-index: 1001;
   transition: right 0.3s ease;
@@ -751,8 +751,8 @@ const Navbar = () => {
           <div style={{ 
             display: 'flex', 
             flexDirection: 'column', 
-            flexGrow: 1, 
-            paddingBottom: '2rem'
+            flex: '1 1 auto', 
+            paddingBottom: '4rem'
           }}>
             <MobileNavSection>
               <MobileNavLink to="/profile" onClick={() => setIsOpen(false)}>
@@ -777,7 +777,7 @@ const Navbar = () => {
               )}
             </MobileNavSection>
 
-            <MobileNavSection>
+            <MobileNavSection style={{ marginBottom: '2rem', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
               <MobileNavLink to="/about" className={location.pathname === '/about' ? 'active' : ''} onClick={() => setIsOpen(false)}>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -802,6 +802,7 @@ const Navbar = () => {
                 </svg>
                 İletişim
               </MobileNavLink>
+              <div style={{ flex: '1 0 auto', minHeight: '20px' }}></div>
               <MobileNavLink 
                 as="button" 
                 onClick={() => { handleSignOut(); setIsOpen(false); }} 
@@ -815,7 +816,8 @@ const Navbar = () => {
                   paddingTop: '1.5rem',
                   paddingBottom: '1.5rem',
                   color: 'var(--color-error)',
-                  fontWeight: '500'
+                  fontWeight: '500',
+                  marginBottom: '1rem'
                 }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: 'var(--color-error)' }}>
