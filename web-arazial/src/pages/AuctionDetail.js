@@ -1036,7 +1036,16 @@ const BidCard = ({
   const handleShare = async () => {
     const shareUrl = window.location.href;
     const shareTitle = auction?.title || 'Arazi İlanı';
-    const shareText = `${shareTitle} - ${formatPrice(getMinimumBidAmount())} başlangıç fiyatıyla!`;
+    
+    // Use the appropriate price based on listing type
+    let priceText;
+    if (isOfferListing) {
+      priceText = `${formatPrice(auction?.price || auction?.start_price || auction?.startPrice || auction?.final_price || auction?.finalPrice || 0)} fiyatıyla!`;
+    } else {
+      priceText = `${formatPrice(getMinimumBidAmount())} başlangıç fiyatıyla!`;
+    }
+    
+    const shareText = `${shareTitle} - ${priceText}`;
     
     try {
       if (navigator.share) {
@@ -1336,10 +1345,52 @@ const BidCard = ({
                 }}>
                   {formatPrice(auction?.price || auction?.start_price || auction?.startPrice || auction?.highest_bid || auction?.final_price || auction?.finalPrice || 0)}
                 </div>
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '0.5rem', 
+                  alignItems: 'center',
+                  borderTop: '1px dashed rgba(var(--color-primary-rgb), 0.15)',
+                  marginTop: '0.75rem',
+                  paddingTop: '0.75rem',
+                  justifyContent: 'space-between'
+                }}>
+                  <div style={{ fontWeight: '600', fontSize: '1rem', textAlign: 'left' }}>
+                    Teminat Tutarı: {formatPrice(auction.deposit_amount || 0)}
+                  </div>
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleShare();
+                    }} 
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      backgroundColor: 'rgba(var(--color-primary-rgb), 0.1)',
+                      color: 'var(--color-primary)',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '0.5rem 0.75rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="18" cy="5" r="3"></circle>
+                      <circle cx="6" cy="12" r="3"></circle>
+                      <circle cx="18" cy="19" r="3"></circle>
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                    Paylaş
+                  </button>
+                </div>
               </div>
             )}
             
-            {/* Login prompt */} 
+            {/* Login prompt */}
             {!user && !authLoading && (
               <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: isMobile ? '0.5rem' : '2rem' }}>
                 Teklif yapmak için <a href="/login">giriş yapmanız</a> gerekmektedir.
@@ -1398,6 +1449,20 @@ const BidCard = ({
                   </OfferButton>
                 </div>
                 {offerError && <p style={{ color: 'red', fontSize: '0.875rem', marginTop: '0.5rem', marginBottom: '0' }}>{offerError}</p>}
+                {shareMessage && (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)', 
+                    color: 'rgb(5, 150, 105)', 
+                    padding: '0.5rem',
+                    borderRadius: '4px',
+                    fontSize: '0.875rem',
+                    marginTop: '0.5rem',
+                    marginBottom: '0.5rem'
+                  }}>
+                    {shareMessage}
+                  </div>
+                )}
               </form>
             )}
           </>
