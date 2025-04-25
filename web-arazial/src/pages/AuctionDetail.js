@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { Helmet } from 'react-helmet-async'; // <-- Import Helmet
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
 import CountdownTimer from '../components/CountdownTimer';
@@ -1493,6 +1494,14 @@ const AuctionDetail = () => {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // --- Add state for current URL ---
+  const [currentUrl, setCurrentUrl] = useState('');
+  
+  useEffect(() => {
+    // Set the current URL when the component mounts
+    setCurrentUrl(window.location.href);
+  }, []);
+
   // Debug auth state for AuctionDetail
   useEffect(() => {
     console.log('[AuctionDetail] Auth state:', { 
@@ -1933,6 +1942,12 @@ const AuctionDetail = () => {
   const showOfferForm = isOfferListing && user && !authLoading && !userActiveOffer;
   const showRejectedMessage = isOfferListing && user && !authLoading && userOffers.find(o => o.status === 'rejected') && !userActiveOffer;
 
+  // Prepare meta tag content
+  const pageTitle = auction?.title || 'İlan Detayı';
+  const pageDescription = auction?.description?.substring(0, 150) || 'Arazial.com üzerinde yer alan ilanı inceleyin.';
+  // Use the first image or a default fallback image
+  const imageUrl = auction?.images?.[0] || 'https://default.com/placeholder.jpg'; // Replace with your actual default image URL
+
   // Modify the bid form section to include deposit check
   const renderBidForm = () => {
     if (!user) {
@@ -1952,6 +1967,28 @@ const AuctionDetail = () => {
 
   return (
     <PageContainer>
+      {/* --- Add Helmet for Meta Tags --- */}
+      <Helmet>
+        <title>{`${pageTitle} - Arazial`}</title>
+        <meta name="description" content={pageDescription} />
+        
+        {/* Open Graph Tags */}
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:image" content={imageUrl} />
+        <meta property="og:url" content={currentUrl} />
+        <meta property="og:type" content="website" /> 
+        {/* You could use 'article' if it fits better */}
+
+        {/* Twitter Card Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content={imageUrl} />
+        {/* Add twitter:site if you have a Twitter handle */}
+        {/* <meta name="twitter:site" content="@YourTwitterHandle" /> */}
+      </Helmet>
+    
       <BackButton onClick={() => navigate(-1)}>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7" />
