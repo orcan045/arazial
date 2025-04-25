@@ -1706,7 +1706,12 @@ const AuctionDetail = () => {
       return;
     }
 
-    const amount = parseFloat(offerAmount);
+    // Clean the input string by removing dots (thousand separators)
+    const cleanedAmountString = String(offerAmount).replace(/\./g, '');
+    
+    // Parse the cleaned string
+    const amount = parseFloat(cleanedAmountString);
+    
     if (isNaN(amount) || amount <= 0) {
       setOfferError('Lütfen geçerli bir teklif miktarı girin.');
       return;
