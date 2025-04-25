@@ -10,12 +10,13 @@ import Button from '../components/ui/Button';
 // Hero section and modern homepage styling
 const HeroSection = styled.section`
   height: 600px;
-  background-color: white;
+  background-position: center;
+  background-size: cover;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: var(--color-text-primary);
+  color: white;
   padding: 2rem;
   text-align: center;
   position: relative;
@@ -37,28 +38,31 @@ const HeroContent = styled.div`
 `;
 
 const HeroTitle = styled.h1`
-  font-size: 2.75rem;
+  font-size: 3.5rem;
   font-weight: 700;
+  color: white;
   margin-bottom: 1.5rem;
+  max-width: 800px;
   line-height: 1.2;
-  color: var(--color-text-primary);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   
   @media (max-width: 768px) {
-    font-size: 2rem;
+    font-size: 2.25rem;
     margin-bottom: 1rem;
   }
 `;
 
 const HeroSubtitle = styled.p`
   font-size: 1.25rem;
-  margin-bottom: 2rem;
-  max-width: 600px;
-  line-height: 1.5;
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 2.5rem;
+  max-width: 700px;
+  line-height: 1.6;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   
   @media (max-width: 768px) {
     font-size: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
   }
 `;
 
@@ -275,20 +279,20 @@ const PopularSearches = styled.div`
   margin-top: 1.5rem;
   
   span {
-    color: var(--color-text-secondary);
+    color: white;
     font-size: 0.9rem;
     margin-right: 0.5rem;
   }
   
   a {
-    color: var(--color-primary);
+    color: white;
     margin-right: 1.5rem;
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s;
     
     &:hover {
-      color: var(--color-primary-dark);
+      color: var(--color-primary-light);
       text-decoration: underline;
     }
   }
@@ -945,12 +949,9 @@ const Home = () => {
     <>
       <HeroSection>
         <HeroContent>
-          <HeroTitle>
-            Türkiye'nin dört bir yanındaki değerli araziler için ihale tekliflerinizi verin.
-          </HeroTitle>
-          
+
           <HeroSubtitle>
-            Türkiye'nin dört bir yanındaki değerli araziler için ihale tekliflerinizi verin.
+          Türkiye'nin dört bir yanındaki değerli araziler için ihale tekliflerinizi verin.  
           </HeroSubtitle>
           
           <SearchContainer>
