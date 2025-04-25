@@ -54,11 +54,11 @@ const HeroTitle = styled.h1`
 
 const HeroSubtitle = styled.p`
   font-size: 1.25rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--color-primary-dark, #003366);
   margin-bottom: 2.5rem;
   max-width: 700px;
   line-height: 1.6;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  font-weight: 500;
   
   @media (max-width: 768px) {
     font-size: 1rem;
@@ -279,20 +279,21 @@ const PopularSearches = styled.div`
   margin-top: 1.5rem;
   
   span {
-    color: white;
+    color: var(--color-primary-dark, #003366);
     font-size: 0.9rem;
     margin-right: 0.5rem;
+    font-weight: 500;
   }
   
   a {
-    color: white;
+    color: var(--color-primary-dark, #003366);
     margin-right: 1.5rem;
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s;
     
     &:hover {
-      color: var(--color-primary-light);
+      color: var(--color-primary);
       text-decoration: underline;
     }
   }
@@ -990,9 +991,9 @@ const Home = () => {
           
           <PopularSearches>
             <span>Popüler:</span>
-            <a href="#" onClick={(e) => {e.preventDefault(); setSelectedCity('İstanbul'); filterAuctions();}}>İstanbul</a>
-            <a href="#" onClick={(e) => {e.preventDefault(); setSelectedCity('Ankara'); filterAuctions();}}>Ankara</a>
-            <a href="#" onClick={(e) => {e.preventDefault(); setSelectedCity('İzmir'); filterAuctions();}}>İzmir</a>
+            <a href="#" onClick={(e) => {e.preventDefault(); setSelectedCity('Kütahya'); filterAuctions();}}>Kütahya</a>
+            <a href="#" onClick={(e) => {e.preventDefault(); setSelectedCity('Konya'); filterAuctions();}}>Konya</a>
+            <a href="#" onClick={(e) => {e.preventDefault(); setSelectedCity('Uşak'); filterAuctions();}}>Uşak</a>
             <a href="#" onClick={(e) => {e.preventDefault(); setSelectedCity(''); filterAuctions();}}>Tüm Şehirler</a>
           </PopularSearches>
         </HeroContent>
