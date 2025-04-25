@@ -1048,6 +1048,7 @@ function AdminDashboard() {
   const [images, setImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [depositAmount, setDepositAmount] = useState(''); // <-- Add missing state
   
   // Add state for tabs and filters
   const [auctionFilter, setAuctionFilter] = useState('all');
@@ -4143,48 +4144,115 @@ function AdminDashboard() {
                 <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
                   {auctionForm.listingType === 'auction' ? 'Teklifler (İhale)' : 'Pazarlık Teklifleri'}
                 </h3>
-                {bids && bids.length > 0 ? (
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableHeader>Teklif Veren</TableHeader>
-                          <TableHeader>E-posta</TableHeader>
-                          <TableHeader>Telefon</TableHeader>
-                          <TableHeader>Teklif Tutarı</TableHeader>
-                          <TableHeader>Teklif Tarihi</TableHeader>
-                          <TableHeader>Durum</TableHeader>
-                        </TableRow>
-                      </TableHead>
-                      <tbody>
-                        {bids.map(bid => (
-                          <TableRow key={bid.id}>
-                            <TableCell data-label="Teklif Veren">{bid.profiles?.full_name || 'İsimsiz'}</TableCell>
-                            <TableCell data-label="E-posta">{bid.profiles?.email || '-'}</TableCell>
-                            <TableCell data-label="Telefon">{bid.profiles?.phone_number || '-'}</TableCell>
-                            <TableCell data-label="Teklif Tutarı">{bid.amount?.toLocaleString('tr-TR')} TL</TableCell>
-                            <TableCell data-label="Teklif Tarihi">{formatDate(bid.created_at)}</TableCell>
-                            <TableCell data-label="Durum">
-                              {bid.isHighestBid ? (
-                                <StatusBadge status={'active'}>En Yüksek</StatusBadge>
-                              ) : (
-                                <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>Daha Düşük</span>
-                              )}
-                            </TableCell>
+                
+                {/* Conditional Rendering based on listingType */}
+                {auctionForm.listingType === 'auction' ? (
+                  // --- Render Bids Table --- 
+                  bids && bids.length > 0 ? (
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableHeader>Teklif Veren</TableHeader>
+                            <TableHeader>E-posta</TableHeader>
+                            <TableHeader>Telefon</TableHeader>
+                            <TableHeader>Teklif Tutarı</TableHeader>
+                            <TableHeader>Teklif Tarihi</TableHeader>
+                            <TableHeader>Durum</TableHeader>
                           </TableRow>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </TableContainer>
+                        </TableHead>
+                        <tbody>
+                          {bids.map(bid => (
+                            <TableRow key={bid.id}>
+                              <TableCell data-label="Teklif Veren">{bid.profiles?.full_name || 'İsimsiz'}</TableCell>
+                              <TableCell data-label="E-posta">{bid.profiles?.email || '-'}</TableCell>
+                              <TableCell data-label="Telefon">{bid.profiles?.phone_number || '-'}</TableCell>
+                              <TableCell data-label="Teklif Tutarı">{bid.amount?.toLocaleString('tr-TR')} TL</TableCell>
+                              <TableCell data-label="Teklif Tarihi">{formatDate(bid.created_at)}</TableCell>
+                              <TableCell data-label="Durum">
+                                {bid.isHighestBid ? (
+                                  <StatusBadge status={'active'}>En Yüksek</StatusBadge>
+                                ) : (
+                                  <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>Daha Düşük</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </TableContainer>
+                  ) : (
+                    <EmptyState>
+                      <EmptyStateIcon>
+                        {/* Placeholder icon */}
+                      </EmptyStateIcon>
+                      <EmptyStateTitle>Bu ihale için henüz teklif verilmemiştir.</EmptyStateTitle>
+                    </EmptyState>
+                  )
                 ) : (
-                  <EmptyState>
-                    <EmptyStateIcon>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                      </svg>
-                    </EmptyStateIcon>
-                    <EmptyStateTitle>Bu ihale için henüz teklif verilmemiştir.</EmptyStateTitle>
-                  </EmptyState>
+                  // --- Render Offers Table ---
+                  selectedAuctionOffers && selectedAuctionOffers.length > 0 ? (
+                    <TableContainer>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableHeader>Teklif Veren</TableHeader>
+                            <TableHeader>E-posta</TableHeader>
+                            <TableHeader>Telefon</TableHeader>
+                            <TableHeader>Teklif Tutarı</TableHeader>
+                            <TableHeader>Teklif Tarihi</TableHeader>
+                            <TableHeader>Durum</TableHeader>
+                            <TableHeader>İşlemler</TableHeader>
+                          </TableRow>
+                        </TableHead>
+                        <tbody>
+                          {selectedAuctionOffers.map(offer => (
+                            <TableRow key={offer.id}>
+                              <TableCell data-label="Teklif Veren">{offer.profiles?.full_name || 'İsimsiz'}</TableCell>
+                              <TableCell data-label="E-posta">{offer.profiles?.email || '-'}</TableCell>
+                              <TableCell data-label="Telefon">{offer.profiles?.phone_number || '-'}</TableCell>
+                              <TableCell data-label="Teklif Tutarı">{offer.amount?.toLocaleString('tr-TR')} TL</TableCell>
+                              <TableCell data-label="Teklif Tarihi">{formatDate(offer.created_at)}</TableCell>
+                              <TableCell data-label="Durum">
+                                <StatusBadge status={offer.status}>{offer.status}</StatusBadge>
+                              </TableCell>
+                              <TableCell data-label="İşlemler">
+                                {offer.status === 'pending' && (
+                                  <>
+                                    <ActionButton 
+                                      variant="success"
+                                      size="small"
+                                      onClick={() => handleAcceptOffer(offer.id)}
+                                      disabled={actionLoading}
+                                    >
+                                      Kabul Et
+                                    </ActionButton>
+                                    <ActionButton 
+                                      variant="danger"
+                                      size="small"
+                                      onClick={() => handleRejectOffer(offer.id)}
+                                      disabled={actionLoading}
+                                    >
+                                      Reddet
+                                    </ActionButton>
+                                  </>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </TableContainer>
+                  ) : (
+                    <EmptyState>
+                      <EmptyStateIcon>
+                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                         </svg>
+                      </EmptyStateIcon>
+                      <EmptyStateTitle>Bu ilan için henüz pazarlık teklifi alınmamıştır.</EmptyStateTitle>
+                    </EmptyState>
+                  )
                 )}
               </div>
             </CardContainer>
