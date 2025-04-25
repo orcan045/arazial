@@ -10,9 +10,11 @@ const PageContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1.5rem;
+  overflow-x: hidden;
   
   @media (max-width: 768px) {
     padding: 0;
+    width: 100%;
   }
 `;
 
@@ -851,6 +853,7 @@ const OfferInput = styled.input`
   font-size: 1rem;
   margin-bottom: 1rem;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
 
   &:focus {
     outline: none;
@@ -863,18 +866,21 @@ const OfferInput = styled.input`
     margin-bottom: 0;
     font-size: 0.875rem;
     height: 36px;
+    width: 100%;
   }
 `;
 
 const OfferButton = styled(Button)`
   width: 100%;
   margin-top: 0.5rem;
+  box-sizing: border-box;
   
   @media (max-width: 768px) {
     margin-top: 0;
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
     min-height: 36px;
+    width: 100%;
   }
 `;
 
@@ -1083,7 +1089,9 @@ const BidCard = ({
       borderRadius: isMobile ? '8px 8px 0 0' : '8px', 
       overflow: 'hidden',
       margin: 0,
-      padding: 0
+      padding: 0,
+      maxWidth: '100%',
+      boxSizing: 'border-box'
     }}>
       {!isMobile && (
         <div style={{ 
@@ -1369,7 +1377,7 @@ const BidCard = ({
                 {!isMobile && (
                   <PropertyLabel htmlFor="offerAmount">Teklif Miktarınız</PropertyLabel>
                 )}
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexDirection: isMobile ? 'column' : 'row' }}>
                   <OfferInput 
                     type="number"
                     id="offerAmount"
@@ -1379,12 +1387,12 @@ const BidCard = ({
                     step="any"
                     required 
                     disabled={submitLoading}
-                    style={{ margin: 0, flex: 1 }}
+                    style={{ margin: 0, flex: 1, width: '100%' }}
                   />
                   <OfferButton 
                     type="submit" 
                     disabled={submitLoading}
-                    style={{ marginTop: 0, width: 'auto' }}
+                    style={{ marginTop: isMobile ? '0.5rem' : 0, width: isMobile ? '100%' : 'auto' }}
                   >
                     {submitLoading ? <LoadingIcon /> : 'Teklifi Gönder'}
                   </OfferButton>

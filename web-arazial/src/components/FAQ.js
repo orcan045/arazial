@@ -83,36 +83,48 @@ const Answer = styled.p`
 const FAQ = () => {
   const faqItems = [
     {
-      question: "İhaleye nasıl katılabilirim?",
-      answer: "İhaleye katılmak için önce arazialcom'a üye olmanız gerekiyor. Üyelikten sonra ilgilendiğiniz arazi ilanına girerek teminat yatırma adımlarını takip edebilir ve ihaleye katılım hakkı kazanabilirsiniz."
+      question: "arazialcom nedir?",
+      answer: "arazialcom, öncelikli olarak kendi mülkiyetinde bulunan taşınmazların dijital ortamda satışa sunulduğu, aynı zamanda yetkili kurumsal firmalara ait arazilerin de ilana çıkarılabildiği bir taşınmaz satış platformudur.\nSistem, hem ihale yöntemiyle, hem de doğrudan (pazarlıklı) satış modeliyle çalışır. Her iki satış türünde de teminat bedeli alınır. Tapu işlemleri tamamen alıcı ve ilan sahibi arasında gerçekleştirilir."
     },
     {
-      question: "Teminat nedir, ne işe yarar?",
-      answer: "Teminat, ihaleye katılabilmeniz için yatırmanız gereken güvence bedelidir. Her arazi için teminat tutarı farklı olabilir. Teminat yatırılmadan ihaleye teklif verilemez."
+      question: "arazialcom aracılık hizmeti sunuyor mu?",
+      answer: "Hayır. arazialcom, taşınmaz alım-satımında aracılık yapmaz. İlan yayını, teklif toplama ve teminat sürecini dijital ortamda yönetir.\nTapu devri işlemleri doğrudan ilan sahibi ile alıcı arasında gerçekleşir."
     },
     {
-      question: "Teminatı nasıl yatırırım?",
-      answer: "İlgili arazi ilanında yer alan \"Teminat Yatır\" butonuna tıklayarak yönlendirilen adımları takip edebilir, sistem üzerinden kolayca ödeme yapabilirsiniz. Ödeme onaylandıktan sonra teklif verme hakkınız aktif hale gelir."
+      question: "İlanları kimler verebilir?",
+      answer: "arazialcom'da sadece kurumsal firmalar ve resmi yetkili şirketler ilan verebilir. Bireysel şahıslardan ilan kabul edilmez.\nHer ilan için firma tarafından yazılı yetki alınması zorunludur."
     },
     {
-      question: "İhaleyi kazanamazsam teminatım ne olur?",
-      answer: "İhaleyi kazanamayan katılımcıların yatırdığı teminatlar, en geç 3 iş günü içerisinde eksiksiz şekilde iade edilir."
+      question: "İlan yayınlamak ücretli mi?",
+      answer: "Evet. İlan yayınlama hizmeti yalnızca kurumsal firmalar ve resmi şirketler için sunulmaktadır.\nHer ilan, yetki belgesi ile birlikte yayınlanır ve seçilen ilan paketine göre ücretlendirilir.\narazialcom yalnızca ilan altyapısı sağlar; satış işlemlerine doğrudan karışmaz."
     },
     {
-      question: "İhaleyi kazanırsam ne olur, ne yapmam gerekiyor?",
-      answer: "İhale sona erdiğinde kazanan kişiye sistem üzerinden bir bilgilendirme mesajı gönderilir. Ardından kimlik bilgileri talep edilir. Bu bilgiler alındıktan sonra tapu giriş işlemleri yapılır ve tapu devri, ilgili tapu dairesinde resmi olarak gerçekleştirilir."
+      question: "arazialcom'da kaç çeşit satış yöntemi vardır?",
+      answer: "Sistemde iki farklı satış modeli uygulanmaktadır:\n• İhaleli satış: Belirli bir süre boyunca tekliflerin toplandığı ve en yüksek teklifin kazandığı satış modeli.\n• Doğrudan satış (Pazarlıklı satış): Sabit fiyat üzerinden ya da tarafların anlaşmasıyla yapılan satış modelidir.\nHer iki modelde de teminat alınır."
     },
     {
-      question: "Ödeme yöntemleri nelerdir?",
-      answer: "arazialcom üzerinden sadece teminat bedeli tahsil edilmektedir. Teminat yatırmak için banka havalesi, EFT veya sistemde tanımlı online ödeme altyapısı kullanılabilir.\n\nİhaleyi kazandıktan sonra yapılacak olan tapuyla ilgili tüm ödemeler, doğrudan tapu dairesinde, resmi işlem sırasında gerçekleştirilir. Bu işlemler arazialcom dışında yürütülür."
+      question: "Satın alma süreci nasıl işler?",
+      answer: "Satın alma sürecine katılmak isteyen her kullanıcı, ister ihaleli ister doğrudan satış olsun, öncelikle teminat bedelini yatırmalıdır.\nBu teminat, işlemin ciddiyetini ve güvenliğini sağlamak amacıyla tahsil edilir."
     },
     {
-      question: "Araziyi görmeden satın alabilir miyim?",
-      answer: "Evet, satın alabilirsiniz. Ancak her arazi ilanında konum bilgileri, fotoğraflar ve açıklamalar yer almaktadır. Dilerseniz araziyi yerinde görmek için adres bilgilerini kullanarak önceden keşif yapabilirsiniz."
+      question: "Teminat bedeli iade edilir mi?",
+      answer: "• İhaleyi kazanamayan kullanıcılara teminat bedeli iade edilir.\n• İhaleyi kazanan kullanıcıya teminat iade edilmez; bu tutar hizmet bedeli olarak arazialcom tarafından tahsil edilir.\n• Doğrudan satışta taraflar anlaşamazsa teminat iade edilir; satış gerçekleşirse teminat arazialcom'a gelir olarak kalır."
     },
     {
-      question: "Satın aldığım arazinin tapusu nasıl devrediliyor?",
-      answer: "İhaleyi kazandıktan sonra kimlik bilgilerinizle birlikte tapu giriş işlemleri yapılır. Sonrasında tapu devri, ilgili tapu müdürlüğünde resmi olarak gerçekleştirilir. Tüm bu süreçte tarafınıza gerekli bilgilendirmeler yapılır."
+      question: "Tapu işlemleri nasıl yapılır?",
+      answer: "Tüm tapu işlemleri doğrudan alıcı ile ilan sahibi arasında gerçekleştirilir.\narazialcom bu sürece müdahil olmaz ve yalnızca dijital ortamda ilan yönetimi ve teklif sürecini sağlar."
+    },
+    {
+      question: "arazialcom üzerinden ödeme yapmak güvenli mi?",
+      answer: "Evet. Tüm ödemeler lisanslı sanal POS altyapısı ile alınır.\nKredi kartı bilgileriniz SSL şifreleme ile korunur ve hiçbir şekilde arazialcom tarafından saklanmaz ya da üçüncü taraflarla paylaşılmaz."
+    },
+    {
+      question: "Kişisel bilgilerim güvende mi?",
+      answer: "Evet. arazialcom, kullanıcı verilerini KVKK (Kişisel Verilerin Korunması Kanunu) kapsamında korur.\nKişisel bilgiler yalnızca hizmet sunumu amacıyla kullanılır ve hiçbir koşulda üçüncü kişilerle paylaşılmaz."
+    },
+    {
+      question: "Üyelik ücretli mi?",
+      answer: "Hayır. Platforma üyelik ücretsizdir. Ancak teklif verebilmek, teminat yatırabilmek veya ilan yayınlayabilmek için sistemin belirlediği şartları sağlayan kullanıcıların gerekli ödemeleri yapması gerekir."
     }
   ];
 
