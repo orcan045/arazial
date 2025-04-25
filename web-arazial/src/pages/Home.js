@@ -823,11 +823,10 @@ const Home = () => {
   
   const formatPrice = (price) => {
     return new Intl.NumberFormat('tr-TR', {
-      style: 'currency',
-      currency: 'TRY',
+      style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
-    }).format(price || 0);
+    }).format(price || 0) + ' ₺';
   };
   
   const getStatusText = (status, itemType) => {

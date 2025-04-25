@@ -375,7 +375,7 @@ const Footer = () => {
             </svg>
           </SocialLink>
           <SocialLink 
-            href="https://www.instagram.com/arazialcomnet?igsh=MWF3amUwMjIwcWs3Yw%3D%3D&utm_source=qr" 
+            href="https://www.instagram.com/arazialcom?igsh=MWF3amUwMjIwcWs3Yw%3D%3D&utm_source=qr" 
             target="_blank" 
             rel="noopener noreferrer"
             className="instagram"

@@ -1757,8 +1757,8 @@ const AuctionDetail = () => {
 
   // Format price with Turkish Lira (₺) symbol
   const formatPrice = (price) => {
-    if (price === undefined || price === null) return '₺0';
-    return `₺${parseFloat(price).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    if (price === undefined || price === null) return '0 ₺';
+    return `${parseFloat(price).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ₺`;
   };
 
   const formatDate = (dateString) => {

@@ -1939,10 +1939,14 @@ const Auctions = () => {
   };
   
   const formatPrice = (price) => {
-    if (price === null || price === undefined) return '₺0';
+    if (price === null || price === undefined) return '0 ₺';
     
     // If price is already a string with currency formatting, return it
     if (typeof price === 'string' && price.includes('₺')) {
+      // Convert old format (₺ on left) to new format (₺ on right)
+      if (price.startsWith('₺')) {
+        return price.substring(1).trim() + ' ₺';
+      }
       return price;
     }
     
@@ -1952,14 +1956,13 @@ const Auctions = () => {
     }
     
     // Handle NaN
-    if (isNaN(price)) return '₺0';
+    if (isNaN(price)) return '0 ₺';
     
-    // Format the number
+    // Format the number with ₺ on the right
     return new Intl.NumberFormat('tr-TR', {
-      style: 'currency',
-      currency: 'TRY',
+      style: 'decimal',
       maximumFractionDigits: 0
-    }).format(price);
+    }).format(price) + ' ₺';
   };
   
   const handleAuctionClick = (auctionId) => {
