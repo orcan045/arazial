@@ -242,7 +242,7 @@ const CloseButton = styled.button`
 const MobileNavLink = styled(Link)`
   display: flex;
   align-items: center;
-  padding: 1.25rem 2rem;
+  padding: 0.85rem 2rem;
   color: var(--color-text);
   text-decoration: none;
   font-weight: 500;
@@ -281,10 +281,10 @@ const MobileNavLink = styled(Link)`
 `;
 
 const MobileAuthButtons = styled.div`
-  padding: 1.5rem 2rem;
+  padding: 1rem 2rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
   border-bottom: 1px solid var(--color-surface-secondary);
   width: 100%;
   
@@ -292,17 +292,17 @@ const MobileAuthButtons = styled.div`
     width: 100%;
     justify-content: center;
     font-size: 1rem;
-    padding: 0.875rem !important;
-    height: 48px;
+    padding: 0.75rem !important;
+    height: 42px;
   }
 `;
 
 const MobileHeader = styled.div`
-  padding: 1.5rem 2rem 1.25rem;
+  padding: 1.5rem 2rem 1rem;
   display: flex;
   align-items: center;
   border-bottom: 1px solid var(--color-surface-secondary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   
   img {
     width: 2.5rem;
@@ -323,10 +323,10 @@ const MobileHeader = styled.div`
 `;
 
 const MobileNavSection = styled.div`
-  margin: 0.5rem 0;
+  margin: 0;
   
   h3 {
-    padding: 0.75rem 2rem;
+    padding: 0.6rem 2rem;
     font-size: 0.875rem;
     color: var(--color-text-secondary);
     text-transform: uppercase;
