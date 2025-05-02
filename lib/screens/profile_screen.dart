@@ -246,13 +246,14 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                     style: theme.textTheme.titleLarge,
                     textAlign: TextAlign.center,
                   ),
-                  Text(
-                    Provider.of<AuthService>(context, listen: false).currentUser?.email ?? '',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey[600],
+                  if (_profile != null)
+                    Text(
+                      Provider.of<AuthService>(context, listen: false).currentUser?.email ?? '',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
                   
                   // Show role badge if admin
                   if (_profile?.isAdmin == true)
