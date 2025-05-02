@@ -189,10 +189,13 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Widget _buildProfileContent(ThemeData theme) {
-    if (_profile == null) {
+    if (_profile == null || _profile!.fullName == null || _profile!.fullName!.isEmpty) {
       return const SizedBox.shrink();
     }
     
+    final String displayName = _profile!.fullName!;
+    final String? userEmail = Provider.of<AuthService>(context, listen: false).currentUser?.email;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -246,17 +249,18 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   const SizedBox(height: 16),
                   
                   Text(
-                    _profile!.fullName ?? 'İsimsiz Kullanıcı',
+                    displayName,
                     style: theme.textTheme.titleLarge,
                     textAlign: TextAlign.center,
                   ),
-                  Text(
-                    Provider.of<AuthService>(context, listen: false).currentUser?.email ?? '',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey[600],
+                  if (userEmail != null)
+                    Text(
+                      userEmail,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
                   
                   // Show role badge if admin
                   if (_profile!.isAdmin == true)
