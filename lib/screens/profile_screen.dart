@@ -189,6 +189,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Widget _buildProfileContent(ThemeData theme) {
+    if (_profile == null) {
+      return const SizedBox.shrink();
+    }
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -211,10 +215,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                           children: [
                             CircleAvatar(
                               radius: 50,
-                              backgroundImage: _profile?.avatarUrl != null
+                              backgroundImage: _profile!.avatarUrl != null
                                   ? CachedNetworkImageProvider(_profile!.avatarUrl!)
                                   : null,
-                              child: _profile?.avatarUrl == null
+                              child: _profile!.avatarUrl == null
                                   ? const Icon(Icons.person, size: 50)
                                   : null,
                             ),
@@ -242,21 +246,20 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   const SizedBox(height: 16),
                   
                   Text(
-                    _profile?.fullName ?? 'İsimsiz Kullanıcı',
+                    _profile!.fullName ?? 'İsimsiz Kullanıcı',
                     style: theme.textTheme.titleLarge,
                     textAlign: TextAlign.center,
                   ),
-                  if (_profile != null)
-                    Text(
-                      Provider.of<AuthService>(context, listen: false).currentUser?.email ?? '',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: Colors.grey[600],
-                      ),
-                      textAlign: TextAlign.center,
+                  Text(
+                    Provider.of<AuthService>(context, listen: false).currentUser?.email ?? '',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: Colors.grey[600],
                     ),
+                    textAlign: TextAlign.center,
+                  ),
                   
                   // Show role badge if admin
-                  if (_profile?.isAdmin == true)
+                  if (_profile!.isAdmin == true)
                     Container(
                       margin: const EdgeInsets.only(top: 8),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
