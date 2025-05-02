@@ -130,16 +130,13 @@ const TableContainer = styled.div`
   background: white;
   border-radius: var(--border-radius-lg);
   
-  @media (min-width: 768px) {
+  @media (max-width: 767px) { /* Apply overflow to mobile */
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-  }
-  
-  @media (max-width: 767px) {
     margin: 0;
     width: 100%;
     border-radius: 0;
-    background: transparent;
+    background: transparent; /* Keep background transparent if desired */
   }
 `;
 
@@ -147,27 +144,31 @@ const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
   
-  @media (min-width: 768px) {
-    min-width: 650px;
-  }
+  /* Ensure table respects container width for scrolling */
+  /* min-width might be needed if content pushes it wider */
+  /* @media (min-width: 768px) { */
+  /*   min-width: 650px; */
+  /* } */
   
-  @media (max-width: 767px) {
-    display: block;
-    width: 100%;
-    
-    thead {
-      display: none;
-    }
-    
-    tbody {
-      display: block;
-      width: 100%;
-    }
-  }
+  /* Remove mobile-specific display changes */
+  /* @media (max-width: 767px) { */
+  /*   display: block; */
+  /*   width: 100%; */
+  /*   */
+  /*   thead { */
+  /*     display: none; */
+  /*   } */
+  /*   */
+  /*   tbody { */
+  /*     display: block; */
+  /*     width: 100%; */
+  /*   } */
+  /* } */
 `;
 
 const TableHead = styled.thead`
   background-color: var(--color-background);
+  /* Remove mobile display none if thead:display:none was used before */
 `;
 
 const TableRow = styled.tr`
@@ -177,18 +178,19 @@ const TableRow = styled.tr`
     border-bottom: none;
   }
   
-  @media (max-width: 767px) {
-    display: block;
-    padding: 0;
-    margin-bottom: 1rem;
-    background: white;
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-sm);
-    
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
+  /* Remove mobile-specific display changes */
+  /* @media (max-width: 767px) { */
+  /*   display: block; */
+  /*   padding: 0; */
+  /*   margin-bottom: 1rem; */
+  /*   background: white; */
+  /*   border-radius: var(--border-radius-lg); */
+  /*   box-shadow: var(--shadow-sm); */
+  /*   */
+  /*   &:last-child { */
+  /*     margin-bottom: 0; */
+  /*   } */
+  /* } */
 `;
 
 const TableHeader = styled.th`
@@ -198,6 +200,7 @@ const TableHeader = styled.th`
   font-size: 0.875rem;
   color: var(--color-text);
   background-color: var(--color-background);
+  white-space: nowrap; /* Prevent header text wrapping */
   
   &:first-child {
     border-top-left-radius: var(--border-radius-lg);
@@ -207,9 +210,10 @@ const TableHeader = styled.th`
     border-top-right-radius: var(--border-radius-lg);
   }
   
-  @media (max-width: 767px) {
-    display: none;
-  }
+  /* Remove mobile display none */
+  /* @media (max-width: 767px) { */
+  /*   display: none; */
+  /* } */
 `;
 
 const TableCell = styled.td`
@@ -217,36 +221,38 @@ const TableCell = styled.td`
   font-size: 0.875rem;
   color: var(--color-text);
   vertical-align: middle;
+  white-space: nowrap; /* Prevent cell content wrapping */
   
-  @media (max-width: 767px) {
-    display: flex;
-    padding: 0.5rem 1rem;
-    align-items: center;
-    
-    &:before {
-      content: attr(data-label);
-      font-weight: 600;
-      margin-right: 1rem;
-      min-width: 120px;
-    }
-    
-    &:first-child {
-      padding-top: 1rem;
-    }
-    
-    &:last-child {
-      padding-bottom: 1rem;
-      border-bottom: none;
-      
-      button {
-        margin: 0.25rem;
-        
-        &:first-child {
-          margin-left: 0;
-        }
-      }
-    }
-  }
+  /* Remove mobile-specific display changes */
+  /* @media (max-width: 767px) { */
+  /*   display: flex; */
+  /*   padding: 0.5rem 1rem; */
+  /*   align-items: center; */
+  /*   */
+  /*   &:before { */
+  /*     content: attr(data-label); */
+  /*     font-weight: 600; */
+  /*     margin-right: 1rem; */
+  /*     min-width: 120px; */
+  /*   } */
+  /*   */
+  /*   &:first-child { */
+  /*     padding-top: 1rem; */
+  /*   } */
+  /*   */
+  /*   &:last-child { */
+  /*     padding-bottom: 1rem; */
+  /*     border-bottom: none; */
+  /*     */
+  /*     button { */
+  /*       margin: 0.25rem; */
+  /*       */
+  /*       &:first-child { */
+  /*         margin-left: 0; */
+  /*       } */
+  /*     } */
+  /*   } */
+  /* } */
 `;
 
 const ActionButton = styled(Button)`
@@ -790,6 +796,8 @@ const MobileCardHeader = styled.div`
       font-size: 1rem;
       font-weight: 600;
       margin: 0 0 0.25rem 0;
+      overflow-wrap: break-word; /* Allow title to wrap */
+      word-break: break-word; /* Add word-break for better wrapping */
     }
     
     .status {
@@ -816,6 +824,10 @@ const MobileCardContent = styled.div`
     .value {
       text-align: right;
       font-weight: 400;
+      overflow-wrap: break-word; /* Allow long values to wrap */
+      word-break: break-word; /* Add word-break for better wrapping */
+      flex-basis: 60%; /* Give value more space if needed */
+      min-width: 0; /* Allow shrinking */
     }
   }
 `;

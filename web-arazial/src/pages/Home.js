@@ -1080,9 +1080,9 @@ const Home = () => {
                     <AuctionStatusBadge status={listing.status} type={listing._display_type}>
                       {getStatusText(listing.status, listing._display_type)}
                     </AuctionStatusBadge>
-                    {listingType === 'new' && (
+                    {listingType === 'new' && listing._display_type !== 'offer' && (
                       <AuctionTypeTag>
-                        {listing._display_type === 'offer' ? 'Pazarlık' : 'Açık Arttırma'}
+                        Açık Arttırma
                       </AuctionTypeTag>
                     )}
                   </AuctionImage>
