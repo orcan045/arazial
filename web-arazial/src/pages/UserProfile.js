@@ -591,10 +591,16 @@ const UserProfile = () => {
     <PageContainer>
       <ProfileHeader>
         <ProfileInfo>
-          <UserName>{profile?.full_name || user?.email}</UserName>
-          <MemberSince>
-            {profile?.created_at ? `Üyelik Tarihi: ${formatDate(profile.created_at)}` : ''}
-          </MemberSince>
+          {loading ? (
+            <UserName>Yükleniyor...</UserName>
+          ) : (
+            <>
+              <UserName>{profile?.full_name}</UserName>
+              <MemberSince>
+                {profile?.created_at ? `Üyelik Tarihi: ${formatDate(profile.created_at)}` : ''}
+              </MemberSince>
+            </>
+          )}
         </ProfileInfo>
       </ProfileHeader>
       

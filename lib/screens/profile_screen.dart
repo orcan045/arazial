@@ -48,45 +48,36 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Future<void> _loadUserData() async {
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-        // Clear the profile while loading to prevent any stale data from showing
-        _profile = null;
-      });
-    }
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       
       // Load profile
       final profile = await authService.getUserProfile();
-      
-      if (mounted) {
+      if (profile != null) {
         setState(() {
           _profile = profile;
           
-          // Initialize form controllers only if profile exists
-          if (profile != null) {
-            _fullNameController.text = profile.fullName ?? '';
-            _phoneController.text = profile.phoneNumber ?? '';
-            _addressController.text = profile.address ?? '';
-            _cityController.text = profile.city ?? '';
-            _postalCodeController.text = profile.postalCode ?? '';
-          }
-          
-          // Set loading to false only after everything is ready
-          _isLoading = false;
+          // Initialize form controllers
+          _fullNameController.text = profile.fullName ?? '';
+          _phoneController.text = profile.phoneNumber ?? '';
+          _addressController.text = profile.address ?? '';
+          _cityController.text = profile.city ?? '';
+          _postalCodeController.text = profile.postalCode ?? '';
         });
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'Kullanıcı bilgileri yüklenirken bir hata oluştu: $e';
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _errorMessage = 'Kullanıcı bilgileri yüklenirken bir hata oluştu: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -192,21 +183,12 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         title: const Text('Profilim'),
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : _buildProfileContent(theme),
     );
   }
 
   Widget _buildProfileContent(ThemeData theme) {
-    if (_profile == null || _profile!.fullName == null || _profile!.fullName!.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    
-    final String displayName = _profile!.fullName!;
-    final String? userEmail = Provider.of<AuthService>(context, listen: false).currentUser?.email;
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -229,10 +211,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                           children: [
                             CircleAvatar(
                               radius: 50,
-                              backgroundImage: _profile!.avatarUrl != null
+                              backgroundImage: _profile?.avatarUrl != null
                                   ? CachedNetworkImageProvider(_profile!.avatarUrl!)
                                   : null,
-                              child: _profile!.avatarUrl == null
+                              child: _profile?.avatarUrl == null
                                   ? const Icon(Icons.person, size: 50)
                                   : null,
                             ),
@@ -260,21 +242,20 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   const SizedBox(height: 16),
                   
                   Text(
-                    displayName,
+                    _profile?.fullName ?? 'İsimsiz Kullanıcı',
                     style: theme.textTheme.titleLarge,
                     textAlign: TextAlign.center,
                   ),
-                  if (userEmail != null)
-                    Text(
-                      userEmail,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: Colors.grey[600],
-                      ),
-                      textAlign: TextAlign.center,
+                  Text(
+                    Provider.of<AuthService>(context, listen: false).currentUser?.email ?? '',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: Colors.grey[600],
                     ),
+                    textAlign: TextAlign.center,
+                  ),
                   
                   // Show role badge if admin
-                  if (_profile!.isAdmin == true)
+                  if (_profile?.isAdmin == true)
                     Container(
                       margin: const EdgeInsets.only(top: 8),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
