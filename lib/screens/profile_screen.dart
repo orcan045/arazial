@@ -48,36 +48,45 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
   }
 
   Future<void> _loadUserData() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+        // Clear the profile while loading to prevent any stale data from showing
+        _profile = null;
+      });
+    }
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
       
       // Load profile
       final profile = await authService.getUserProfile();
-      if (profile != null) {
+      
+      if (mounted) {
         setState(() {
           _profile = profile;
           
-          // Initialize form controllers
-          _fullNameController.text = profile.fullName ?? '';
-          _phoneController.text = profile.phoneNumber ?? '';
-          _addressController.text = profile.address ?? '';
-          _cityController.text = profile.city ?? '';
-          _postalCodeController.text = profile.postalCode ?? '';
+          // Initialize form controllers only if profile exists
+          if (profile != null) {
+            _fullNameController.text = profile.fullName ?? '';
+            _phoneController.text = profile.phoneNumber ?? '';
+            _addressController.text = profile.address ?? '';
+            _cityController.text = profile.city ?? '';
+            _postalCodeController.text = profile.postalCode ?? '';
+          }
+          
+          // Set loading to false only after everything is ready
+          _isLoading = false;
         });
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Kullanıcı bilgileri yüklenirken bir hata oluştu: $e';
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Kullanıcı bilgileri yüklenirken bir hata oluştu: $e';
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -183,7 +192,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         title: const Text('Profilim'),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
           : _buildProfileContent(theme),
     );
   }
