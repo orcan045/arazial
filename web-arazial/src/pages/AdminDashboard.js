@@ -1131,7 +1131,10 @@ function AdminDashboard() {
     setContentLoading(true);
     setActiveSection(section);
     
-    setTimeout(() => {
+    setTimeout(async () => {
+      if (section === 'edit-auction' && selectedAuctionId) {
+        await fetchAuctionDetails(selectedAuctionId);
+      }
       fetchSectionData(section);
       setContentLoading(false);
     }, 300);
@@ -1724,9 +1727,9 @@ function AdminDashboard() {
       setAuctionForm({
         title: auctionData.title || '',
         description: auctionData.description || '',
-        startingPrice: auctionData.starting_price || auctionData.start_price || 0,
-        minIncrement: auctionData.min_increment || '',
-        offerIncrement: auctionData.offer_increment || '',
+        startingPrice: auctionData.starting_price?.toString() || auctionData.start_price?.toString() || '0',
+        minIncrement: auctionData.min_increment?.toString() || '',
+        offerIncrement: auctionData.offer_increment?.toString() || '',
         listingType: auctionData.listing_type || 'auction',
         startDate: formatDateForInput(auctionData.start_time) || '',
         endDate: formatDateForInput(auctionData.end_time) || '',
@@ -1738,12 +1741,12 @@ function AdminDashboard() {
         images: auctionData.images || [],
         ada_no: auctionData.ada_no || '',
         parsel_no: auctionData.parsel_no || '',
-        area_size: auctionData.area_size || '', // Use area_size
-        area_unit: auctionData.area_unit || 'm2', // ADDED area_unit
+        area_size: auctionData.area_size?.toString() || '', 
+        area_unit: auctionData.area_unit || 'm2',
         emlak_tipi: auctionData.emlak_tipi || '',
         imar_durumu: auctionData.imar_durumu || '',
         ilan_sahibi: auctionData.ilan_sahibi || '',
-        deposit_amount: auctionData.deposit_amount || '', // <-- Add deposit_amount to data
+        deposit_amount: auctionData.deposit_amount?.toString() || '',
       });
 
       setSelectedAuctionId(auctionId);
@@ -2901,6 +2904,7 @@ function AdminDashboard() {
                                 variant="warning"
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  fetchAuctionDetails(item.id);
                                   setSelectedAuctionId(item.id);
                                   handleSectionChange('edit-auction');
                                 }}
@@ -3002,6 +3006,7 @@ function AdminDashboard() {
                         <ActionButton 
                           variant="warning" size="small"
                           onClick={() => {
+                            fetchAuctionDetails(item.id);
                             setSelectedAuctionId(item.id);
                             handleSectionChange('edit-auction');
                           }}
