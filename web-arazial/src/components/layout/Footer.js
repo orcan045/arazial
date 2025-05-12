@@ -320,6 +320,9 @@ const Footer = () => {
                 <Link to="/terms-of-use">Kullanım Koşulları</Link>
               </li>
               <li>
+                <Link to="/sartlar-ve-kosullar">Şartlar ve Koşullar</Link>
+              </li>
+              <li>
                 <Link to="/privacy-policy">Gizlilik Politikası</Link>
               </li>
               <li>

@@ -25,6 +25,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import UserSettings from './pages/UserSettings';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfUse from './pages/TermsOfUse';
+import SartlarVeKosullarPage from './pages/SartlarVeKosullarPage';
 import PaymentCallback from './pages/PaymentCallback';
 import FAQ from './pages/FAQ';
 import CookiePolicy from './pages/CookiePolicy';
@@ -465,6 +466,7 @@ const App = () => {
           <Route path="/auctions/:id" element={<Layout><AuctionDetail /></Layout>} />
           <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
           <Route path="/terms-of-use" element={<Layout><TermsOfUse /></Layout>} />
+          <Route path="/sartlar-ve-kosullar" element={<Layout><SartlarVeKosullarPage /></Layout>} />
           <Route path="/payment-callback" element={<Layout><PaymentCallback /></Layout>} />
           <Route path="/sss" element={<Layout><FAQ /></Layout>} />
           <Route path="/cookies" element={<Layout><CookiePolicy /></Layout>} />
