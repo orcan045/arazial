@@ -325,7 +325,7 @@ const Dashboard = () => {
           // Process each auction to ensure consistent field naming
           const auction = {
             ...bid.auctions,
-            startPrice: bid.auctions.start_price || bid.auctions.startPrice,
+            starting_price: bid.auctions.starting_price || bid.auctions.startingPrice,
             minIncrement: bid.auctions.min_increment || bid.auctions.minIncrement,
             startTime: bid.auctions.start_time || bid.auctions.startTime,
             endTime: bid.auctions.end_time || bid.auctions.endTime,
@@ -408,7 +408,7 @@ const Dashboard = () => {
       
       // Calculate total spent on won auctions
       const totalSpent = wonAuctions.reduce((sum, auction) => {
-        return sum + (auction.final_price || auction.start_price || 0);
+        return sum + (auction.final_price || auction.starting_price || 0);
       }, 0);
       
       setUserStats({
@@ -612,7 +612,7 @@ const Dashboard = () => {
                 <AuctionDetails>
                   <AuctionPrice>
                     {formatPrice(
-                      auction.final_price || auction.finalPrice || auction.start_price || auction.startPrice
+                      auction.final_price || auction.finalPrice || auction.starting_price || auction.startingPrice
                     )}
                   </AuctionPrice>
                   <AuctionStatus status="active">Aktif</AuctionStatus>
@@ -677,7 +677,7 @@ const Dashboard = () => {
                 <AuctionLocation>{auction.location || 'Konum bilgisi yok'}</AuctionLocation>
                 <AuctionDetails>
                   <AuctionPrice>
-                    {formatPrice(auction.start_price || auction.startPrice)}
+                    {formatPrice(auction.starting_price || auction.startingPrice)}
                   </AuctionPrice>
                   <AuctionStatus status="upcoming">Yaklaşan</AuctionStatus>
                 </AuctionDetails>

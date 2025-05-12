@@ -130,7 +130,7 @@ export const fetchListings = async (type = 'auction', forceRefresh = false, upda
           return {
             ...listing,
             // Ensure consistent naming
-            startPrice: listing.start_price || listing.startPrice,
+            starting_price: listing.starting_price || listing.startingPrice,
             minIncrement: listing.min_increment || listing.minIncrement,
             offerIncrement: listing.offer_increment || listing.offerIncrement,
             startTime: listing.start_time || listing.startTime,
@@ -296,7 +296,7 @@ export const getAuctionById = async (auctionId) => {
     const processedAuction = {
       ...data,
       // Ensure consistent naming
-      startPrice: data.start_price || data.startPrice,
+      starting_price: data.starting_price || data.startingPrice,
       minIncrement: data.min_increment || data.minIncrement,
       startTime: data.start_time || data.startTime,
       endTime: data.end_time || data.endTime,
@@ -399,7 +399,7 @@ export const placeBid = async (auctionId, amount) => {
     
     if (bidsError) throw bidsError;
     
-    const startPrice = auction.start_price || auction.startPrice || 0;
+    const startPrice = auction.starting_price || auction.startingPrice || 0;
     const latestBidAmount = latestBids && latestBids.length > 0 
       ? latestBids[0].amount 
       : startPrice;

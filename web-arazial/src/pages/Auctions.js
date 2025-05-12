@@ -1662,14 +1662,14 @@ const Auctions = () => {
       // Apply sorting
       if (sortOption === 'priceAsc') {
         filtered.sort((a, b) => {
-          const aPrice = a.start_price || a.startPrice || 0;
-          const bPrice = b.start_price || b.startPrice || 0;
+          const aPrice = a.starting_price || a.startingPrice || 0;
+          const bPrice = b.starting_price || b.startingPrice || 0;
           return aPrice - bPrice;
         });
       } else if (sortOption === 'priceDesc') {
         filtered.sort((a, b) => {
-          const aPrice = a.start_price || a.startPrice || 0;
-          const bPrice = b.start_price || b.startPrice || 0;
+          const aPrice = a.starting_price || a.startingPrice || 0;
+          const bPrice = b.starting_price || b.startingPrice || 0;
           return bPrice - aPrice;
         });
       } else if (sortOption === 'newest') {
@@ -2107,8 +2107,8 @@ const Auctions = () => {
             <AuctionPrice>
               {formatPrice(
                 itemStatus === 'upcoming' 
-                  ? (auction.start_price || auction.startPrice)
-                  : (auction.highest_bid || auction.final_price || auction.finalPrice || auction.start_price || auction.startPrice)
+                  ? (auction.starting_price || auction.startingPrice)
+                  : (auction.highest_bid || auction.final_price || auction.finalPrice || auction.starting_price || auction.startingPrice)
               )}
             </AuctionPrice>
             <AuctionStatus status={itemStatus}>
@@ -2408,8 +2408,8 @@ const Auctions = () => {
             <AuctionPrice>
               {formatPrice(
                 itemStatus === 'upcoming' 
-                  ? (auction.start_price || auction.startPrice)
-                  : (auction.highest_bid || auction.final_price || auction.finalPrice || auction.start_price || auction.startPrice)
+                  ? (auction.starting_price || auction.startingPrice)
+                  : (auction.highest_bid || auction.final_price || auction.finalPrice || auction.starting_price || auction.startingPrice)
               )}
             </AuctionPrice>
             <AuctionStatus status={itemStatus}>

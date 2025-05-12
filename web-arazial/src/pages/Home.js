@@ -1098,8 +1098,8 @@ const Home = () => {
                           listing.highest_bid || 
                           listing.final_price || 
                           listing.finalPrice || 
-                          listing.start_price || 
-                          listing.startPrice || 
+                          listing.starting_price || 
+                          listing.startingPrice || 
                           listing.starting_bid || 
                           0
                         )}

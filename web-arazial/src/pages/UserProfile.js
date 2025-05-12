@@ -596,9 +596,9 @@ const UserProfile = () => {
           ) : (
             <>
               <UserName>{profile?.full_name}</UserName>
-              <MemberSince>
-                {profile?.created_at ? `Üyelik Tarihi: ${formatDate(profile.created_at)}` : ''}
-              </MemberSince>
+          <MemberSince>
+            {profile?.created_at ? `Üyelik Tarihi: ${formatDate(profile.created_at)}` : ''}
+          </MemberSince>
             </>
           )}
         </ProfileInfo>

@@ -1041,7 +1041,7 @@ const BidCard = ({
     // Use the appropriate price based on listing type
     let priceText;
     if (isOfferListing) {
-      priceText = `${formatPrice(auction?.price || auction?.start_price || auction?.startPrice || auction?.final_price || auction?.finalPrice || 0)} fiyatıyla!`;
+      priceText = `${formatPrice(auction?.price || auction?.starting_price || auction?.startingPrice || auction?.final_price || auction?.finalPrice || 0)} fiyatıyla!`;
     } else {
       priceText = `${formatPrice(getMinimumBidAmount())} başlangıç fiyatıyla!`;
     }
@@ -1327,7 +1327,7 @@ const BidCard = ({
         {isOfferListing && (
           <>
             {/* Display listing price */}
-            {(auction?.price || auction?.start_price || auction?.startPrice || auction?.highest_bid || auction?.final_price || auction?.finalPrice) && (
+            {(auction?.price || auction?.starting_price || auction?.startingPrice || auction?.highest_bid || auction?.final_price || auction?.finalPrice) && (
               <div style={{ 
                 marginBottom: isMobile ? '0.75rem' : '1.25rem',
                 borderRadius: '0.5rem',
@@ -1344,7 +1344,7 @@ const BidCard = ({
                   color: 'var(--color-primary)',
                   marginTop: '0.25rem'
                 }}>
-                  {formatPrice(auction?.price || auction?.start_price || auction?.startPrice || auction?.highest_bid || auction?.final_price || auction?.finalPrice || 0)}
+                  {formatPrice(auction?.price || auction?.starting_price || auction?.startingPrice || auction?.highest_bid || auction?.final_price || auction?.finalPrice || 0)}
                 </div>
                 <div style={{ 
                   display: 'flex', 
@@ -1821,7 +1821,7 @@ const AuctionDetail = () => {
   const getMinimumBidAmount = useCallback(() => {
     if (!auction || auction.listing_type !== 'auction') return 0;
     const highestBid = bids[0]?.amount || 0;
-    const startPrice = auction.start_price || 0;
+    const startPrice = auction.starting_price || 0;
     const minIncrement = auction.min_increment || 1;
     
     // If there are no bids, return the start price

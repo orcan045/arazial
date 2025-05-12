@@ -1739,7 +1739,7 @@ function AdminDashboard() {
       setAuctionForm({
         title: auctionData.title || '',
         description: auctionData.description || '',
-        startingPrice: auctionData.starting_price?.toString() || auctionData.start_price?.toString() || '0',
+        startingPrice: auctionData.starting_price?.toString() || auctionData.startingPrice?.toString() || '0',
         minIncrement: auctionData.min_increment?.toString() || '',
         offerIncrement: auctionData.offer_increment?.toString() || '',
         listingType: auctionData.listing_type || 'auction',
@@ -2895,7 +2895,7 @@ function AdminDashboard() {
                             </TableCell>
                             <TableCell data-label="Başlık">{item.title}</TableCell>
                             <TableCell data-label="Tür">{item.listing_type === 'auction' || item.listingType === 'auction' ? 'İhale' : 'Pazarlık'}</TableCell>
-                            <TableCell data-label="Fiyat">{item.starting_price?.toLocaleString('tr-TR') || item.start_price?.toLocaleString('tr-TR')} TL</TableCell>
+                            <TableCell data-label="Fiyat">{item.starting_price?.toLocaleString('tr-TR')} TL</TableCell>
                             <TableCell data-label="Bitiş Tarihi">{formatDate(item.end_date || item.endDate)}</TableCell>
                             <TableCell data-label="Durum">
                               <StatusBadge status={item.status}>
@@ -3000,7 +3000,7 @@ function AdminDashboard() {
                         </div>
                         <div className="item">
                           <div className="label">Fiyat</div>
-                          <div>{item.starting_price?.toLocaleString('tr-TR') || item.start_price?.toLocaleString('tr-TR')} TL</div>
+                          <div>{item.starting_price?.toLocaleString('tr-TR')} TL</div>
                         </div>
                         <div className="item">
                           <div className="label">Bitiş Tarihi</div>
