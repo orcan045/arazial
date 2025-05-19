@@ -1,190 +1,217 @@
 import React from 'react';
 import styled from 'styled-components';
 
+// Assuming these styled components are similar to KvkkAydinlatmaMetniPage or defined globally
 const PageContainer = styled.div`
   max-width: 900px;
-  margin: 0 auto;
-  padding: 3rem 2rem;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  color: #333;
+  line-height: 1.8;
+
+  @media (max-width: 768px) {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
 `;
 
-const PageHeader = styled.div`
+const PageHeader = styled.header`
   margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #eee;
   text-align: center;
 `;
 
 const PageTitle = styled.h1`
-  font-size: 2rem;
-  color: var(--color-text);
-  margin-bottom: 0.75rem;
-`;
+  font-size: 2.5rem;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
 
-const PageSubtitle = styled.p`
-  color: var(--color-text-secondary);
-  font-size: 1rem;
-  max-width: 600px;
-  margin: 0 auto;
-`;
-
-const DocumentMeta = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--color-border);
-`;
-
-const ContentSection = styled.div`
-  background-color: white;
-  border-radius: var(--border-radius-lg);
-  padding: 2.5rem;
-  box-shadow: var(--shadow-sm);
-  margin-bottom: 2rem;
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--color-border);
-`;
-
-const Paragraph = styled.p`
-  margin-bottom: 1.5rem;
-  line-height: 1.6;
-  color: var(--color-text);
-`;
-
-const List = styled.ul`
-  margin-bottom: 1.5rem;
-  padding-left: 1.5rem;
-`;
-
-const ListItem = styled.li`
-  margin-bottom: 0.75rem;
-  line-height: 1.6;
-  color: var(--color-text);
+  @media (max-width: 768px) {
+    font-size: 2rem;
+  }
 `;
 
 const Divider = styled.hr`
-  margin: 1.5rem 0;
-  border: 0;
-  border-top: 1px solid var(--color-border);
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 2rem 0;
+`;
+
+const ContentSection = styled.section`
+  margin-bottom: 2rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 1.6rem;
+  color: #34495e;
+  margin-bottom: 1.25rem;
+
+  @media (max-width: 768px) {
+    font-size: 1.4rem;
+  }
+`;
+
+const Paragraph = styled.p`
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 1rem;
+  text-align: justify;
+`;
+
+const List = styled.ul`
+  list-style: disc;
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+`;
+
+const ListItem = styled.li`
+  margin-bottom: 0.5rem;
+`;
+
+const Link = styled.a`
+  color: #3498db;
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 const PrivacyPolicy = () => {
   return (
     <PageContainer>
       <PageHeader>
-        <PageTitle>Gizlilik Politikası</PageTitle>
-        <PageSubtitle>
-          KİŞİSEL VERİLERİN KORUNMASI HAKKINDA AYDINLATMA METNİ
-        </PageSubtitle>
+        <PageTitle>GİZLİLİK POLİTİKASI</PageTitle>
       </PageHeader>
 
-      <DocumentMeta>
-        <div>Yürürlülük Tarihi: 29/03/2025</div>
-        <div>Son Güncelleme Tarihi: 29/03/2025</div>
-      </DocumentMeta>
+      <Paragraph>
+        Bu Gizlilik Politikası, arazialcom.net ("Platform") üzerinden sunulan hizmetler sırasında elde edilen kişisel verilerin nasıl toplandığını, kullanıldığını, korunduğunu ve hangi durumlarda paylaşıldığını açıklamak amacıyla hazırlanmıştır.
+      </Paragraph>
+
+      <Divider />
 
       <ContentSection>
-        <Paragraph>
-          arazialcom Gayrimenkul Sanayi ve Ticaret Limited Şirketi ("arazialcom" olarak anılacaktır) olarak, kullanıcılarımızın kişisel verilerinin güvenliğine önem veriyoruz.
-          Bu metin, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında kişisel verilerin ne şekilde toplandığı, işlendiği ve korunduğuna dair bilgilendirme amacıyla hazırlanmıştır.
-        </Paragraph>
-      </ContentSection>
-
-      <ContentSection>
-        <SectionTitle>1. Veri Sorumlusu</SectionTitle>
-        <Paragraph>
-          Veri Sorumlusu:
-          arazialcom Gayrimenkul Sanayi ve Ticaret Ltd. Şti.
-          Adres: ULU CAMİİ MAH. 388 SK. NO:29/1B, AKHİSAR / MANİSA
-          Vergi No: 0730982784
-          E-posta: info@arazialcom.org
-        </Paragraph>
-      </ContentSection>
-
-      <ContentSection>
-        <SectionTitle>2. İşlenen Kişisel Veriler</SectionTitle>
-        <Paragraph>
-          Tarafımızca işlenebilecek kişisel veriler şunlardır:
-        </Paragraph>
-
+        <SectionTitle>1. Toplanan Veriler</SectionTitle>
+        <Paragraph>Kullanıcılarımızdan aşağıdaki kişisel veriler toplanabilir:</Paragraph>
         <List>
-          <ListItem>Ad, soyad</ListItem>
-          <ListItem>Telefon numarası</ListItem>
-          <ListItem>E-posta adresi</ListItem>
-          <ListItem>IBAN ve ödeme dekontu (teminat işlemleri için)</ListItem>
-          <ListItem>IP adresi, işlem zamanı, cihaz bilgileri</ListItem>
+          <ListItem>Ad, soyad, telefon, e-posta adresi</ListItem>
+          <ListItem>IP adresi, cihaz bilgisi, işlem geçmişi</ListItem>
+          <ListItem>Teklif ve teminat işlemlerine ilişkin bilgiler</ListItem>
+          <ListItem>Site kullanımına ilişkin çerez verileri</ListItem>
+        </List>
+        <Paragraph>
+          Bu veriler, doğrudan kullanıcı tarafından sağlanabileceği gibi, site üzerindeki formlar, çerezler ve işlem kayıtları aracılığıyla da elde edilebilir.
+        </Paragraph>
+      </ContentSection>
+
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>2. Verilerin İşlenme Amaçları</SectionTitle>
+        <Paragraph>Toplanan kişisel veriler aşağıdaki amaçlarla işlenebilir:</Paragraph>
+        <List>
+          <ListItem>Üyelik ve kimlik doğrulama süreçlerinin yürütülmesi</ListItem>
+          <ListItem>Açık artırma ilanlarının sunulması ve yönetimi</ListItem>
+          <ListItem>Teminat ödemeleri ve iade süreçlerinin sağlanması</ListItem>
+          <ListItem>Kullanıcı bilgilendirmeleri, duyurular ve destek iletişimi</ListItem>
+          <ListItem>Yasal yükümlülüklerin yerine getirilmesi</ListItem>
         </List>
       </ContentSection>
 
-      <ContentSection>
-        <SectionTitle>3. Kişisel Verilerin Toplanma Yöntemi ve Hukuki Sebep</SectionTitle>
-        <Paragraph>
-          Veriler, web sitemiz, mobil uygulamamız veya iletişim kanallarımız aracılığıyla doğrudan kullanıcı tarafından sağlanır.
-        </Paragraph>
-        <Paragraph>
-          Toplama amaçları:
-        </Paragraph>
+      <Divider />
 
+      <ContentSection>
+        <SectionTitle>3. Hukuki Dayanaklar</SectionTitle>
+        <Paragraph>Kişisel verileriniz, 6698 sayılı KVKK'nın 5. ve 6. maddelerine uygun olarak;</Paragraph>
         <List>
-          <ListItem>Teminat ödeme ve iade işlemlerini yürütmek</ListItem>
-          <ListItem>Kullanıcı doğrulama ve destek hizmeti sunmak</ListItem>
-          <ListItem>Yasal yükümlülükleri yerine getirmek</ListItem>
+          <ListItem>Açık rıza</ListItem>
+          <ListItem>Sözleşmenin kurulması ve ifası</ListItem>
+          <ListItem>Hukuki yükümlülük</ListItem>
+          <ListItem>Meşru menfaat</ListItem>
         </List>
+        <Paragraph>hukuki sebeplerine dayanarak işlenmektedir.</Paragraph>
+      </ContentSection>
 
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>4. Verilerin Saklama Süresi</SectionTitle>
         <Paragraph>
-          Hukuki sebepler:
+          Kişisel veriler, mevzuatta öngörülen süre kadar veya işleme amacının gerektirdiği süre boyunca saklanır. Bu süre sona erdiğinde veriler silinir, yok edilir veya anonimleştirilir.
         </Paragraph>
+      </ContentSection>
 
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>5. Verilerin Aktarımı</SectionTitle>
+        <Paragraph>Kişisel verileriniz;</Paragraph>
         <List>
-          <ListItem>KVKK md.5/2-c: Sözleşmenin ifası için gerekli olması</ListItem>
-          <ListItem>KVKK md.5/2-f: Veri sorumlusunun meşru menfaati</ListItem>
+          <ListItem>Ödeme altyapı sağlayıcıları</ListItem>
+          <ListItem>Web sunucu ve yazılım hizmeti sağlayıcıları</ListItem>
+          <ListItem>Yasal yükümlülük nedeniyle yetkili kamu kurumları</ListItem>
         </List>
+        <Paragraph>ile yalnızca hizmetin gereği ve yasal zorunluluk durumunda paylaşılabilir.</Paragraph>
       </ContentSection>
 
-      <ContentSection>
-        <SectionTitle>4. Verilerin Aktarımı</SectionTitle>
-        <Paragraph>
-          Kişisel veriler, üçüncü kişilerle kesinlikle paylaşılmaz.
-          Yalnızca yasal zorunluluk halinde yetkili kamu kurum ve kuruluşlarına aktarılır.
-        </Paragraph>
-      </ContentSection>
+      <Divider />
 
       <ContentSection>
-        <SectionTitle>5. Saklama Süresi</SectionTitle>
-        <Paragraph>
-          Toplanan veriler, ilgili mevzuat gereğince ve hizmetin gerektirdiği süre boyunca saklanır.
-          Teminat ve işlem bilgileri, vergi ve ticaret mevzuatı uyarınca 5 yıl süreyle muhafaza edilir.
-        </Paragraph>
-      </ContentSection>
-
-      <ContentSection>
-        <SectionTitle>6. KVKK Kapsamındaki Haklarınız</SectionTitle>
-        <Paragraph>
-          6698 sayılı Kanun'un 11. maddesi gereği, kullanıcılar aşağıdaki haklara sahiptir:
-        </Paragraph>
-
+        <SectionTitle>6. Bilgi Güvenliği</SectionTitle>
+        <Paragraph>Kullanıcı verileri, güncel teknolojik önlemlerle korunur.</Paragraph>
         <List>
-          <ListItem>Kişisel verisinin işlenip işlenmediğini öğrenme</ListItem>
-          <ListItem>İşlenmişse buna ilişkin bilgi talep etme</ListItem>
-          <ListItem>Amacına uygun kullanılıp kullanılmadığını öğrenme</ListItem>
-          <ListItem>Hatalı ya da eksikse düzeltilmesini isteme</ListItem>
-          <ListItem>İşlenmesini gerektiren sebeplerin ortadan kalkması hâlinde silinmesini talep etme</ListItem>
-          <ListItem>Zarara uğranmışsa giderilmesini talep etme</ListItem>
+          <ListItem>Tüm iletişim SSL (HTTPS) ile şifrelenmektedir.</ListItem>
+          <ListItem>Erişim sadece yetkili kişilerle sınırlıdır.</ListItem>
+          <ListItem>Sunucu ve veri güvenliği için teknik ve idari tedbirler alınmaktadır.</ListItem>
         </List>
       </ContentSection>
 
+      <Divider />
+
       <ContentSection>
-        <SectionTitle>7. Başvuru</SectionTitle>
+        <SectionTitle>7. Çerez Politikası</SectionTitle>
+        <Paragraph>arazialcom.net, kullanıcı deneyimini geliştirmek için çerezlerden faydalanır:</Paragraph>
+        <List>
+          <ListItem>Zorunlu çerezler: Sitenin temel işlevleri için gereklidir.</ListItem>
+          <ListItem>İstatistik çerezleri: Site trafiği analizinde kullanılır.</ListItem>
+          <ListItem>Tercih çerezleri: Kullanıcı ayarlarını hatırlar.</ListItem>
+        </List>
         <Paragraph>
-          KVKK kapsamındaki tüm taleplerinizi info@arazialcom.org adresine e-posta yoluyla iletebilirsiniz.
-          Talepleriniz yasal süre içerisinde değerlendirilecek ve tarafınıza dönüş sağlanacaktır.
+          Tarayıcınızın ayarlarından çerezleri yönetebilir veya engelleyebilirsiniz. Çerez kullanımına ilişkin detaylara "Çerez Politikası" sayfamızdan ulaşabilirsiniz.
+        </Paragraph>
+      </ContentSection>
+
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>8. Kullanıcı Hakları</SectionTitle>
+        <Paragraph>KVKK'nın 11. maddesi uyarınca;</Paragraph>
+        <List>
+          <ListItem>Verilerinizin işlenip işlenmediğini öğrenme</ListItem>
+          <ListItem>Düzeltme, silme veya anonimleştirme talep etme</ListItem>
+          <ListItem>Aktarıldığı kişileri öğrenme</ListItem>
+          <ListItem>İşlemlere itiraz etme</ListItem>
+          <ListItem>Zarara uğranması hâlinde tazminat talep etme</ListItem>
+        </List>
+        <Paragraph>haklarına sahipsiniz.</Paragraph>
+        <Paragraph>
+          Bu haklarınızı kullanmak için bize info@arazialcom.org adresinden ulaşabilirsiniz.
+        </Paragraph>
+      </ContentSection>
+
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>9. Politika Güncellemeleri</SectionTitle>
+        <Paragraph>
+          Bu gizlilik politikası zaman zaman güncellenebilir. Güncel haline arazialcom.net üzerinden her zaman ulaşabilirsiniz.
         </Paragraph>
       </ContentSection>
     </PageContainer>

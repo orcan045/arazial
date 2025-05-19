@@ -317,22 +317,10 @@ const Footer = () => {
             <h3>Sözleşmeler</h3>
             <ul>
               <li>
-                <Link to="/terms-of-use">Kullanım Koşulları</Link>
+                <Link to="/kvkk-aydinlatma-metni">KVKK</Link>
               </li>
               <li>
-                <Link to="/sartlar-ve-kosullar">Şartlar ve Koşullar</Link>
-              </li>
-              <li>
-                <Link to="/privacy-policy">Gizlilik Politikası</Link>
-              </li>
-              <li>
-                <Link to="/cookies">Çerez Politikası</Link>
-              </li>
-              <li>
-                <Link to="/legal">Yasal Bildirimler</Link>
-              </li>
-              <li>
-                <Link to="/security">Güvenlik</Link>
+                <Link to="/privacy-policy">Gizlilik Sözleşmesi</Link>
               </li>
             </ul>
           </FooterSection>

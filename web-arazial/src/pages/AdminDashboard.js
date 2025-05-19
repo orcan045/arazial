@@ -3169,7 +3169,7 @@ function AdminDashboard() {
               </FormRow>
               <FormRow>
                 <FormGroup> 
-                  <Label htmlFor="deposit_amount">Teminat Tutarı (TL)</Label>
+                  <Label htmlFor="deposit_amount">Hizmet Bedeli Peşinatı (TL)</Label>
                   <Input 
                     type="number" 
                     id="deposit_amount" 
@@ -3739,7 +3739,7 @@ function AdminDashboard() {
               
               <FormRow>
                 <FormGroup> 
-                  <Label htmlFor="deposit_amount">Teminat Tutarı (TL)</Label>
+                  <Label htmlFor="deposit_amount">Hizmet Bedeli Peşinatı (TL)</Label>
                   <Input 
                     type="number" 
                     id="deposit_amount" 

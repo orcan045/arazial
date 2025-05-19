@@ -31,6 +31,7 @@ import FAQ from './pages/FAQ';
 import CookiePolicy from './pages/CookiePolicy';
 import LegalNotices from './pages/LegalNotices';
 import Security from './pages/Security';
+import KvkkAydinlatmaMetniPage from './pages/KvkkAydinlatmaMetniPage';
 
 // Re-export for backward compatibility
 export { forceAuthRefresh, resetAllAuthStorage };
@@ -472,6 +473,7 @@ const App = () => {
           <Route path="/cookies" element={<Layout><CookiePolicy /></Layout>} />
           <Route path="/legal" element={<Layout><LegalNotices /></Layout>} />
           <Route path="/security" element={<Layout><Security /></Layout>} />
+          <Route path="/kvkk-aydinlatma-metni" element={<Layout><KvkkAydinlatmaMetniPage /></Layout>} />
         </Routes>
       </Router>
     </AuthProvider>

@@ -1175,7 +1175,7 @@ const BidCard = ({
                         justifyContent: 'space-between'
                       }}>
                         <div style={{ fontWeight: '600', fontSize: '1.125rem', textAlign: 'left' }}>
-                          Teminat Tutarı: {formatPrice(auction.deposit_amount || 0)}
+                          Hizmet Bedeli Peşinatı: {formatPrice(auction.deposit_amount || 0)}
                         </div>
                         <button 
                           onClick={(e) => {
@@ -1356,7 +1356,7 @@ const BidCard = ({
                   justifyContent: 'space-between'
                 }}>
                   <div style={{ fontWeight: '600', fontSize: '1rem', textAlign: 'left' }}>
-                    Teminat Tutarı: {formatPrice(auction.deposit_amount || 0)}
+                    Hizmet Bedeli Peşinatı: {formatPrice(auction.deposit_amount || 0)}
                   </div>
                   <button 
                     onClick={(e) => {
