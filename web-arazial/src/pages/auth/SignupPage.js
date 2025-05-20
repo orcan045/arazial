@@ -180,8 +180,7 @@ const SignupPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [acceptMarketing, setAcceptMarketing] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
-  const [acceptKVKK, setAcceptKVKK] = useState(false);
-  const [acceptAydinlatma, setAcceptAydinlatma] = useState(false);
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   
   // OTP fields
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
@@ -231,12 +230,8 @@ const SignupPage = () => {
       setErrors(prev => ({ ...prev, terms: 'Üyelik sözleşmesini kabul etmelisiniz' }));
       return;
     }
-    if (!acceptKVKK) {
-      setErrors(prev => ({ ...prev, kvkk: 'KVKK metnini kabul etmelisiniz' }));
-      return;
-    }
-    if (!acceptAydinlatma) {
-      setErrors(prev => ({ ...prev, aydinlatma: 'Aydınlatma metnini kabul etmelisiniz' }));
+    if (!acceptPrivacy) {
+      setErrors(prev => ({ ...prev, privacy: 'Gizlilik Sözleşmesini kabul etmelisiniz' }));
       return;
     }
     
@@ -563,28 +558,15 @@ const SignupPage = () => {
       <CheckboxContainer>
         <CheckboxInput 
           type="checkbox" 
-          id="kvkk" 
-          checked={acceptKVKK}
-          onChange={(e) => setAcceptKVKK(e.target.checked)}
+          id="privacy" 
+          checked={acceptPrivacy}
+          onChange={(e) => setAcceptPrivacy(e.target.checked)}
         />
         <CheckboxLabel>
-          <Link to="/privacy-policy" target="_blank" style={{ color: 'var(--color-primary)' }}>KVKK metnini</Link> okudum ve kabul ediyorum.
+          <Link to="/privacy-policy" target="_blank" style={{ color: 'var(--color-primary)' }}>Gizlilik Sözleşmesini</Link> okudum ve kabul ediyorum.
         </CheckboxLabel>
       </CheckboxContainer>
-      {errors.kvkk && <ErrorMessage>{errors.kvkk}</ErrorMessage>}
-
-      <CheckboxContainer>
-        <CheckboxInput 
-          type="checkbox" 
-          id="aydinlatma" 
-          checked={acceptAydinlatma}
-          onChange={(e) => setAcceptAydinlatma(e.target.checked)}
-        />
-        <CheckboxLabel>
-          <Link to="/privacy-policy" target="_blank" style={{ color: 'var(--color-primary)' }}>Aydınlatma metnini</Link> okudum ve onaylıyorum.
-        </CheckboxLabel>
-      </CheckboxContainer>
-      {errors.aydinlatma && <ErrorMessage>{errors.aydinlatma}</ErrorMessage>}
+      {errors.privacy && <ErrorMessage>{errors.privacy}</ErrorMessage>}
       
       {errors.general && (
         <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>
