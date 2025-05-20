@@ -155,7 +155,7 @@ const KvkkAydinlatmaMetniPage = () => {
           Kişisel verileriniz, mevzuatta belirtilen süreler kadar veya işleme amacı ortadan kalkana kadar saklanmakta, ardından silinmekte, yok edilmekte ya da anonimleştirilmektedir.
         </Paragraph>
       </ContentSection>
-
+      
       <Divider />
 
       <ContentSection>
@@ -178,9 +178,9 @@ const KvkkAydinlatmaMetniPage = () => {
 
       <ContentSection>
         <SectionTitle>8. Başvuru Yolu</SectionTitle>
-        <Paragraph>
+      <Paragraph>
           Bu haklarınıza ilişkin taleplerinizi info@arazialcom.org adresine iletebilirsiniz.
-        </Paragraph>
+      </Paragraph>
       </ContentSection>
     </PageContainer>
   );

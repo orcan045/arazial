@@ -1473,6 +1473,119 @@ const BidCard = ({
   );
 };
 
+// Add new styled components for payment modal
+const PaymentModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  opacity: ${props => props.isVisible ? 1 : 0};
+  visibility: ${props => props.isVisible ? 'visible' : 'hidden'};
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+`;
+
+const PaymentModalContent = styled.div`
+  background-color: white;
+  border-radius: 8px;
+  max-width: 90%;
+  width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  padding: 0;
+  position: relative;
+`;
+
+const PaymentModalHeader = styled.div`
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--color-background);
+  border-radius: 8px 8px 0 0;
+`;
+
+const PaymentModalTitle = styled.h3`
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+`;
+
+const PaymentModalBody = styled.div`
+  padding: 1.5rem;
+`;
+
+const PaymentModalFooter = styled.div`
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  background-color: var(--color-background);
+  border-radius: 0 0 8px 8px;
+`;
+
+const PaymentWarning = styled.div`
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: rgba(251, 191, 36, 0.1);
+  border-left: 4px solid #F59E0B;
+  border-radius: 4px;
+  color: #92400E;
+`;
+
+const PaymentInfo = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+const PaymentAmount = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  background-color: rgba(var(--color-primary-rgb), 0.05);
+`;
+
+const PaymentAmountLabel = styled.span`
+  font-weight: 500;
+  color: var(--color-text);
+`;
+
+const PaymentAmountValue = styled.span`
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--color-primary);
+`;
+
+const PaymentMessage = styled.p`
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 0.875rem;
+  background-color: ${props => 
+    props.type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 
+    props.type === 'error' ? 'rgba(239, 68, 68, 0.1)' : 
+    'transparent'
+  };
+  color: ${props => 
+    props.type === 'success' ? 'rgb(5, 150, 105)' : 
+    props.type === 'error' ? 'rgb(220, 38, 38)' : 
+    'inherit'
+  };
+`;
+
 const AuctionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -1496,6 +1609,14 @@ const AuctionDetail = () => {
 
   // --- Add state for current URL ---
   const [currentUrl, setCurrentUrl] = useState('');
+  
+  // --- Add new state for payment handling ---
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [hasDeposit, setHasDeposit] = useState(false);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [paymentMessage, setPaymentMessage] = useState('');
+  const [paymentMessageType, setPaymentMessageType] = useState('');
+  const [actionType, setActionType] = useState(''); // 'bid' or 'offer'
   
   useEffect(() => {
     // Set the current URL when the component mounts
@@ -1580,6 +1701,24 @@ const AuctionDetail = () => {
         }
       }
 
+      // 3. Check if user has already made a deposit for this auction
+      if (user?.id) {
+        // Mock API call - in a real implementation, this would check a user_deposits table
+        const { data: depositData, error: depositError } = await supabase
+          .from('user_deposits')
+          .select('*')
+          .eq('auction_id', id)
+          .eq('user_id', user.id)
+          .single();
+          
+        if (depositError && depositError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+          console.error('Error checking deposit status:', depositError);
+        }
+        
+        // Set deposit status based on retrieved data
+        setHasDeposit(!!depositData);
+      }
+
     } catch (err) {
       console.error('Error fetching auction details:', err);
       setError(err.message || 'İlan detayları yüklenirken bir hata oluştu.');
@@ -1630,6 +1769,13 @@ const AuctionDetail = () => {
     }
     if (!auction || auction.listing_type !== 'auction') {
       setBidError('Bu ilana teklif verilemez.');
+      return;
+    }
+    
+    // Check if the user has paid the deposit
+    if (!hasDeposit) {
+      setActionType('bid');
+      setShowPaymentModal(true);
       return;
     }
     
@@ -1703,6 +1849,13 @@ const AuctionDetail = () => {
     }
     if (!auction || auction.listing_type !== 'offer') {
       setOfferError('Bu ilana teklif verilemez.');
+      return;
+    }
+    
+    // Check if the user has paid the deposit
+    if (!hasDeposit) {
+      setActionType('offer');
+      setShowPaymentModal(true);
       return;
     }
 
@@ -1926,6 +2079,163 @@ const AuctionDetail = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [id]);
+
+  // New function to handle the mock payment process
+  const handleMockPayment = async () => {
+    if (!user?.id || !auction) {
+      return;
+    }
+    
+    setPaymentProcessing(true);
+    setPaymentMessage('');
+    setPaymentMessageType('');
+    
+    try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Mock a successful payment record creation
+      const { error: insertError } = await supabase.from('user_deposits').insert({
+        auction_id: auction.id,
+        user_id: user.id,
+        amount: auction.deposit_amount,
+        status: 'paid',
+        created_at: new Date().toISOString()
+      });
+      
+      if (insertError) {
+        throw insertError;
+      }
+      
+      // Update local state to reflect successful payment
+      setHasDeposit(true);
+      setPaymentMessage('Ödeme başarıyla gerçekleşti.');
+      setPaymentMessageType('success');
+      
+      // Close modal after a short delay
+      setTimeout(() => {
+        setShowPaymentModal(false);
+        
+        // Try to continue with the intended action
+        if (actionType === 'bid') {
+          // Will need to call the actual bid submission
+          console.log('Ready to place bid...');
+        } else if (actionType === 'offer') {
+          // Will need to call the actual offer submission
+          console.log('Ready to submit offer...');
+        }
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      setPaymentMessage('Ödeme işlemi sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+      setPaymentMessageType('error');
+    } finally {
+      setPaymentProcessing(false);
+    }
+  };
+  
+  // Function to close payment modal
+  const closePaymentModal = () => {
+    setShowPaymentModal(false);
+    setPaymentMessage('');
+    setPaymentMessageType('');
+  };
+
+  // Add payment modal component
+  const renderPaymentModal = () => {
+    if (!auction) return null;
+    
+    return (
+      <PaymentModalOverlay isVisible={showPaymentModal} onClick={closePaymentModal}>
+        <PaymentModalContent onClick={(e) => e.stopPropagation()}>
+          <PaymentModalHeader>
+            <PaymentModalTitle>Hizmet Bedeli Peşinatı Ödemesi</PaymentModalTitle>
+            <button 
+              onClick={closePaymentModal}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--color-text-secondary)'
+              }}
+            >
+              <CloseIcon />
+            </button>
+          </PaymentModalHeader>
+          
+          <PaymentModalBody>
+            <PaymentWarning>
+              <p style={{ margin: 0, fontWeight: 500 }}>Teklif verebilmek için hizmet bedeli peşinatını ödemeniz gerekmektedir.</p>
+              <p style={{ marginBottom: 0 }}>Kazanmadığınız durumda peşinat tutarınız iade edilecektir.</p>
+            </PaymentWarning>
+            
+            <PaymentInfo>
+              <p>
+                <strong>{auction.title}</strong> ilanına teklif vermek için hizmet bedeli peşinatı ödemeniz gerekmektedir. Bu, teklif verme ciddiyetinizi teyit etmek için gereklidir.
+              </p>
+            </PaymentInfo>
+            
+            <PaymentAmount>
+              <PaymentAmountLabel>Ödenecek Tutar:</PaymentAmountLabel>
+              <PaymentAmountValue>{formatPrice(auction.deposit_amount || 0)}</PaymentAmountValue>
+            </PaymentAmount>
+            
+            {/* Mock form fields for payment - to be replaced with actual payment processor later */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <InputGroup>
+                <InputLabel>Kart Numarası</InputLabel>
+                <Input type="text" placeholder="1234 5678 9012 3456" disabled={paymentProcessing} />
+              </InputGroup>
+              
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <InputGroup style={{ flex: 1 }}>
+                  <InputLabel>Son Kullanma Tarihi</InputLabel>
+                  <Input type="text" placeholder="MM/YY" disabled={paymentProcessing} />
+                </InputGroup>
+                
+                <InputGroup style={{ flex: 1 }}>
+                  <InputLabel>CVV</InputLabel>
+                  <Input type="text" placeholder="123" disabled={paymentProcessing} />
+                </InputGroup>
+              </div>
+            </div>
+            
+            {paymentMessage && (
+              <PaymentMessage type={paymentMessageType}>{paymentMessage}</PaymentMessage>
+            )}
+          </PaymentModalBody>
+          
+          <PaymentModalFooter>
+            <Button 
+              onClick={closePaymentModal}
+              style={{ 
+                backgroundColor: 'transparent', 
+                color: 'var(--color-text)',
+                border: '1px solid var(--color-border)'
+              }}
+              disabled={paymentProcessing}
+            >
+              İptal
+            </Button>
+            <Button 
+              onClick={handleMockPayment}
+              style={{ minWidth: '120px' }}
+              disabled={paymentProcessing}
+            >
+              {paymentProcessing ? (
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
+                  <LoadingIcon /> Ödeniyor...
+                </div>
+              ) : (
+                'Ödeme Yap'
+              )}
+            </Button>
+          </PaymentModalFooter>
+        </PaymentModalContent>
+      </PaymentModalOverlay>
+    );
+  };
 
   if (loading && !auction) {
       return <PageContainer><LoadingSpinner message="İlan yükleniyor..." /></PageContainer>;
@@ -2363,6 +2673,9 @@ const AuctionDetail = () => {
           </LightboxThumbnails>
         </LightboxOverlay>
       )}
+      
+      {/* Add Payment Modal */}
+      {renderPaymentModal()}
     </PageContainer>
   );
 };
