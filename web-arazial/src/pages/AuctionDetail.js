@@ -1003,6 +1003,126 @@ const DesktopBidCard = styled.div`
   }
 `;
 
+// --- Add these helper functions after the existing utility functions ---
+
+// Helper function to format number with thousand separators
+const formatNumberDisplay = (value) => {
+  if (!value) return '';
+  // Remove any non-digit characters first
+  const cleanValue = value.toString().replace(/\D/g, '');
+  if (!cleanValue) return '';
+  // Format with dots as thousand separators
+  return parseInt(cleanValue).toLocaleString('tr-TR');
+};
+
+// Helper function to parse formatted number back to plain number
+const parseFormattedNumber = (value) => {
+  if (!value) return '';
+  // Remove dots and any non-digit characters except the value itself
+  return value.toString().replace(/\./g, '').replace(/\D/g, '');
+};
+
+// Styled component for formatted currency input
+const CurrencyInputContainer = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+`;
+
+const CurrencySymbol = styled.span`
+  position: absolute;
+  right: 1rem;
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 1;
+`;
+
+const FormattedInput = styled.input`
+  width: 100%;
+  padding: 0.875rem 2.5rem 0.875rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  font-size: 1.125rem;
+  text-align: left;
+  font-weight: 600;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    height: 36px;
+  }
+`;
+
+const BidAmountInput = styled(FormattedInput)`
+  text-align: center;
+`;
+
+// Custom formatted currency input component
+const CurrencyInput = ({ 
+  value, 
+  onChange, 
+  placeholder, 
+  disabled, 
+  style, 
+  className,
+  isBidInput = false 
+}) => {
+  const [displayValue, setDisplayValue] = useState('');
+  
+  // Update display value when value prop changes
+  useEffect(() => {
+    if (value) {
+      setDisplayValue(formatNumberDisplay(value));
+    } else {
+      setDisplayValue('');
+    }
+  }, [value]);
+  
+  const handleInputChange = (e) => {
+    const inputValue = e.target.value;
+    
+    // Allow empty input
+    if (inputValue === '') {
+      setDisplayValue('');
+      onChange({ target: { value: '' } });
+      return;
+    }
+    
+    // Parse and format the input
+    const cleanValue = parseFormattedNumber(inputValue);
+    if (cleanValue) {
+      const formattedDisplay = formatNumberDisplay(cleanValue);
+      setDisplayValue(formattedDisplay);
+      // Pass the clean number value to parent
+      onChange({ target: { value: cleanValue } });
+    }
+  };
+  
+  const InputComponent = isBidInput ? BidAmountInput : FormattedInput;
+  
+  return (
+    <CurrencyInputContainer style={style} className={className}>
+      <InputComponent
+        type="text"
+        value={displayValue}
+        onChange={handleInputChange}
+        placeholder={placeholder}
+        disabled={disabled}
+      />
+      <CurrencySymbol>₺</CurrencySymbol>
+    </CurrencyInputContainer>
+  );
+};
+
 // Add BidCard component
 const BidCard = ({ 
   isOfferListing,
@@ -1208,6 +1328,19 @@ const BidCard = ({
                         </button>
                       </div>
                     </div>
+                    
+                    {/* Add Bid Amount Input for manual bidding if needed */}
+                    <div style={{ marginBottom: '0.75rem' }}>
+                      <InputLabel>Teklif Tutarınız</InputLabel>
+                      <CurrencyInput
+                        value={bidAmount}
+                        onChange={(e) => setBidAmount(e.target.value)}
+                        placeholder="Teklif tutarınızı girin"
+                        disabled={submitLoading}
+                        isBidInput={true}
+                      />
+                    </div>
+                    
                     <OfferButton 
                       type="submit" 
                       disabled={submitLoading || authLoading}
@@ -1430,14 +1563,10 @@ const BidCard = ({
                   <PropertyLabel htmlFor="offerAmount">Teklif Miktarınız</PropertyLabel>
                 )}
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexDirection: isMobile ? 'column' : 'row' }}>
-                  <OfferInput 
-                    type="number"
-                    id="offerAmount"
+                  <CurrencyInput
                     value={offerAmount}
-                    onChange={(e) => setOfferAmount(e.target.value === '' ? '' : e.target.value)}
-                    placeholder="Teklifinizi Girin (₺)"
-                    step="any"
-                    required 
+                    onChange={(e) => setOfferAmount(e.target.value)}
+                    placeholder="Teklifinizi girin"
                     disabled={submitLoading}
                     style={{ margin: 0, flex: 1, width: '100%' }}
                   />
@@ -1617,6 +1746,7 @@ const AuctionDetail = () => {
   const [paymentMessage, setPaymentMessage] = useState('');
   const [paymentMessageType, setPaymentMessageType] = useState('');
   const [actionType, setActionType] = useState(''); // 'bid' or 'offer'
+  const [paymentStep, setPaymentStep] = useState('info'); // 'info' or 'payment'
   
   useEffect(() => {
     // Set the current URL when the component mounts
@@ -1928,6 +2058,12 @@ const AuctionDetail = () => {
     return `${parseFloat(price).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} ₺`;
   };
 
+  // Format number with thousand separators (for area, etc.)
+  const formatNumber = (number) => {
+    if (number === undefined || number === null) return '';
+    return parseFloat(number).toLocaleString('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     try {
@@ -2115,6 +2251,7 @@ const AuctionDetail = () => {
       // Close modal after a short delay
       setTimeout(() => {
         setShowPaymentModal(false);
+        setPaymentStep('info'); // Reset to initial step
         
         // Try to continue with the intended action
         if (actionType === 'bid') {
@@ -2140,6 +2277,12 @@ const AuctionDetail = () => {
     setShowPaymentModal(false);
     setPaymentMessage('');
     setPaymentMessageType('');
+    setPaymentStep('info'); // Reset to initial step
+  };
+
+  // Function to proceed to payment form
+  const proceedToPayment = () => {
+    setPaymentStep('payment');
   };
 
   // Add payment modal component
@@ -2150,7 +2293,9 @@ const AuctionDetail = () => {
       <PaymentModalOverlay isVisible={showPaymentModal} onClick={closePaymentModal}>
         <PaymentModalContent onClick={(e) => e.stopPropagation()}>
           <PaymentModalHeader>
-            <PaymentModalTitle>Hizmet Bedeli Peşinatı Ödemesi</PaymentModalTitle>
+            <PaymentModalTitle>
+              {paymentStep === 'info' ? 'Hizmet Bedeli Peşinatı' : 'Hizmet Bedeli Peşinatı Ödemesi'}
+            </PaymentModalTitle>
             <button 
               onClick={closePaymentModal}
               style={{
@@ -2165,72 +2310,108 @@ const AuctionDetail = () => {
           </PaymentModalHeader>
           
           <PaymentModalBody>
-            <PaymentWarning>
-              <p style={{ margin: 0, fontWeight: 500 }}>Teklif verebilmek için hizmet bedeli peşinatını ödemeniz gerekmektedir.</p>
-              <p style={{ marginBottom: 0 }}>Kazanmadığınız durumda peşinat tutarınız iade edilecektir.</p>
-            </PaymentWarning>
-            
-            <PaymentInfo>
-              <p>
-                <strong>{auction.title}</strong> ilanına teklif vermek için hizmet bedeli peşinatı ödemeniz gerekmektedir. Bu, teklif verme ciddiyetinizi teyit etmek için gereklidir.
-              </p>
-            </PaymentInfo>
-            
-            <PaymentAmount>
-              <PaymentAmountLabel>Ödenecek Tutar:</PaymentAmountLabel>
-              <PaymentAmountValue>{formatPrice(auction.deposit_amount || 0)}</PaymentAmountValue>
-            </PaymentAmount>
-            
-            {/* Mock form fields for payment - to be replaced with actual payment processor later */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <InputGroup>
-                <InputLabel>Kart Numarası</InputLabel>
-                <Input type="text" placeholder="1234 5678 9012 3456" disabled={paymentProcessing} />
-              </InputGroup>
-              
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <InputGroup style={{ flex: 1 }}>
-                  <InputLabel>Son Kullanma Tarihi</InputLabel>
-                  <Input type="text" placeholder="MM/YY" disabled={paymentProcessing} />
-                </InputGroup>
+            {paymentStep === 'info' ? (
+              // Initial information step
+              <>
+                <PaymentWarning>
+                  <p style={{ margin: 0, fontWeight: 500, textAlign: 'center' }}>
+                    Teklif verebilmek için hizmet bedeli peşinatını ödemeniz gerekmektedir.
+                  </p>
+                  <p style={{ marginBottom: 0, textAlign: 'center' }}>
+                    Kazanmadığınız durumda peşinat tutarınız iade edilecektir.
+                  </p>
+                </PaymentWarning>
                 
-                <InputGroup style={{ flex: 1 }}>
-                  <InputLabel>CVV</InputLabel>
-                  <Input type="text" placeholder="123" disabled={paymentProcessing} />
-                </InputGroup>
-              </div>
-            </div>
-            
-            {paymentMessage && (
-              <PaymentMessage type={paymentMessageType}>{paymentMessage}</PaymentMessage>
+                <PaymentAmount>
+                  <PaymentAmountLabel>Ödenecek Tutar:</PaymentAmountLabel>
+                  <PaymentAmountValue>{formatPrice(auction.deposit_amount || 0)}</PaymentAmountValue>
+                </PaymentAmount>
+              </>
+            ) : (
+              // Payment form step
+              <>
+                <PaymentAmount>
+                  <PaymentAmountLabel>Ödenecek Tutar:</PaymentAmountLabel>
+                  <PaymentAmountValue>{formatPrice(auction.deposit_amount || 0)}</PaymentAmountValue>
+                </PaymentAmount>
+                
+                {/* Mock form fields for payment - to be replaced with actual payment processor later */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <InputGroup>
+                    <InputLabel>Kart Numarası</InputLabel>
+                    <Input type="text" placeholder="1234 5678 9012 3456" disabled={paymentProcessing} />
+                  </InputGroup>
+                  
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <InputGroup style={{ flex: 1 }}>
+                      <InputLabel>Son Kullanma Tarihi</InputLabel>
+                      <Input type="text" placeholder="MM/YY" disabled={paymentProcessing} />
+                    </InputGroup>
+                    
+                    <InputGroup style={{ flex: 1 }}>
+                      <InputLabel>CVV</InputLabel>
+                      <Input type="text" placeholder="123" disabled={paymentProcessing} />
+                    </InputGroup>
+                  </div>
+                </div>
+                
+                {paymentMessage && (
+                  <PaymentMessage type={paymentMessageType}>{paymentMessage}</PaymentMessage>
+                )}
+              </>
             )}
           </PaymentModalBody>
           
           <PaymentModalFooter>
-            <Button 
-              onClick={closePaymentModal}
-              style={{ 
-                backgroundColor: 'transparent', 
-                color: 'var(--color-text)',
-                border: '1px solid var(--color-border)'
-              }}
-              disabled={paymentProcessing}
-            >
-              İptal
-            </Button>
-            <Button 
-              onClick={handleMockPayment}
-              style={{ minWidth: '120px' }}
-              disabled={paymentProcessing}
-            >
-              {paymentProcessing ? (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-                  <LoadingIcon /> Ödeniyor...
-                </div>
-              ) : (
-                'Ödeme Yap'
-              )}
-            </Button>
+            {paymentStep === 'info' ? (
+              // Initial step buttons
+              <>
+                <Button 
+                  onClick={closePaymentModal}
+                  style={{ 
+                    backgroundColor: 'transparent', 
+                    color: 'var(--color-text)',
+                    border: '1px solid var(--color-border)'
+                  }}
+                >
+                  İptal
+                </Button>
+                <Button 
+                  onClick={proceedToPayment}
+                  style={{ minWidth: '140px' }}
+                >
+                  Teminatı Yatır
+                </Button>
+              </>
+            ) : (
+              // Payment step buttons
+              <>
+                <Button 
+                  onClick={() => setPaymentStep('info')}
+                  style={{ 
+                    backgroundColor: 'transparent', 
+                    color: 'var(--color-text)',
+                    border: '1px solid var(--color-border)'
+                  }}
+                  disabled={paymentProcessing}
+                >
+                  Geri
+                </Button>
+                <Button 
+                  onClick={handleMockPayment}
+                  style={{ minWidth: '120px' }}
+                  disabled={paymentProcessing}
+                >
+                  {paymentProcessing ? (
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
+                      <LoadingIcon /> Ödeniyor...
+                    </div>
+                  ) : (
+                    'Ödeme Yap'
+                  )}
+                </Button>
+              </>
+            )}
           </PaymentModalFooter>
         </PaymentModalContent>
       </PaymentModalOverlay>
@@ -2442,7 +2623,7 @@ const AuctionDetail = () => {
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>Alan (m²)</PropertyLabel>
-                  <PropertyValue>{auction.area_size ? `${auction.area_size} ${auction.area_unit || 'm²'}` : '-'}</PropertyValue>
+                  <PropertyValue>{auction.area_size ? `${formatNumber(auction.area_size)} ${auction.area_unit || 'm²'}` : '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>İlan Sahibi</PropertyLabel>
@@ -2545,7 +2726,7 @@ const AuctionDetail = () => {
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>Alan (m²)</PropertyLabel>
-                  <PropertyValue>{auction.area_size ? `${auction.area_size} ${auction.area_unit || 'm²'}` : '-'}</PropertyValue>
+                  <PropertyValue>{auction.area_size ? `${formatNumber(auction.area_size)} ${auction.area_unit || 'm²'}` : '-'}</PropertyValue>
                 </PropertyItem>
                 <PropertyItem>
                   <PropertyLabel>İlan Sahibi</PropertyLabel>
