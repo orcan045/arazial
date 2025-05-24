@@ -62,7 +62,7 @@ const HeroSubtitle = styled.p`
   
   @media (max-width: 768px) {
     font-size: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
   }
 `;
 
@@ -299,8 +299,8 @@ const PopularSearches = styled.div`
   }
   
   @media (max-width: 768px) {
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0;
     
     a {
       margin-right: 1rem;
@@ -322,8 +322,8 @@ const PageContainer = styled.div`
   z-index: 10;
   
   @media (max-width: 768px) {
-    padding: 1rem;
-    margin-top: 0;
+    padding: 0.75rem;
+    margin-top: -1rem;
     border-radius: 0;
     box-shadow: none;
   }
