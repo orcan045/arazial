@@ -187,7 +187,6 @@ const PhoneSignup = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
-  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -342,12 +341,6 @@ const PhoneSignup = () => {
       // Check terms and privacy acceptance
       if (!termsAccepted) {
         setVerificationError('Kullanım Koşullarını kabul etmelisiniz');
-        setVerifyLoading(false);
-        return;
-      }
-      
-      if (!privacyAccepted) {
-        setVerificationError('Gizlilik Politikasını kabul etmelisiniz');
         setVerifyLoading(false);
         return;
       }
@@ -657,19 +650,7 @@ const PhoneSignup = () => {
         </CheckboxLabel>
       </CheckboxContainer>
       
-      <CheckboxContainer>
-        <Checkbox 
-          id="privacyAgreement" 
-          type="checkbox" 
-          checked={privacyAccepted} 
-          onChange={(e) => setPrivacyAccepted(e.target.checked)}
-        />
-        <CheckboxLabel htmlFor="privacyAgreement">
-          <Link to="/privacy-policy" target="_blank">Gizlilik Politikası</Link>'nı okudum ve kabul ediyorum.
-        </CheckboxLabel>
-      </CheckboxContainer>
-      
-      <Button type="submit" disabled={verifyLoading || !password || !confirmPassword || !termsAccepted || !privacyAccepted}>
+      <Button type="submit" disabled={verifyLoading || !password || !confirmPassword || !termsAccepted}>
         {verifyLoading ? 'Kaydediliyor...' : 'Kayıt Ol'}
       </Button>
     </Form>

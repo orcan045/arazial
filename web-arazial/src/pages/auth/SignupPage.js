@@ -180,7 +180,6 @@ const SignupPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [acceptMarketing, setAcceptMarketing] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
-  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   
   // OTP fields
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
@@ -228,10 +227,6 @@ const SignupPage = () => {
     }
     if (!acceptTerms) {
       setErrors(prev => ({ ...prev, terms: 'Üyelik sözleşmesini kabul etmelisiniz' }));
-      return;
-    }
-    if (!acceptPrivacy) {
-      setErrors(prev => ({ ...prev, privacy: 'Gizlilik Sözleşmesini kabul etmelisiniz' }));
       return;
     }
     
@@ -554,19 +549,6 @@ const SignupPage = () => {
         </CheckboxLabel>
       </CheckboxContainer>
       {errors.terms && <ErrorMessage>{errors.terms}</ErrorMessage>}
-
-      <CheckboxContainer>
-        <CheckboxInput 
-          type="checkbox" 
-          id="privacy" 
-          checked={acceptPrivacy}
-          onChange={(e) => setAcceptPrivacy(e.target.checked)}
-        />
-        <CheckboxLabel>
-          <Link to="/privacy-policy" target="_blank" style={{ color: 'var(--color-primary)' }}>Gizlilik Sözleşmesini</Link> okudum ve kabul ediyorum.
-        </CheckboxLabel>
-      </CheckboxContainer>
-      {errors.privacy && <ErrorMessage>{errors.privacy}</ErrorMessage>}
       
       {errors.general && (
         <div style={{ textAlign: 'center', marginTop: '0.5rem' }}>

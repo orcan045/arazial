@@ -59,6 +59,17 @@ const SectionTitle = styled.h2`
   }
 `;
 
+const SubSectionTitle = styled.h3`
+  font-size: 1.3rem;
+  color: #34495e;
+  margin-bottom: 1rem;
+  margin-top: 1.5rem;
+
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+  }
+`;
+
 const Paragraph = styled.p`
   font-size: 1rem;
   color: #555;
@@ -84,103 +95,271 @@ const KvkkAydinlatmaMetniPage = () => {
   return (
     <PageContainer>
       <PageHeader>
-        <PageTitle>KİŞİSEL VERİLERİN KORUNMASI HAKKINDA AYDINLATMA METNİ</PageTitle>
+        <PageTitle>KİŞİSEL VERİLERİN KORUNMASI POLİTİKASI</PageTitle>
       </PageHeader>
 
-      <Paragraph>
-        İşbu Aydınlatma Metni, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, veri sorumlusu sıfatıyla arazialcom.net tarafından kişisel verilerinizin işlenme usul ve esaslarını açıklamak amacıyla hazırlanmıştır.
-      </Paragraph>
-
-      <Divider />
-
       <ContentSection>
-        <SectionTitle>1. Veri Sorumlusu</SectionTitle>
+        <SectionTitle>1. Giriş</SectionTitle>
         <Paragraph>
-          Kişisel verileriniz, veri sorumlusu sıfatıyla arazialcom.net tarafından KVKK'ya uygun şekilde işlenmektedir.
-          İletişim: info@arazialcom.org
+          arazialcom ("Şirket"), 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca, kişisel verilerinizin güvenliğine büyük önem vermektedir. Bu politika, kullanıcılarımızın verilerinin hangi amaçlarla, hangi yöntemlerle işlendiğini ve haklarını açıklamaktadır.
         </Paragraph>
       </ContentSection>
 
       <Divider />
 
       <ContentSection>
-        <SectionTitle>2. İşlenen Kişisel Veriler</SectionTitle>
+        <SectionTitle>2. Veri Sorumlusu</SectionTitle>
         <Paragraph>
-          Kimlik ve iletişim bilgileriniz (ad, soyad, e-posta, telefon), IP adresi, işlem geçmişi, ödeme bilgileri, teklif ve üyelik verileri gibi kişisel verileriniz işlenmektedir.
+          <strong>Veri sorumlusu:</strong> arazialcom<br />
+          <strong>İletişim:</strong> info@arazialcom.org
         </Paragraph>
       </ContentSection>
 
       <Divider />
 
       <ContentSection>
-        <SectionTitle>3. Kişisel Verilerin İşlenme Amaçları</SectionTitle>
-        <Paragraph>Kişisel verileriniz aşağıdaki amaçlarla işlenmektedir:</Paragraph>
+        <SectionTitle>3. İşlenen Kişisel Veriler</SectionTitle>
         <List>
-          <ListItem>Üyelik ve kullanıcı işlemlerinin yürütülmesi</ListItem>
-          <ListItem>Açık artırma ve ilan hizmetlerinin sağlanması</ListItem>
-          <ListItem>Teminat ödeme süreçlerinin yönetilmesi</ListItem>
-          <ListItem>Müşteri ilişkileri ve bilgilendirme faaliyetleri</ListItem>
-          <ListItem>İlgili mevzuattan doğan yasal yükümlülüklerin yerine getirilmesi</ListItem>
+          <ListItem>Kimlik bilgileri (Ad-soyad, TCKN)</ListItem>
+          <ListItem>İletişim bilgileri (Telefon, e-posta)</ListItem>
+          <ListItem>Kullanıcı işlem bilgileri</ListItem>
+          <ListItem>Ödeme ve teminat verileri</ListItem>
+          <ListItem>Cihaz/IP verileri</ListItem>
         </List>
       </ContentSection>
 
       <Divider />
 
       <ContentSection>
-        <SectionTitle>4. Hukuki Sebepler</SectionTitle>
-        <Paragraph>Kişisel verileriniz, KVKK'nın 5. ve 6. maddelerinde belirtilen:</Paragraph>
+        <SectionTitle>4. Veri İşleme Amaçları</SectionTitle>
         <List>
-          <ListItem>Sözleşmenin kurulması ve ifası</ListItem>
-          <ListItem>Bir hakkın tesisi, kullanılması veya korunması</ListItem>
-          <ListItem>Kanuni yükümlülüklerin yerine getirilmesi</ListItem>
-          <ListItem>Açık rızaya dayalı olarak</ListItem>
-        </List>
-        <Paragraph>hukuki sebeplerle işlenmektedir.</Paragraph>
-      </ContentSection>
-
-      <Divider />
-
-      <ContentSection>
-        <SectionTitle>5. Aktarım Bilgisi</SectionTitle>
-        <Paragraph>
-          Kişisel verileriniz, yalnızca yasal zorunluluk hâlinde veya hizmetin ifası için gerekli durumlarda; yetkili kamu kurumları, ödeme kuruluşları ve hizmet alınan iş ortaklarına aktarılabilir.
-        </Paragraph>
-      </ContentSection>
-
-      <Divider />
-
-      <ContentSection>
-        <SectionTitle>6. Saklama Süresi</SectionTitle>
-        <Paragraph>
-          Kişisel verileriniz, mevzuatta belirtilen süreler kadar veya işleme amacı ortadan kalkana kadar saklanmakta, ardından silinmekte, yok edilmekte ya da anonimleştirilmektedir.
-        </Paragraph>
-      </ContentSection>
-      
-      <Divider />
-
-      <ContentSection>
-        <SectionTitle>7. KVKK Kapsamındaki Haklarınız</SectionTitle>
-        <Paragraph>KVKK'nın 11. maddesi uyarınca;</Paragraph>
-        <List>
-          <ListItem>Kişisel verilerinizin işlenip işlenmediğini öğrenme</ListItem>
-          <ListItem>İşlenmişse buna ilişkin bilgi talep etme</ListItem>
-          <ListItem>İşleme amacını ve amaca uygun kullanılıp kullanılmadığını öğrenme</ListItem>
-          <ListItem>Yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme</ListItem>
-          <ListItem>Eksik veya yanlış işlenmişse düzeltilmesini isteme</ListItem>
-          <ListItem>KVKK'ya aykırı işlenmişse silinmesini veya yok edilmesini isteme</ListItem>
-          <ListItem>Bu işlemlerin üçüncü kişilere bildirilmesini isteme</ListItem>
-          <ListItem>İşlenen verilerin münhasıran otomatik sistemler aracılığıyla analiz edilmesiyle aleyhinize bir sonucun ortaya çıkmasına itiraz etme</ListItem>
-          <ListItem>Zarara uğramanız hâlinde tazminat talep etme hakkınız vardır.</ListItem>
+          <ListItem>Üyelik işlemlerinin gerçekleştirilmesi</ListItem>
+          <ListItem>Teklif ve teminat süreçlerinin yürütülmesi</ListItem>
+          <ListItem>Finansal kayıtların tutulması</ListItem>
+          <ListItem>Yasal yükümlülüklerin yerine getirilmesi</ListItem>
+          <ListItem>Kullanıcı deneyiminin geliştirilmesi</ListItem>
         </List>
       </ContentSection>
 
       <Divider />
 
       <ContentSection>
-        <SectionTitle>8. Başvuru Yolu</SectionTitle>
-      <Paragraph>
-          Bu haklarınıza ilişkin taleplerinizi info@arazialcom.org adresine iletebilirsiniz.
-      </Paragraph>
+        <SectionTitle>5. Hukuki Sebepler</SectionTitle>
+        <Paragraph>
+          KVKK md. 5/2 çerçevesinde; sözleşmenin kurulması, hukuki yükümlülüklerin yerine getirilmesi, meşru menfaat gereklilikleri gibi hukuki sebeplere dayanarak işlenir.
+        </Paragraph>
+      </ContentSection>
+
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>6. Veri Aktarımı</SectionTitle>
+        <Paragraph>Verileriniz;</Paragraph>
+        <List>
+          <ListItem>Yetkili kamu kurumları,</ListItem>
+          <ListItem>Ödeme altyapısı sağlayıcıları,</ListItem>
+          <ListItem>Teknik destek hizmeti alınan üçüncü kişilerle</ListItem>
+        </List>
+        <Paragraph>yasal sınırlar dahilinde paylaşılabilir.</Paragraph>
+      </ContentSection>
+
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>7. Saklama Süresi</SectionTitle>
+        <Paragraph>
+          Kişisel veriler, ilgili mevzuatta öngörülen süreler boyunca saklanır; süre sonunda anonimleştirilerek veya silinerek imha edilir.
+        </Paragraph>
+      </ContentSection>
+
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>8. KVKK Kapsamında Haklarınız</SectionTitle>
+        <Paragraph>
+          KVKK madde 11 kapsamında; veri işlenip işlenmediğini öğrenme, düzeltme, silme, itiraz etme gibi tüm yasal haklara sahipsiniz.
+        </Paragraph>
+        <Paragraph>
+          Başvurularınızı <strong>info@arazialcom.org</strong> adresine yazılı olarak iletebilirsiniz.
+        </Paragraph>
+      </ContentSection>
+
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>2. PAZARLAMA VE AÇIK RIZA AYDINLATMA METNİ</SectionTitle>
+        <Paragraph>
+          Tarafınıza kampanya, duyuru, tanıtım, reklam ve bilgilendirme yapılabilmesi amacıyla iletişim bilgilerinizin kullanılması; 6698 sayılı KVKK uyarınca sadece açık rızanız ile mümkündür.
+        </Paragraph>
+        <Paragraph>Rıza göstermeniz halinde;</Paragraph>
+        <List>
+          <ListItem>E-posta, SMS ve mobil bildirim gönderimi yapılabilir,</ListItem>
+          <ListItem>Verileriniz pazarlama amacı dışında kullanılmaz,</ListItem>
+          <ListItem>Her zaman iletişimden çıkma hakkınız bulunmaktadır.</ListItem>
+        </List>
+        <Paragraph>
+          Açık rızanızı dilediğiniz zaman iptal etmek için <strong>info@arazialcom.org</strong> adresinden bize ulaşabilirsiniz.
+        </Paragraph>
+      </ContentSection>
+
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>3. ÇEREZ AYDINLATMA METNİ</SectionTitle>
+        <Paragraph>
+          arazialcom olarak, internet sitemizi ve uygulamalarımızı ziyaret ettiğinizde deneyiminizi iyileştirmek ve istatistiksel analiz yapmak amacıyla çerez (cookie) teknolojilerinden faydalanıyoruz.
+        </Paragraph>
+        <SubSectionTitle>Kullanılan Çerez Türleri:</SubSectionTitle>
+        <List>
+          <ListItem><strong>Zorunlu çerezler:</strong> Oturum yönetimi ve güvenlik</ListItem>
+          <ListItem><strong>Performans çerezleri:</strong> Site trafiği ve hata takibi</ListItem>
+          <ListItem><strong>Hedefleme çerezleri:</strong> Pazarlama ve kullanıcı tercihleri</ListItem>
+        </List>
+        <Paragraph>
+          Tarayıcınızdan çerezleri reddedebilir veya yönetebilirsiniz. Detaylı bilgi için <strong>info@arazialcom.org</strong> üzerinden bize ulaşabilirsiniz.
+        </Paragraph>
+      </ContentSection>
+
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>4. KULLANIM KOŞULLARI</SectionTitle>
+        
+        <SubSectionTitle>1. Tanımlar</SubSectionTitle>
+        <Paragraph>
+          <strong>"Platform":</strong> www.arazialcom.net alan adlı web sitesi.<br />
+          <strong>"Kullanıcı":</strong> Platforma kayıtlı veya ziyaretçi sıfatıyla erişim sağlayan gerçek veya tüzel kişiler.<br />
+          <strong>"Satıcı":</strong> İlan oluşturan ve arazisini satışa çıkaran tüzel kişilerdir.<br />
+          <strong>"arazialcom":</strong> Platformun yöneticisi ve altyapı sağlayıcısıdır.
+        </Paragraph>
+
+        <SubSectionTitle>2. Hizmet Tanımı</SubSectionTitle>
+        <Paragraph>
+          arazialcom; arazi satışı yapan firmaların ilanlarını yayımlayan, teminatlı tekliflerin alınmasına imkân sağlayan, ilan listeleme ve ödeme altyapısı sunan bir çevrimiçi platformdur.
+          arazialcom satışa taraf değildir.
+        </Paragraph>
+
+        <SubSectionTitle>3. Kullanıcı Yükümlülükleri</SubSectionTitle>
+        <List>
+          <ListItem>Gerçek ve doğru bilgi vermek,</ListItem>
+          <ListItem>Kendi hesabının güvenliğini sağlamak,</ListItem>
+          <ListItem>Teminat ödeme yükümlülüklerine uymak,</ListItem>
+          <ListItem>Platformu kötüye kullanmamak.</ListItem>
+        </List>
+
+        <SubSectionTitle>4. Teminat Sistemi</SubSectionTitle>
+        <List>
+          <ListItem>Her teklif için belirtilen tutarda teminat alınır.</ListItem>
+          <ListItem>Teklif kazanılmazsa teminat, 7 iş günü içinde iade edilir.</ListItem>
+          <ListItem>Ödeme ve iade süreçleri sanal POS sistemi üzerinden yürütülür.</ListItem>
+        </List>
+
+        <SubSectionTitle>5. Sorumluluk Reddi</SubSectionTitle>
+        <Paragraph>
+          arazialcom, ilan içeriğinin doğruluğu ve satış sonrası işlemlerden sorumlu değildir.
+          Her satış, kazanan kullanıcı ile ilan sahibi arasında gerçekleşir.
+        </Paragraph>
+
+        <SubSectionTitle>6. Fesih</SubSectionTitle>
+        <Paragraph>
+          arazialcom, üyeliği herhangi bir gerekçeyle sonlandırma hakkını saklı tutar.
+        </Paragraph>
+      </ContentSection>
+
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>5. VERİ SAHİBİ BAŞVURU FORMU</SectionTitle>
+        
+        <SubSectionTitle>Başvuru Yöntemleri:</SubSectionTitle>
+        <List>
+          <ListItem><strong>E-posta:</strong> info@arazialcom.org</ListItem>
+          <ListItem><strong>Posta:</strong> [Şirket adresi buraya eklenecek]</ListItem>
+        </List>
+
+        <SubSectionTitle>Zorunlu Bilgiler:</SubSectionTitle>
+        <List>
+          <ListItem>Ad-soyad</ListItem>
+          <ListItem>T.C. kimlik numarası</ListItem>
+          <ListItem>E-posta veya telefon</ListItem>
+          <ListItem>Talep konusu</ListItem>
+          <ListItem>İmza</ListItem>
+        </List>
+
+        <Paragraph>
+          Başvurular en geç 30 gün içinde yazılı olarak yanıtlanır. Kimlik doğrulaması gerekebilir.
+        </Paragraph>
+      </ContentSection>
+
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>6. MESAFELİ SATIŞ SÖZLEŞMESİ – TEKLİF</SectionTitle>
+        <Paragraph>
+          Bu sözleşme, teklif veren kullanıcı ("Alıcı") ile ilan yayınlayan firma ("Satıcı") arasında, arazialcom'un yalnızca aracı platform olarak yer aldığı teklif sürecine ilişkindir.
+        </Paragraph>
+        <List>
+          <ListItem>Alıcı, ihaleye katılım için teminat yatırmakla yükümlüdür.</ListItem>
+          <ListItem>Kazanan kullanıcı dışında kalan tüm kullanıcılara teminat kesintisiz iade edilir.</ListItem>
+          <ListItem>Satışa ilişkin nihai sözleşme alıcı ile satıcı arasında yapılır.</ListItem>
+          <ListItem>arazialcom, satış sözleşmesine taraf değildir.</ListItem>
+        </List>
+      </ContentSection>
+
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>7. MESAFELİ SATIŞ SÖZLEŞMESİ</SectionTitle>
+        
+        <SubSectionTitle>Taraflar:</SubSectionTitle>
+        <List>
+          <ListItem><strong>Satıcı:</strong> İlan sahibi tüzel kişi</ListItem>
+          <ListItem><strong>Alıcı:</strong> İhaleyi kazanan kullanıcı</ListItem>
+        </List>
+
+        <Paragraph>
+          Bu sözleşme, yalnızca ihaleyi kazanan kullanıcı ile ilan sahibi arasında yapılır. Satışa konu taşınmazın devri, noter veya tapu müdürlüğü huzurunda gerçekleştirilir.
+          arazialcom, bu sürece taraf değildir ve garanti vermez.
+        </Paragraph>
+      </ContentSection>
+
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>8. ÜYELİK SÖZLEŞMESİ</SectionTitle>
+        
+        <SubSectionTitle>1. Üyelik Şartları:</SubSectionTitle>
+        <List>
+          <ListItem>Kullanıcı, kayıt olurken doğru bilgi vermekle yükümlüdür.</ListItem>
+          <ListItem>Üyelik ücretsizdir ve iptal edilebilir.</ListItem>
+        </List>
+
+        <SubSectionTitle>2. Kullanım Alanı:</SubSectionTitle>
+        <List>
+          <ListItem>Kullanıcı, yalnızca teklif verme, ilan görüntüleme ve ödeme işlemleri için platformu kullanabilir.</ListItem>
+          <ListItem>İlan yayınlama yalnızca yetkili satıcı hesapları üzerinden gerçekleştirilir.</ListItem>
+        </List>
+
+        <SubSectionTitle>3. Sorumluluk ve Fesih:</SubSectionTitle>
+        <List>
+          <ListItem>arazialcom, platformu kötüye kullanan hesapları durdurabilir.</ListItem>
+          <ListItem>Her kullanıcı, hesabından yapılan işlemlerden sorumludur.</ListItem>
+        </List>
+      </ContentSection>
+
+      <Divider />
+
+      <ContentSection>
+        <SectionTitle>9. GİZLİLİK POLİTİKASI</SectionTitle>
+        <Paragraph>
+          arazialcom, kullanıcıların gizliliğine önem verir. Kişisel veriler:
+        </Paragraph>
+        <List>
+          <ListItem>Sadece yasal zorunluluk ve kullanıcı onayı ile işlenir,</ListItem>
+          <ListItem>Üçüncü kişilerle yalnızca hizmet sunum amacıyla paylaşılır,</ListItem>
+          <ListItem>Güvenli sunucularda saklanır ve yetkisiz erişime karşı korunur,</ListItem>
+          <ListItem>Ticari amaçla satılmaz, pazarlanmaz, saklanmaz.</ListItem>
+        </List>
       </ContentSection>
     </PageContainer>
   );
