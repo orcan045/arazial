@@ -644,7 +644,7 @@ const SignupPage = () => {
         </svg>
         Anasayfaya Dön
       </BackLink>
-      <Header>Arazialcom'a Katıl</Header>
+      <Header>arazialcom'a Katıl</Header>
       <Description>
         Hoş geldiniz, aşağıdaki formu doldurarak ücretsiz üye olabilirsiniz.
       </Description>
