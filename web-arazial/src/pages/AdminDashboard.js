@@ -4171,7 +4171,6 @@ function AdminDashboard() {
                         <TableHead>
                           <TableRow>
                             <TableHeader>Teklif Veren</TableHeader>
-                            <TableHeader>E-posta</TableHeader>
                             <TableHeader>Telefon</TableHeader>
                             <TableHeader>Teklif Tutarı</TableHeader>
                             <TableHeader>Teklif Tarihi</TableHeader>
@@ -4182,7 +4181,6 @@ function AdminDashboard() {
                           {bids.map(bid => (
                             <TableRow key={bid.id}>
                               <TableCell data-label="Teklif Veren">{bid.profiles?.full_name || 'İsimsiz'}</TableCell>
-                              <TableCell data-label="E-posta">{bid.profiles?.email || '-'}</TableCell>
                               <TableCell data-label="Telefon">{bid.profiles?.phone_number || '-'}</TableCell>
                               <TableCell data-label="Teklif Tutarı">{bid.amount?.toLocaleString('tr-TR')} TL</TableCell>
                               <TableCell data-label="Teklif Tarihi">{formatDate(bid.created_at)}</TableCell>
@@ -4214,7 +4212,6 @@ function AdminDashboard() {
                         <TableHead>
                           <TableRow>
                             <TableHeader>Teklif Veren</TableHeader>
-                            <TableHeader>E-posta</TableHeader>
                             <TableHeader>Telefon</TableHeader>
                             <TableHeader>Teklif Tutarı</TableHeader>
                             <TableHeader>Teklif Tarihi</TableHeader>
@@ -4226,7 +4223,6 @@ function AdminDashboard() {
                           {selectedAuctionOffers.map(offer => (
                             <TableRow key={offer.id}>
                               <TableCell data-label="Teklif Veren">{offer.profiles?.full_name || 'İsimsiz'}</TableCell>
-                              <TableCell data-label="E-posta">{offer.profiles?.email || '-'}</TableCell>
                               <TableCell data-label="Telefon">{offer.profiles?.phone_number || '-'}</TableCell>
                               <TableCell data-label="Teklif Tutarı">{offer.amount?.toLocaleString('tr-TR')} TL</TableCell>
                               <TableCell data-label="Teklif Tarihi">{formatDate(offer.created_at)}</TableCell>
