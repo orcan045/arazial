@@ -2289,7 +2289,7 @@ const AuctionDetail = () => {
         throw new Error(error.message || 'Payment request failed');
       }
 
-      if (!data.PaymentLink) {
+      if (!data?.PaymentLink) {
         throw new Error('No payment link received');
       }
 
