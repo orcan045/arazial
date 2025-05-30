@@ -2252,7 +2252,7 @@ const AuctionDetail = () => {
       const payload = {
         ReturnUrl: window.location.origin + '/payment-result',
         OrderId: `auction-${auction.id}-user-${user.id}-${Date.now()}`,
-        ClientIp: clientIp,
+        ClientIp: clientIp || '127.0.0.1', // Fallback IP if getClientIp fails
         Installment: 1,
         Amount: Number(auction.deposit_amount), // Ensure it's a number
         Is3D: true,
