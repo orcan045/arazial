@@ -2281,17 +2281,13 @@ const AuctionDetail = () => {
         ]
       };
 
-      // Call the Supabase Edge Function
-      const res = await fetch(PAYMENT_CONFIG.PAYMENT_REQUEST_URL, {
-        method: 'POST',
-        headers: PAYMENT_CONFIG.HEADERS,
-        body: JSON.stringify(payload),
+      // Call the Supabase Edge Function using invoke
+      const { data, error } = await supabase.functions.invoke('payment-proxy', {
+        body: payload
       });
 
-      const data = await res.json();
-
-      if (!res.ok || !data.PaymentLink) {
-        throw new Error(data.error?.Message || data.error || 'Ödeme başlatılamadı.');
+      if (error || !data?.PaymentLink) {
+        throw new Error(error?.message || data?.error?.Message || data?.error || 'Ödeme başlatılamadı.');
       }
 
       // Redirect to PaymentLink

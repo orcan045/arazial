@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { PAYMENT_CONFIG } from '../config/payment';
+import { supabase } from '../services/supabase';
 
 const Container = styled.div`
   max-width: 600px;
@@ -60,14 +60,14 @@ const PaymentCallback = () => {
         const payload = {};
         if (uid) payload.uid = uid;
         if (orderId) payload.orderId = orderId;
-        const res = await fetch(PAYMENT_CONFIG.PAYMENT_RESULT_URL, {
-          method: 'POST',
-          headers: PAYMENT_CONFIG.HEADERS,
-          body: JSON.stringify(payload),
+        
+        // Call the Supabase Edge Function using invoke
+        const { data, error: functionError } = await supabase.functions.invoke('payment-proxy', {
+          body: payload
         });
-        const data = await res.json();
-        if (!res.ok || data.error) {
-          throw new Error(data.error || 'Ödeme sonucu alınamadı.');
+
+        if (functionError || !data) {
+          throw new Error(functionError?.message || 'Ödeme sonucu alınamadı.');
         }
         setResult(data);
       } catch (err) {
@@ -80,7 +80,17 @@ const PaymentCallback = () => {
   }, [searchParams]);
 
   const handleContinue = () => {
-    // Implement the logic to navigate to the auction page
+    // Extract auction ID from orderId
+    const orderId = searchParams.get('orderId');
+    if (orderId) {
+      const match = orderId.match(/auction-(\d+)-user/);
+      if (match && match[1]) {
+        window.location.href = `/auctions/${match[1]}`;
+        return;
+      }
+    }
+    // Fallback to auctions list if we can't extract the auction ID
+    window.location.href = '/auctions';
   };
 
   if (loading) {
