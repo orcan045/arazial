@@ -2248,37 +2248,61 @@ const AuctionDetail = () => {
 
     try {
       const clientIp = await getClientIp();
+      
+      // Validate card info before sending
+      if (!cardOwner || !cardNumber || !cardMonth || !cardYear || !cardCvv) {
+        throw new Error('Lütfen tüm kart bilgilerini doldurun.');
+      }
+
+      // Clean and validate card number
+      const cleanCardNumber = cardNumber.replace(/\s/g, '');
+      if (!/^\d{16}$/.test(cleanCardNumber)) {
+        throw new Error('Geçersiz kart numarası.');
+      }
+
+      // Clean and validate expiry date
+      const cleanMonth = cardMonth.padStart(2, '0');
+      const cleanYear = cardYear.padStart(2, '0');
+      if (!/^\d{2}$/.test(cleanMonth) || parseInt(cleanMonth) < 1 || parseInt(cleanMonth) > 12) {
+        throw new Error('Geçersiz son kullanma ayı.');
+      }
+      if (!/^\d{2}$/.test(cleanYear)) {
+        throw new Error('Geçersiz son kullanma yılı.');
+      }
+
+      // Clean and validate CVV
+      const cleanCvv = cardCvv.trim();
+      if (!/^\d{3,4}$/.test(cleanCvv)) {
+        throw new Error('Geçersiz CVV.');
+      }
+
       // Prepare the payload for the payment-proxy-server
       const payload = {
-        ReturnUrl: window.location.origin + '/payment-result',
+        ReturnUrl: `${window.location.origin}/payment-result`,
         OrderId: `auction-${auction.id}-user-${user.id}-${Date.now()}`,
-        ClientIp: clientIp || '127.0.0.1', // Fallback IP if getClientIp fails
+        ClientIp: clientIp || '127.0.0.1',
         Installment: 1,
-        Amount: Number(auction.deposit_amount), // Ensure it's a number
+        Amount: Number(auction.deposit_amount),
         Is3D: true,
         IsAutoCommit: true,
         CardInfo: {
-          CardOwner: cardOwner,
-          CardNo: cardNumber.replace(/\s/g, ''),
-          Month: cardMonth,
-          Year: cardYear,
-          Cvv: cardCvv,
-        },
-        CustomerInfo: {
-          Name: profile?.full_name || user.email || '',
-          Phone: profile?.phone_number || '',
-          Email: user.email || '',
-          Address: profile?.address || '',
-          Description: `Auction deposit for auction #${auction.id}`,
-        },
-        Products: [
-          {
-            Name: auction.title,
-            Count: 1,
-            UnitPrice: Number(auction.deposit_amount), // Ensure it's a number
-          }
-        ]
+          CardOwner: cardOwner.trim(),
+          CardNo: cleanCardNumber,
+          Month: cleanMonth,
+          Year: cleanYear,
+          Cvv: cleanCvv
+        }
       };
+
+      // Log the payload (without sensitive data)
+      console.log('Sending payment request:', {
+        ...payload,
+        CardInfo: {
+          ...payload.CardInfo,
+          CardNo: '****' + payload.CardInfo.CardNo.slice(-4),
+          Cvv: '***'
+        }
+      });
 
       // Call the payment proxy server through our edge function
       const { data: response, error } = await supabase.functions.invoke('relay-payment', {
@@ -2286,8 +2310,11 @@ const AuctionDetail = () => {
       });
 
       if (error) {
+        console.error('Payment function error:', error);
         throw new Error(error.message || 'Payment request failed');
       }
+
+      console.log('Payment function response:', response);
 
       if (!response?.data?.PaymentLink) {
         throw new Error('No payment link received');
