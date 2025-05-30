@@ -2249,10 +2249,15 @@ const AuctionDetail = () => {
 
     try {
       const clientIp = await getClientIp();
+      
+      // Generate a shorter OrderId (max 64 chars)
+      const timestamp = Date.now().toString(36); // Convert timestamp to base36
+      const orderId = `a${auction.id}u${user.id}t${timestamp}`;
+      
       // Prepare the payload for the payment-proxy-server
       const payload = {
         ReturnUrl: window.location.origin + '/payment-result',
-        OrderId: `auction-${auction.id}-user-${user.id}-${Date.now()}`,
+        OrderId: orderId,
         ClientIp: clientIp,
         Installment: 1,
         Amount: auction.deposit_amount,
@@ -2270,11 +2275,11 @@ const AuctionDetail = () => {
           Phone: profile?.phone_number || '',
           Email: user.email || '',
           Address: profile?.address || '',
-          Description: `Auction deposit for auction #${auction.id}`,
+          Description: `Deposit for #${auction.id}`,
         },
         Products: [
           {
-            Name: auction.title,
+            Name: auction.title.substring(0, 100), // Ensure product name isn't too long
             Count: 1,
             UnitPrice: auction.deposit_amount,
           }
