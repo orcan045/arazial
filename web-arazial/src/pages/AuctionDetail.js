@@ -2309,12 +2309,12 @@ const AuctionDetail = () => {
         body: payload
       });
 
+      console.log('Payment function response:', response);
+
       if (error) {
         console.error('Payment function error:', error);
         throw new Error(error.message || 'Payment request failed');
       }
-
-      console.log('Payment function response:', response);
 
       if (!response?.data?.PaymentLink) {
         throw new Error('No payment link received');
