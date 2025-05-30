@@ -8,9 +8,8 @@ import CountdownTimer from '../components/CountdownTimer';
 import Button from '../components/ui/Button';
 
 // Add at the top of the file:
-// Set the Supabase Edge Function endpoint for payment relay
-const PAYMENT_PROXY_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/relay-payment`; // Replace with your actual Supabase project URL
-// No PAYMENT_PROXY_KEY needed in frontend anymore
+const PAYMENT_PROXY_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/relay-payment`;
+const PAYMENT_PROXY_KEY = 'arazialcom123123';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -2281,23 +2280,27 @@ const AuctionDetail = () => {
         ]
       };
 
-      // Call the payment proxy server
-      const res = await fetch(PAYMENT_PROXY_URL, {
+      // Call the payment proxy server through our edge function
+      const res = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/relay-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+          'x-api-key': PAYMENT_PROXY_KEY,
         },
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
-
-      if (!res.ok || !data.PaymentLink) {
-        throw new Error(data.error?.Message || data.error || 'Ödeme başlatılamadı.');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Payment request failed');
       }
 
-      // Redirect to PaymentLink
+      const data = await res.json();
+      if (!data.PaymentLink) {
+        throw new Error('No payment link received');
+      }
+
+      // Redirect to PaymentLink for 3D Secure
       window.location.href = data.PaymentLink;
     } catch (error) {
       setPaymentMessage(error.message || 'Ödeme işlemi sırasında bir hata oluştu.');

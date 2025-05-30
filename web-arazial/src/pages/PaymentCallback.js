@@ -39,7 +39,7 @@ const Button = styled.button`
   }
 `;
 
-const PAYMENT_PROXY_URL = 'https://srv759491.hstgr.cloud:4000/api/pay-result'; // Update to your VPS payment proxy URL
+const PAYMENT_PROXY_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/relay-payment`;
 const PAYMENT_PROXY_KEY = 'arazialcom123123';
 
 const PaymentCallback = () => {
