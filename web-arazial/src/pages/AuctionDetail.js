@@ -8,8 +8,9 @@ import CountdownTimer from '../components/CountdownTimer';
 import Button from '../components/ui/Button';
 
 // Add at the top of the file:
-const PAYMENT_PROXY_URL = 'http://srv759491.hstgr.cloud:4000/api/pay-request';
-const PAYMENT_PROXY_KEY = 'arazialcom123123';
+// Set the Supabase Edge Function endpoint for payment relay
+const PAYMENT_PROXY_URL = 'https://<your-supabase-project>.functions.supabase.co/relay-payment'; // Replace with your actual Supabase project URL
+// No PAYMENT_PROXY_KEY needed in frontend anymore
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -2285,7 +2286,6 @@ const AuctionDetail = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': PAYMENT_PROXY_KEY,
         },
         body: JSON.stringify(payload),
       });
