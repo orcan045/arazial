@@ -6,9 +6,10 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
 import CountdownTimer from '../components/CountdownTimer';
 import Button from '../components/ui/Button';
+import { PAYMENT_CONFIG } from '../config/payment';
 
 // Add at the top of the file:
-const PAYMENT_PROXY_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/relay-payment`;
+const PAYMENT_PROXY_URL = 'https://srv759491.hstgr.cloud:4000/api/pay-request';
 const PAYMENT_PROXY_KEY = 'arazialcom123123';
 
 const PageContainer = styled.div`
@@ -2248,82 +2249,54 @@ const AuctionDetail = () => {
 
     try {
       const clientIp = await getClientIp();
-      
-      // Validate card info before sending
-      if (!cardOwner || !cardNumber || !cardMonth || !cardYear || !cardCvv) {
-        throw new Error('Lütfen tüm kart bilgilerini doldurun.');
-      }
-
-      // Clean and validate card number
-      const cleanCardNumber = cardNumber.replace(/\s/g, '');
-      if (!/^\d{16}$/.test(cleanCardNumber)) {
-        throw new Error('Geçersiz kart numarası.');
-      }
-
-      // Clean and validate expiry date
-      const cleanMonth = cardMonth.padStart(2, '0');
-      const cleanYear = cardYear.padStart(2, '0');
-      if (!/^\d{2}$/.test(cleanMonth) || parseInt(cleanMonth) < 1 || parseInt(cleanMonth) > 12) {
-        throw new Error('Geçersiz son kullanma ayı.');
-      }
-      if (!/^\d{2}$/.test(cleanYear)) {
-        throw new Error('Geçersiz son kullanma yılı.');
-      }
-
-      // Clean and validate CVV
-      const cleanCvv = cardCvv.trim();
-      if (!/^\d{3,4}$/.test(cleanCvv)) {
-        throw new Error('Geçersiz CVV.');
-      }
-
       // Prepare the payload for the payment-proxy-server
       const payload = {
-        ReturnUrl: `${window.location.origin}/payment-result`,
+        ReturnUrl: window.location.origin + '/payment-result',
         OrderId: `auction-${auction.id}-user-${user.id}-${Date.now()}`,
-        ClientIp: clientIp || '127.0.0.1',
+        ClientIp: clientIp,
         Installment: 1,
-        Amount: Number(auction.deposit_amount),
+        Amount: auction.deposit_amount,
         Is3D: true,
         IsAutoCommit: true,
         CardInfo: {
-          CardOwner: cardOwner.trim(),
-          CardNo: cleanCardNumber,
-          Month: cleanMonth,
-          Year: cleanYear,
-          Cvv: cleanCvv
-        }
+          CardOwner: cardOwner,
+          CardNo: cardNumber.replace(/\s/g, ''),
+          Month: cardMonth,
+          Year: cardYear,
+          Cvv: cardCvv,
+        },
+        CustomerInfo: {
+          Name: profile?.full_name || user.email || '',
+          Phone: profile?.phone_number || '',
+          Email: user.email || '',
+          Address: profile?.address || '',
+          Description: `Auction deposit for auction #${auction.id}`,
+        },
+        Products: [
+          {
+            Name: auction.title,
+            Count: 1,
+            UnitPrice: auction.deposit_amount,
+          }
+        ]
       };
 
-      // Log the payload (without sensitive data)
-      console.log('Sending payment request:', {
-        ...payload,
-        CardInfo: {
-          ...payload.CardInfo,
-          CardNo: '****' + payload.CardInfo.CardNo.slice(-4),
-          Cvv: '***'
-        }
+      // Call the Supabase Edge Function
+      const res = await fetch(PAYMENT_CONFIG.PAYMENT_REQUEST_URL, {
+        method: 'POST',
+        headers: PAYMENT_CONFIG.HEADERS,
+        body: JSON.stringify(payload),
       });
 
-      // Call the payment proxy server through our edge function
-      const { data: response, error } = await supabase.functions.invoke('relay-payment', {
-        body: payload
-      });
+      const data = await res.json();
 
-      console.log('Payment function response:', response);
-
-      if (error) {
-        console.error('Payment function error:', error);
-        throw new Error(error.message || 'Payment request failed');
+      if (!res.ok || !data.PaymentLink) {
+        throw new Error(data.error?.Message || data.error || 'Ödeme başlatılamadı.');
       }
 
-      if (!response?.data?.PaymentLink) {
-        throw new Error('No payment link received');
-      }
-
-      // Redirect to PaymentLink for 3D Secure
-      window.location.href = response.data.PaymentLink;
+      // Redirect to PaymentLink
+      window.location.href = data.PaymentLink;
     } catch (error) {
-      console.error('Payment error:', error);
       setPaymentMessage(error.message || 'Ödeme işlemi sırasında bir hata oluştu.');
       setPaymentMessageType('error');
     } finally {

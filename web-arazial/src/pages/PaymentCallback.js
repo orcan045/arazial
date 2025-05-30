@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { supabase } from '../services/supabase';
+import { PAYMENT_CONFIG } from '../config/payment';
 
 const Container = styled.div`
   max-width: 600px;
@@ -60,15 +60,15 @@ const PaymentCallback = () => {
         const payload = {};
         if (uid) payload.uid = uid;
         if (orderId) payload.orderId = orderId;
-        
-        const { data, error: functionError } = await supabase.functions.invoke('relay-payment', {
-          body: payload
+        const res = await fetch(PAYMENT_CONFIG.PAYMENT_RESULT_URL, {
+          method: 'POST',
+          headers: PAYMENT_CONFIG.HEADERS,
+          body: JSON.stringify(payload),
         });
-
-        if (functionError) {
-          throw new Error(functionError.message || 'Ödeme sonucu alınamadı.');
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Ödeme sonucu alınamadı.');
         }
-
         setResult(data);
       } catch (err) {
         setError(err.message || 'Ödeme sonucu alınamadı.');
