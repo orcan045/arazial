@@ -2260,7 +2260,7 @@ const AuctionDetail = () => {
         IsAutoCommit: true,
         CardInfo: {
           CardOwner: cardOwner,
-          CardNo: cardNumber.replace(/\s/g, ''),
+          CardNo: cardNumber.replace(/\\s/g, ''),
           Month: cardMonth,
           Year: cardYear,
           Cvv: cardCvv,
@@ -2281,18 +2281,42 @@ const AuctionDetail = () => {
         ]
       };
 
+      console.log('Payment request payload:', payload);
+
       // Call the Supabase Edge Function using invoke
       const { data, error } = await supabase.functions.invoke('payment-proxy', {
-        body: payload
+        body: payload,
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
-      if (error || !data?.PaymentLink) {
-        throw new Error(error?.message || data?.error?.Message || data?.error || 'Ödeme başlatılamadı.');
+      console.log('Payment response:', { data, error });
+
+      if (error) {
+        console.error('Payment error:', error);
+        throw new Error(`Ödeme hatası: ${error.message || 'Bilinmeyen hata'}`);
+      }
+
+      if (!data) {
+        console.error('No data in response');
+        throw new Error('Ödeme yanıtı alınamadı');
+      }
+
+      if (data.error) {
+        console.error('Payment provider error:', data.error);
+        throw new Error(data.error.Message || data.error || 'Ödeme sağlayıcı hatası');
+      }
+
+      if (!data.PaymentLink) {
+        console.error('No payment link in response:', data);
+        throw new Error('Ödeme linki alınamadı');
       }
 
       // Redirect to PaymentLink
       window.location.href = data.PaymentLink;
     } catch (error) {
+      console.error('Payment error details:', error);
       setPaymentMessage(error.message || 'Ödeme işlemi sırasında bir hata oluştu.');
       setPaymentMessageType('error');
     } finally {
