@@ -2249,10 +2249,17 @@ const AuctionDetail = () => {
 
     try {
       const clientIp = await getClientIp();
+      
+      // Generate a timestamp that's shorter than Date.now()
+      const timestamp = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
+      
+      // Create a shorter OrderId that's guaranteed to be under 64 chars
+      const orderId = `a${auction.id}u${user.id}t${timestamp}`.substring(0, 64);
+      
       // Prepare the payload for the payment-proxy-server
       const payload = {
         ReturnUrl: window.location.origin + '/payment-result',
-        OrderId: `auction-${auction.id}-user-${user.id}-${Date.now()}`,
+        OrderId: orderId,
         ClientIp: clientIp,
         Installment: 1,
         Amount: auction.deposit_amount,
