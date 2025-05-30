@@ -9,7 +9,7 @@ import Button from '../components/ui/Button';
 
 // Add at the top of the file:
 // Set the Supabase Edge Function endpoint for payment relay
-const PAYMENT_PROXY_URL = 'https://<your-supabase-project>.functions.supabase.co/relay-payment'; // Replace with your actual Supabase project URL
+const PAYMENT_PROXY_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/relay-payment`; // Replace with your actual Supabase project URL
 // No PAYMENT_PROXY_KEY needed in frontend anymore
 
 const PageContainer = styled.div`
