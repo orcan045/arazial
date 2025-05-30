@@ -2281,7 +2281,7 @@ const AuctionDetail = () => {
       };
 
       // Call the payment proxy server through our edge function
-      const { data, error } = await supabase.functions.invoke('relay-payment', {
+      const { data: response, error } = await supabase.functions.invoke('relay-payment', {
         body: payload
       });
 
@@ -2289,12 +2289,12 @@ const AuctionDetail = () => {
         throw new Error(error.message || 'Payment request failed');
       }
 
-      if (!data?.PaymentLink) {
+      if (!response?.data?.PaymentLink) {
         throw new Error('No payment link received');
       }
 
       // Redirect to PaymentLink for 3D Secure
-      window.location.href = data.PaymentLink;
+      window.location.href = response.data.PaymentLink;
     } catch (error) {
       console.error('Payment error:', error);
       setPaymentMessage(error.message || 'Ödeme işlemi sırasında bir hata oluştu.');
