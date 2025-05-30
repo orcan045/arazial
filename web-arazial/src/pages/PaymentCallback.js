@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import valletPayment from '../services/valletPayment';
 import { supabase } from '../supabaseClient';
@@ -39,74 +39,55 @@ const Button = styled.button`
   }
 `;
 
+const PAYMENT_PROXY_URL = 'https://srv759491.hstgr.cloud/api/pay-result'; // Update to your VPS payment proxy URL
+const PAYMENT_PROXY_KEY = process.env.REACT_APP_PAYMENT_PROXY_KEY;
+
 const PaymentCallback = () => {
-  const { status, auctionId } = useParams();
-  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const handleCallback = async () => {
+    const uid = searchParams.get('uid');
+    const orderId = searchParams.get('orderId');
+    if (!uid && !orderId) {
+      setError('Ödeme sonucu sorgulamak için gerekli parametreler eksik.');
+      setLoading(false);
+      return;
+    }
+
+    const fetchResult = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        // Get pending payment info from localStorage
-        const pendingPayment = JSON.parse(localStorage.getItem('pendingPayment') || '{}');
-        
-        if (!pendingPayment.orderId || !pendingPayment.auctionId) {
-          throw new Error('Ödeme bilgileri bulunamadı');
+        const payload = {};
+        if (uid) payload.uid = uid;
+        if (orderId) payload.orderId = orderId;
+        const res = await fetch(PAYMENT_PROXY_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': PAYMENT_PROXY_KEY,
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Ödeme sonucu alınamadı.');
         }
-
-        if (pendingPayment.auctionId !== auctionId) {
-          throw new Error('Ödeme bilgileri eşleşmiyor');
-        }
-
-        if (status === 'success') {
-          // Verify the payment with Vallet's callback data
-          const urlParams = new URLSearchParams(window.location.search);
-          const callbackData = {
-            status: urlParams.get('status'),
-            paymentStatus: urlParams.get('paymentStatus'),
-            hash: urlParams.get('hash'),
-            paymentAmount: urlParams.get('paymentAmount'),
-            paymentType: urlParams.get('paymentType'),
-            orderId: pendingPayment.orderId,
-            shopCode: urlParams.get('shopCode')
-          };
-
-          const isValid = valletPayment.verifyCallback(callbackData);
-
-          if (!isValid) {
-            throw new Error('Ödeme doğrulaması başarısız');
-          }
-
-          // Record the successful payment in your database
-          const { error: dbError } = await supabase
-            .from('deposits')
-            .insert({
-              auction_id: auctionId,
-              user_id: (await supabase.auth.getUser()).data.user?.id,
-              amount: pendingPayment.amount,
-              payment_id: pendingPayment.orderId,
-              status: 'completed'
-            });
-
-          if (dbError) throw dbError;
-        }
-
-        // Clear the pending payment info
-        localStorage.removeItem('pendingPayment');
-        setLoading(false);
+        setResult(data);
       } catch (err) {
-        console.error('Payment callback error:', err);
-        setError(err.message || 'Bir hata oluştu');
+        setError(err.message || 'Ödeme sonucu alınamadı.');
+      } finally {
         setLoading(false);
       }
     };
-
-    handleCallback();
-  }, [status, auctionId]);
+    fetchResult();
+  }, [searchParams]);
 
   const handleContinue = () => {
-    navigate(`/auction/${auctionId}`);
+    // Implement the logic to navigate to the auction page
   };
 
   if (loading) {
@@ -129,14 +110,26 @@ const PaymentCallback = () => {
 
   return (
     <Container>
-      <Title success={status === 'success'}>
-        {status === 'success' ? 'Ödeme Başarılı!' : 'Ödeme Başarısız'}
+      <Title success={result && result.IsDone}>
+        {result && result.IsDone ? 'Ödeme Başarılı!' : 'Ödeme Başarısız'}
       </Title>
       <Message>
-        {status === 'success'
-          ? 'Depozito ödemesi başarıyla tamamlandı. Artık ihaleye teklif verebilirsiniz.'
-          : 'Depozito ödemesi başarısız oldu. Lütfen tekrar deneyin.'}
+        {result && result.IsDone
+          ? `Depozito ödemesi başarıyla tamamlandı. Artık ihaleye teklif verebilirsiniz.`
+          : `Depozito ödemesi başarısız oldu. Lütfen tekrar deneyin.`}
       </Message>
+      {result && (
+        <div>
+          {result.IsDone ? (
+            <>
+              <p><b>Tutar:</b> {result.Content?.Amount} TL</p>
+              <p><b>İşlem No:</b> {result.Content?.OrderId || result.Content?.Uid}</p>
+            </>
+          ) : (
+            <p><b>Hata:</b> {result.Message || 'Bilinmeyen hata'}</p>
+          )}
+        </div>
+      )}
       <Button onClick={handleContinue}>İlana Geri Dön</Button>
     </Container>
   );

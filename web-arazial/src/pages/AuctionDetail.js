@@ -1748,6 +1748,13 @@ const AuctionDetail = () => {
   const [actionType, setActionType] = useState(''); // 'bid' or 'offer'
   const [paymentStep, setPaymentStep] = useState('info'); // 'info' or 'payment'
   
+  // --- Add state for card info ---
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardMonth, setCardMonth] = useState('');
+  const [cardYear, setCardYear] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  const [cardOwner, setCardOwner] = useState('');
+  
   useEffect(() => {
     // Set the current URL when the component mounts
     setCurrentUrl(window.location.href);
@@ -2216,68 +2223,96 @@ const AuctionDetail = () => {
     };
   }, [id]);
 
-  // New function to handle the mock payment process
-  const handleMockPayment = async () => {
-    if (!user?.id || !auction) {
-      return;
+  // --- Utility to get client IP ---
+  const getClientIp = async () => {
+    try {
+      const res = await fetch('https://api.ipify.org?format=json');
+      const data = await res.json();
+      return data.ip;
+    } catch {
+      return '';
     }
-    
+  };
+
+  // --- Replace handleRealPayment to use the payment proxy ---
+  const handleRealPayment = async () => {
+    if (!user?.id || !auction) return;
+
     setPaymentProcessing(true);
     setPaymentMessage('');
     setPaymentMessageType('');
-    
+
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock a successful payment record creation
-      const { error: insertError } = await supabase.from('user_deposits').insert({
-        auction_id: auction.id,
-        user_id: user.id,
-        amount: auction.deposit_amount,
-        status: 'paid',
-        created_at: new Date().toISOString()
+      const clientIp = await getClientIp();
+      // Prepare the payload for the payment-proxy-server
+      const payload = {
+        ReturnUrl: window.location.origin + '/payment-result',
+        OrderId: `auction-${auction.id}-user-${user.id}-${Date.now()}`,
+        ClientIp: clientIp,
+        Installment: 1,
+        Amount: auction.deposit_amount,
+        Is3D: true,
+        IsAutoCommit: true,
+        CardInfo: {
+          CardOwner: cardOwner,
+          CardNo: cardNumber.replace(/\s/g, ''),
+          Month: cardMonth,
+          Year: cardYear,
+          Cvv: cardCvv,
+        },
+        CustomerInfo: {
+          Name: profile?.full_name || user.email || '',
+          Phone: profile?.phone_number || '',
+          Email: user.email || '',
+          Address: profile?.address || '',
+          Description: `Auction deposit for auction #${auction.id}`,
+        },
+        Products: [
+          {
+            Name: auction.title,
+            Count: 1,
+            UnitPrice: auction.deposit_amount,
+          }
+        ]
+      };
+
+      // Call the payment proxy server
+      const res = await fetch(PAYMENT_PROXY_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': PAYMENT_PROXY_KEY,
+        },
+        body: JSON.stringify(payload),
       });
-      
-      if (insertError) {
-        throw insertError;
+
+      const data = await res.json();
+
+      if (!res.ok || !data.PaymentLink) {
+        throw new Error(data.error?.Message || data.error || 'Ödeme başlatılamadı.');
       }
-      
-      // Update local state to reflect successful payment
-      setHasDeposit(true);
-      setPaymentMessage('Ödeme başarıyla gerçekleşti.');
-      setPaymentMessageType('success');
-      
-      // Close modal after a short delay
-      setTimeout(() => {
-        setShowPaymentModal(false);
-        setPaymentStep('info'); // Reset to initial step
-        
-        // Try to continue with the intended action
-        if (actionType === 'bid') {
-          // Will need to call the actual bid submission
-          console.log('Ready to place bid...');
-        } else if (actionType === 'offer') {
-          // Will need to call the actual offer submission
-          console.log('Ready to submit offer...');
-        }
-      }, 1500);
-      
+
+      // Redirect to PaymentLink
+      window.location.href = data.PaymentLink;
     } catch (error) {
-      console.error('Error processing payment:', error);
-      setPaymentMessage('Ödeme işlemi sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+      setPaymentMessage(error.message || 'Ödeme işlemi sırasında bir hata oluştu.');
       setPaymentMessageType('error');
     } finally {
       setPaymentProcessing(false);
     }
   };
-  
-  // Function to close payment modal
+
+  // --- Update closePaymentModal to reset card info ---
   const closePaymentModal = () => {
     setShowPaymentModal(false);
     setPaymentMessage('');
     setPaymentMessageType('');
-    setPaymentStep('info'); // Reset to initial step
+    setPaymentStep('info');
+    setCardNumber('');
+    setCardMonth('');
+    setCardYear('');
+    setCardCvv('');
+    setCardOwner('');
   };
 
   // Function to proceed to payment form
@@ -2338,23 +2373,63 @@ const AuctionDetail = () => {
                 {/* Mock form fields for payment - to be replaced with actual payment processor later */}
                 <div style={{ marginBottom: '1.5rem' }}>
                   <InputGroup>
-                    <InputLabel>Kart Numarası</InputLabel>
-                    <Input type="text" placeholder="1234 5678 9012 3456" disabled={paymentProcessing} />
+                    <InputLabel>Kart Sahibi</InputLabel>
+                    <Input
+                      type="text"
+                      placeholder="Ad Soyad"
+                      value={cardOwner}
+                      onChange={e => setCardOwner(e.target.value)}
+                      disabled={paymentProcessing}
+                      required
+                    />
                   </InputGroup>
-                  
+                  <InputGroup>
+                    <InputLabel>Kart Numarası</InputLabel>
+                    <Input
+                      type="text"
+                      placeholder="1234 5678 9012 3456"
+                      value={cardNumber}
+                      onChange={e => setCardNumber(e.target.value)}
+                      disabled={paymentProcessing}
+                      required
+                    />
+                  </InputGroup>
                   <div style={{ display: 'flex', gap: '1rem' }}>
                     <InputGroup style={{ flex: 1 }}>
-                      <InputLabel>Son Kullanma Tarihi</InputLabel>
-                      <Input type="text" placeholder="MM/YY" disabled={paymentProcessing} />
+                      <InputLabel>Son Kullanma Ayı</InputLabel>
+                      <Input
+                        type="text"
+                        placeholder="MM"
+                        value={cardMonth}
+                        onChange={e => setCardMonth(e.target.value)}
+                        disabled={paymentProcessing}
+                        required
+                      />
                     </InputGroup>
-                    
+                    <InputGroup style={{ flex: 1 }}>
+                      <InputLabel>Son Kullanma Yılı</InputLabel>
+                      <Input
+                        type="text"
+                        placeholder="YY"
+                        value={cardYear}
+                        onChange={e => setCardYear(e.target.value)}
+                        disabled={paymentProcessing}
+                        required
+                      />
+                    </InputGroup>
                     <InputGroup style={{ flex: 1 }}>
                       <InputLabel>CVV</InputLabel>
-                      <Input type="text" placeholder="123" disabled={paymentProcessing} />
+                      <Input
+                        type="text"
+                        placeholder="123"
+                        value={cardCvv}
+                        onChange={e => setCardCvv(e.target.value)}
+                        disabled={paymentProcessing}
+                        required
+                      />
                     </InputGroup>
                   </div>
                 </div>
-                
                 {paymentMessage && (
                   <PaymentMessage type={paymentMessageType}>{paymentMessage}</PaymentMessage>
                 )}
@@ -2398,7 +2473,7 @@ const AuctionDetail = () => {
                   Geri
                 </Button>
                 <Button 
-                  onClick={handleMockPayment}
+                  onClick={handleRealPayment}
                   style={{ minWidth: '120px' }}
                   disabled={paymentProcessing}
                 >
