@@ -2241,25 +2241,30 @@ const AuctionDetail = () => {
 
   // --- Replace handleRealPayment to use the payment proxy ---
   const handleRealPayment = async () => {
-    if (!user?.id || !auction) return;
+    console.log('=== PAYMENT REQUEST START ===');
+    
+    if (!user?.id || !auction) {
+      console.error('Missing required data:', { hasUser: !!user?.id, hasAuction: !!auction });
+      return;
+    }
 
     setPaymentProcessing(true);
     setPaymentMessage('');
     setPaymentMessageType('');
 
     try {
+      console.log('Getting client IP...');
       const clientIp = await getClientIp();
       
       // Generate a shorter OrderId (max 64 chars)
       const timestamp = Math.floor(Date.now() / 1000).toString(36); // Unix timestamp in seconds, base36
       const orderId = `${auction.id}${user.id}${timestamp}`; // Simple concatenation
       
-      // Verify length before proceeding
+      console.log('Generated OrderId:', { orderId, length: orderId.length });
+      
       if (orderId.length > 64) {
         throw new Error('Internal error: Generated OrderId is too long');
       }
-      
-      console.log('Generated OrderId length:', orderId.length, 'OrderId:', orderId);
       
       // Prepare the payload for the payment-proxy-server
       const payload = {
@@ -2293,9 +2298,9 @@ const AuctionDetail = () => {
         ]
       };
 
-      console.log('Payment request payload:', {
+      console.log('Calling payment-proxy function with payload:', {
         ...payload,
-        CardInfo: { ...payload.CardInfo, CardNo: '****' }
+        CardInfo: { ...payload.CardInfo, CardNo: '****', Cvv: '***' }
       });
 
       // Call the Supabase Edge Function using invoke
@@ -2306,15 +2311,17 @@ const AuctionDetail = () => {
       console.log('Edge function response:', { data, error });
 
       if (error) {
+        console.error('Edge function error:', error);
         throw new Error(`Edge function error: ${error.message}`);
       }
 
       if (!data) {
+        console.error('No data in response');
         throw new Error('No response from edge function');
       }
 
       if (data.error) {
-        // If there's a raw response in the error, it might be HTML
+        console.error('Error in response data:', data.error);
         if (data.rawResponse) {
           console.error('Raw error response:', data.rawResponse);
           throw new Error('Ödeme servisi yanıtı işlenemedi. Lütfen daha sonra tekrar deneyin.');
@@ -2327,13 +2334,16 @@ const AuctionDetail = () => {
         throw new Error('Ödeme linki alınamadı');
       }
 
-      // Redirect to PaymentLink
+      console.log('Payment link received, redirecting...');
       window.location.href = data.PaymentLink;
+      
     } catch (error) {
+      console.error('=== PAYMENT REQUEST ERROR ===');
       console.error('Payment error details:', error);
       setPaymentMessage(error.message || 'Ödeme işlemi sırasında bir hata oluştu.');
       setPaymentMessageType('error');
     } finally {
+      console.log('=== PAYMENT REQUEST END ===');
       setPaymentProcessing(false);
     }
   };
