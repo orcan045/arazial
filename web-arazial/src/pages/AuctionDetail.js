@@ -2286,6 +2286,7 @@ const AuctionDetail = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify(payload),
       });
