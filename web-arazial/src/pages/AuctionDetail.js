@@ -2281,21 +2281,14 @@ const AuctionDetail = () => {
       };
 
       // Call the payment proxy server through our edge function
-      const res = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/relay-payment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': PAYMENT_PROXY_KEY,
-        },
-        body: JSON.stringify(payload),
+      const { data, error } = await supabase.functions.invoke('relay-payment', {
+        body: payload
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Payment request failed');
+      if (error) {
+        throw new Error(error.message || 'Payment request failed');
       }
 
-      const data = await res.json();
       if (!data.PaymentLink) {
         throw new Error('No payment link received');
       }

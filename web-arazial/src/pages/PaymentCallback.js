@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
-import valletPayment from '../services/valletPayment';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../services/supabase';
 
 const Container = styled.div`
   max-width: 600px;
@@ -39,9 +38,6 @@ const Button = styled.button`
   }
 `;
 
-const PAYMENT_PROXY_URL = `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/relay-payment`;
-const PAYMENT_PROXY_KEY = 'arazialcom123123';
-
 const PaymentCallback = () => {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -64,18 +60,15 @@ const PaymentCallback = () => {
         const payload = {};
         if (uid) payload.uid = uid;
         if (orderId) payload.orderId = orderId;
-        const res = await fetch(PAYMENT_PROXY_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': PAYMENT_PROXY_KEY,
-          },
-          body: JSON.stringify(payload),
+        
+        const { data, error: functionError } = await supabase.functions.invoke('relay-payment', {
+          body: payload
         });
-        const data = await res.json();
-        if (!res.ok || data.error) {
-          throw new Error(data.error || 'Ödeme sonucu alınamadı.');
+
+        if (functionError) {
+          throw new Error(functionError.message || 'Ödeme sonucu alınamadı.');
         }
+
         setResult(data);
       } catch (err) {
         setError(err.message || 'Ödeme sonucu alınamadı.');
