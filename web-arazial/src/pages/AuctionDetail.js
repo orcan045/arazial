@@ -2241,35 +2241,18 @@ const AuctionDetail = () => {
 
   // --- Replace handleRealPayment to use the payment proxy ---
   const handleRealPayment = async () => {
-    console.log('=== PAYMENT REQUEST START ===');
-    
-    if (!user?.id || !auction) {
-      console.error('Missing required data:', { hasUser: !!user?.id, hasAuction: !!auction });
-      return;
-    }
+    if (!user?.id || !auction) return;
 
     setPaymentProcessing(true);
     setPaymentMessage('');
     setPaymentMessageType('');
 
     try {
-      console.log('Getting client IP...');
       const clientIp = await getClientIp();
-      
-      // Generate a shorter OrderId (max 64 chars)
-      const timestamp = Math.floor(Date.now() / 1000).toString(36); // Unix timestamp in seconds, base36
-      const orderId = `${auction.id}${user.id}${timestamp}`; // Simple concatenation
-      
-      console.log('Generated OrderId:', { orderId, length: orderId.length });
-      
-      if (orderId.length > 64) {
-        throw new Error('Internal error: Generated OrderId is too long');
-      }
-      
       // Prepare the payload for the payment-proxy-server
       const payload = {
         ReturnUrl: window.location.origin + '/payment-result',
-        OrderId: orderId,
+        OrderId: `auction-${auction.id}-user-${user.id}-${Date.now()}`,
         ClientIp: clientIp,
         Installment: 1,
         Amount: auction.deposit_amount,
@@ -2287,20 +2270,20 @@ const AuctionDetail = () => {
           Phone: profile?.phone_number || '',
           Email: user.email || '',
           Address: profile?.address || '',
-          Description: `Deposit #${auction.id}`,
+          Description: `Auction deposit for auction #${auction.id}`,
         },
         Products: [
           {
-            Name: auction.title.substring(0, 100),
+            Name: auction.title,
             Count: 1,
             UnitPrice: auction.deposit_amount,
           }
         ]
       };
 
-      console.log('Calling payment-proxy function with payload:', {
+      console.log('Payment request payload:', {
         ...payload,
-        CardInfo: { ...payload.CardInfo, CardNo: '****', Cvv: '***' }
+        CardInfo: { ...payload.CardInfo, CardNo: '****' }
       });
 
       // Call the Supabase Edge Function using invoke
@@ -2311,17 +2294,15 @@ const AuctionDetail = () => {
       console.log('Edge function response:', { data, error });
 
       if (error) {
-        console.error('Edge function error:', error);
         throw new Error(`Edge function error: ${error.message}`);
       }
 
       if (!data) {
-        console.error('No data in response');
         throw new Error('No response from edge function');
       }
 
       if (data.error) {
-        console.error('Error in response data:', data.error);
+        // If there's a raw response in the error, it might be HTML
         if (data.rawResponse) {
           console.error('Raw error response:', data.rawResponse);
           throw new Error('Ödeme servisi yanıtı işlenemedi. Lütfen daha sonra tekrar deneyin.');
@@ -2334,16 +2315,13 @@ const AuctionDetail = () => {
         throw new Error('Ödeme linki alınamadı');
       }
 
-      console.log('Payment link received, redirecting...');
+      // Redirect to PaymentLink
       window.location.href = data.PaymentLink;
-      
     } catch (error) {
-      console.error('=== PAYMENT REQUEST ERROR ===');
       console.error('Payment error details:', error);
       setPaymentMessage(error.message || 'Ödeme işlemi sırasında bir hata oluştu.');
       setPaymentMessageType('error');
     } finally {
-      console.log('=== PAYMENT REQUEST END ===');
       setPaymentProcessing(false);
     }
   };
