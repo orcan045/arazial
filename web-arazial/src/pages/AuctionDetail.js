@@ -2281,35 +2281,37 @@ const AuctionDetail = () => {
         ]
       };
 
-      console.log('Payment request payload:', payload);
+      console.log('Payment request payload:', {
+        ...payload,
+        CardInfo: { ...payload.CardInfo, CardNo: '****' }
+      });
 
       // Call the Supabase Edge Function using invoke
       const { data, error } = await supabase.functions.invoke('payment-proxy', {
-        body: payload,
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        body: payload
       });
 
-      console.log('Payment response:', { data, error });
+      console.log('Edge function response:', { data, error });
 
       if (error) {
-        console.error('Payment error:', error);
-        throw new Error(`Ödeme hatası: ${error.message || 'Bilinmeyen hata'}`);
+        throw new Error(`Edge function error: ${error.message}`);
       }
 
       if (!data) {
-        console.error('No data in response');
-        throw new Error('Ödeme yanıtı alınamadı');
+        throw new Error('No response from edge function');
       }
 
       if (data.error) {
-        console.error('Payment provider error:', data.error);
-        throw new Error(data.error.Message || data.error || 'Ödeme sağlayıcı hatası');
+        // If there's a raw response in the error, it might be HTML
+        if (data.rawResponse) {
+          console.error('Raw error response:', data.rawResponse);
+          throw new Error('Ödeme servisi yanıtı işlenemedi. Lütfen daha sonra tekrar deneyin.');
+        }
+        throw new Error(data.error);
       }
 
       if (!data.PaymentLink) {
-        console.error('No payment link in response:', data);
+        console.error('Invalid payment response:', data);
         throw new Error('Ödeme linki alınamadı');
       }
 
