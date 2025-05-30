@@ -2254,7 +2254,7 @@ const AuctionDetail = () => {
         OrderId: `auction-${auction.id}-user-${user.id}-${Date.now()}`,
         ClientIp: clientIp,
         Installment: 1,
-        Amount: auction.deposit_amount,
+        Amount: Number(auction.deposit_amount), // Ensure it's a number
         Is3D: true,
         IsAutoCommit: true,
         CardInfo: {
@@ -2275,7 +2275,7 @@ const AuctionDetail = () => {
           {
             Name: auction.title,
             Count: 1,
-            UnitPrice: auction.deposit_amount,
+            UnitPrice: Number(auction.deposit_amount), // Ensure it's a number
           }
         ]
       };
@@ -2296,6 +2296,7 @@ const AuctionDetail = () => {
       // Redirect to PaymentLink for 3D Secure
       window.location.href = data.PaymentLink;
     } catch (error) {
+      console.error('Payment error:', error);
       setPaymentMessage(error.message || 'Ödeme işlemi sırasında bir hata oluştu.');
       setPaymentMessageType('error');
     } finally {
