@@ -8,7 +8,7 @@ import CountdownTimer from '../components/CountdownTimer';
 import Button from '../components/ui/Button';
 
 // Add at the top of the file:
-const PAYMENT_PROXY_URL = 'https://srv759491.hstgr.cloud:4000/api/pay-request';
+const PAYMENT_PROXY_URL = 'http://srv759491.hstgr.cloud:4000/api/pay-request';
 const PAYMENT_PROXY_KEY = 'arazialcom123123';
 
 const PageContainer = styled.div`
