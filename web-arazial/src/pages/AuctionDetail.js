@@ -2251,8 +2251,15 @@ const AuctionDetail = () => {
       const clientIp = await getClientIp();
       
       // Generate a shorter OrderId (max 64 chars)
-      const timestamp = Date.now().toString(36); // Convert timestamp to base36
-      const orderId = `a${auction.id}u${user.id}t${timestamp}`;
+      const timestamp = Math.floor(Date.now() / 1000).toString(36); // Unix timestamp in seconds, base36
+      const orderId = `${auction.id}${user.id}${timestamp}`; // Simple concatenation
+      
+      // Verify length before proceeding
+      if (orderId.length > 64) {
+        throw new Error('Internal error: Generated OrderId is too long');
+      }
+      
+      console.log('Generated OrderId length:', orderId.length, 'OrderId:', orderId);
       
       // Prepare the payload for the payment-proxy-server
       const payload = {
@@ -2275,11 +2282,11 @@ const AuctionDetail = () => {
           Phone: profile?.phone_number || '',
           Email: user.email || '',
           Address: profile?.address || '',
-          Description: `Deposit for #${auction.id}`,
+          Description: `Deposit #${auction.id}`,
         },
         Products: [
           {
-            Name: auction.title.substring(0, 100), // Ensure product name isn't too long
+            Name: auction.title.substring(0, 100),
             Count: 1,
             UnitPrice: auction.deposit_amount,
           }
