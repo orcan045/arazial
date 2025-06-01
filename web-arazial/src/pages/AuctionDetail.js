@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { Helmet } from 'react-helmet-async'; // <-- Import Helmet
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
+import { hasUserCompletedDeposit, createDeposit } from '../services/depositService';
 import CountdownTimer from '../components/CountdownTimer';
 import Button from '../components/ui/Button';
 import { PAYMENT_CONFIG } from '../config/payment';
@@ -1845,20 +1846,8 @@ const AuctionDetail = () => {
 
       // 3. Check if user has already made a deposit for this auction
       if (user?.id) {
-        // Mock API call - in a real implementation, this would check a user_deposits table
-        const { data: depositData, error: depositError } = await supabase
-          .from('user_deposits')
-          .select('*')
-          .eq('auction_id', id)
-          .eq('user_id', user.id)
-          .single();
-          
-        if (depositError && depositError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-          console.error('Error checking deposit status:', depositError);
-        }
-        
-        // Set deposit status based on retrieved data
-        setHasDeposit(!!depositData);
+        const hasCompletedDeposit = await hasUserCompletedDeposit(id, user.id);
+        setHasDeposit(hasCompletedDeposit);
       }
 
     } catch (err) {
@@ -2250,18 +2239,30 @@ const AuctionDetail = () => {
     try {
       const clientIp = await getClientIp();
       
-      // Generate a timestamp that's shorter than Date.now()
+      // Generate a shorter OrderId that's guaranteed to be under 64 chars
       const timestamp = Math.floor(Date.now() / 1000); // Unix timestamp in seconds
       
-      // Create a shorter OrderId that's guaranteed to be under 64 chars
-      const orderId = `a${auction.id}u${user.id}t${timestamp}`.substring(0, 64);
+      // Create a much shorter OrderId using just essential info
+      const shortAuctionId = auction.id.replace(/-/g, '').substring(0, 8); // First 8 chars of auction ID without dashes
+      const shortUserId = user.id.replace(/-/g, '').substring(0, 8); // First 8 chars of user ID without dashes
+      const orderId = `a${shortAuctionId}u${shortUserId}t${timestamp}`.substring(0, 50); // Limit to 50 chars for safety
       
       // Convert TL amount to kuruş (cents) by multiplying by 100
       const amountInKurus = Math.round((auction.deposit_amount || 0) * 100);
       
+      // Create a deposit record before initiating payment
+      const depositRecord = await createDeposit({
+        auction_id: auction.id,
+        user_id: user.id,
+        amount: auction.deposit_amount || 0,
+        payment_id: orderId
+      });
+      
+      console.log('Deposit record created:', depositRecord);
+      
       // Prepare the payload for the payment-proxy-server
       const payload = {
-        ReturnUrl: window.location.origin + '/payment-result',
+        ReturnUrl: window.location.origin + '/payment-callback',
         OrderId: orderId,
         ClientIp: clientIp,
         Installment: 1,
@@ -2304,14 +2305,29 @@ const AuctionDetail = () => {
       console.log('Edge function response:', { data, error });
 
       if (error) {
+        // If payment initiation fails, update deposit status to failed
+        await supabase
+          .from('deposits')
+          .update({ status: 'failed' })
+          .eq('id', depositRecord.id);
         throw new Error(`Edge function error: ${error.message}`);
       }
 
       if (!data) {
+        // If payment initiation fails, update deposit status to failed
+        await supabase
+          .from('deposits')
+          .update({ status: 'failed' })
+          .eq('id', depositRecord.id);
         throw new Error('No response from edge function');
       }
 
       if (data.error) {
+        // If payment initiation fails, update deposit status to failed
+        await supabase
+          .from('deposits')
+          .update({ status: 'failed' })
+          .eq('id', depositRecord.id);
         // If there's a raw response in the error, it might be HTML
         if (data.rawResponse) {
           console.error('Raw error response:', data.rawResponse);
@@ -2321,11 +2337,16 @@ const AuctionDetail = () => {
       }
 
       if (!data.paymentLink) {
+        // If payment initiation fails, update deposit status to failed
+        await supabase
+          .from('deposits')
+          .update({ status: 'failed' })
+          .eq('id', depositRecord.id);
         console.error('Invalid payment response:', data);
         throw new Error('Ödeme linki alınamadı');
       }
 
-      // Redirect to PaymentLink
+      // Payment initiation successful, redirect to PaymentLink
       window.location.href = data.paymentLink;
     } catch (error) {
       console.error('Payment error details:', error);
