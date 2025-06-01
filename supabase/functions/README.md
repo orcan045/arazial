@@ -128,3 +128,7 @@ To ensure your proxy server is running properly, you can set up monitoring of th
 ```
 
 You can use services like UptimeRobot or Pingdom to monitor this endpoint. 
+
+## pay-request
+
+This function handles payment requests to the İşyeriPOS payment provider. It securely receives payment details, adds merchant credentials, and returns the payment link or HTML for 3D Secure authentication. Do not call the payment provider directly from the frontend; always use this function to keep credentials secure. 
