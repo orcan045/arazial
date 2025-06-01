@@ -64,7 +64,7 @@ const PaymentCallback = () => {
         // Call the Supabase Edge Function using invoke
         const { data, error: functionError } = await supabase.functions.invoke('payment-proxy', {
           body: payload
-        });
+            });
 
         if (functionError || !data) {
           throw new Error(functionError?.message || 'Ödeme sonucu alınamadı.');

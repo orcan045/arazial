@@ -9,8 +9,8 @@ import Button from '../components/ui/Button';
 import { PAYMENT_CONFIG } from '../config/payment';
 
 // Add at the top of the file:
-// const PAYMENT_PROXY_URL = 'https://srv759491.hstgr.cloud:4000/api/pay-request';
-// const PAYMENT_PROXY_KEY = 'arazialcom123123';
+const PAYMENT_PROXY_URL = 'https://srv759491.hstgr.cloud:4000/api/pay-request';
+const PAYMENT_PROXY_KEY = 'arazialcom123123';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -2242,11 +2242,11 @@ const AuctionDetail = () => {
   // --- Replace handleRealPayment to use the payment proxy ---
   const handleRealPayment = async () => {
     if (!user?.id || !auction) return;
-
+    
     setPaymentProcessing(true);
     setPaymentMessage('');
     setPaymentMessageType('');
-
+    
     try {
       const clientIp = await getClientIp();
       
@@ -2267,7 +2267,7 @@ const AuctionDetail = () => {
         IsAutoCommit: true,
         CardInfo: {
           CardOwner: cardOwner,
-          CardNo: cardNumber.replace(/\s/g, ''),
+          CardNo: cardNumber.replace(/\\s/g, ''),
           Month: cardMonth,
           Year: cardYear,
           Cvv: cardCvv,
@@ -2292,7 +2292,7 @@ const AuctionDetail = () => {
         ...payload,
         CardInfo: { ...payload.CardInfo, CardNo: '****' }
       });
-
+      
       // Call the Supabase Edge Function using invoke
       const { data, error } = await supabase.functions.invoke('payment-proxy', {
         body: payload
@@ -2309,13 +2309,18 @@ const AuctionDetail = () => {
       }
 
       if (data.error) {
+        // If there's a raw response in the error, it might be HTML
+        if (data.rawResponse) {
+          console.error('Raw error response:', data.rawResponse);
+          throw new Error('Ödeme servisi yanıtı işlenemedi. Lütfen daha sonra tekrar deneyin.');
+        }
         throw new Error(data.error);
       }
 
       if (!data.PaymentLink) {
         console.error('Invalid payment response:', data);
         throw new Error('Ödeme linki alınamadı');
-      }
+        }
 
       // Redirect to PaymentLink
       window.location.href = data.PaymentLink;
@@ -2327,7 +2332,7 @@ const AuctionDetail = () => {
       setPaymentProcessing(false);
     }
   };
-
+  
   // --- Update closePaymentModal to reset card info ---
   const closePaymentModal = () => {
     setShowPaymentModal(false);
