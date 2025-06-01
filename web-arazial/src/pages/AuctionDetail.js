@@ -2256,18 +2256,21 @@ const AuctionDetail = () => {
       // Create a shorter OrderId that's guaranteed to be under 64 chars
       const orderId = `a${auction.id}u${user.id}t${timestamp}`.substring(0, 64);
       
+      // Convert TL amount to kuruş (cents) by multiplying by 100
+      const amountInKurus = Math.round((auction.deposit_amount || 0) * 100);
+      
       // Prepare the payload for the payment-proxy-server
       const payload = {
         ReturnUrl: window.location.origin + '/payment-result',
         OrderId: orderId,
         ClientIp: clientIp,
         Installment: 1,
-        Amount: auction.deposit_amount,
+        Amount: amountInKurus, // Amount in kuruş (cents)
         Is3D: true,
         IsAutoCommit: true,
         CardInfo: {
           CardOwner: cardOwner,
-          CardNo: cardNumber.replace(/\\s/g, ''),
+          CardNo: cardNumber.replace(/\s/g, ''),
           Month: cardMonth,
           Year: cardYear,
           Cvv: cardCvv,
@@ -2283,14 +2286,14 @@ const AuctionDetail = () => {
           {
             Name: auction.title,
             Count: 1,
-            UnitPrice: auction.deposit_amount,
+            UnitPrice: amountInKurus, // Unit price in kuruş (cents)
           }
         ]
       };
 
       console.log('Payment request payload:', {
         ...payload,
-        CardInfo: { ...payload.CardInfo, CardNo: '****' }
+        CardInfo: { ...payload.CardInfo, CardNo: '****', Cvv: '***' }
       });
       
       // Call the Supabase Edge Function using invoke
@@ -2317,13 +2320,13 @@ const AuctionDetail = () => {
         throw new Error(data.error);
       }
 
-      if (!data.PaymentLink) {
+      if (!data.paymentLink) {
         console.error('Invalid payment response:', data);
         throw new Error('Ödeme linki alınamadı');
-        }
+      }
 
       // Redirect to PaymentLink
-      window.location.href = data.PaymentLink;
+      window.location.href = data.paymentLink;
     } catch (error) {
       console.error('Payment error details:', error);
       setPaymentMessage(error.message || 'Ödeme işlemi sırasında bir hata oluştu.');
