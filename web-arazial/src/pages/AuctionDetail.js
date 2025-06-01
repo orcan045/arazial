@@ -9,8 +9,8 @@ import Button from '../components/ui/Button';
 import { PAYMENT_CONFIG } from '../config/payment';
 
 // Add at the top of the file:
-const PAYMENT_PROXY_URL = 'https://srv759491.hstgr.cloud:4000/api/pay-request';
-const PAYMENT_PROXY_KEY = 'arazialcom123123';
+// const PAYMENT_PROXY_URL = 'https://srv759491.hstgr.cloud:4000/api/pay-request';
+// const PAYMENT_PROXY_KEY = 'arazialcom123123';
 
 const PageContainer = styled.div`
   max-width: 1200px;
@@ -2267,7 +2267,7 @@ const AuctionDetail = () => {
         IsAutoCommit: true,
         CardInfo: {
           CardOwner: cardOwner,
-          CardNo: cardNumber.replace(/\\s/g, ''),
+          CardNo: cardNumber.replace(/\s/g, ''),
           Month: cardMonth,
           Year: cardYear,
           Cvv: cardCvv,
@@ -2309,11 +2309,6 @@ const AuctionDetail = () => {
       }
 
       if (data.error) {
-        // If there's a raw response in the error, it might be HTML
-        if (data.rawResponse) {
-          console.error('Raw error response:', data.rawResponse);
-          throw new Error('Ödeme servisi yanıtı işlenemedi. Lütfen daha sonra tekrar deneyin.');
-        }
         throw new Error(data.error);
       }
 
