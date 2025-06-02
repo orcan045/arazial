@@ -2322,10 +2322,9 @@ const AuctionDetail = () => {
           console.error('Could not mark deposit as failed:', updateError);
         }
         
-        // Maximum defensive error handling to prevent any constructor issues
+        // Maximum defensive error handling - avoid Error constructor entirely
         let errorMessage = 'Ödeme işlemi başlatılırken hata oluştu';
         try {
-          // First try to get a safe string representation
           if (error) {
             if (typeof error === 'string') {
               errorMessage = error;
@@ -2334,7 +2333,6 @@ const AuctionDetail = () => {
             } else if (error && typeof error.toString === 'function') {
               errorMessage = error.toString();
             } else {
-              // Last resort - JSON stringify
               errorMessage = JSON.stringify(error);
             }
           }
@@ -2343,14 +2341,18 @@ const AuctionDetail = () => {
           errorMessage = 'Bilinmeyen hata oluştu';
         }
         
-        // Ensure errorMessage is definitely a string
-        errorMessage = String(errorMessage || 'Bilinmeyen hata');
+        // Create error-like object without using Error constructor
+        const paymentErrorText = 'Edge function error: ' + String(errorMessage || 'Bilinmeyen hata');
+        const errorObj = {
+          name: 'PaymentError',
+          message: paymentErrorText,
+          toString: function() { return this.message; }
+        };
         
-        // Create error without template literals or concatenation that might cause issues
-        const errorText = 'Edge function error: ' + errorMessage;
-        const finalError = new Error();
-        finalError.message = errorText;
-        throw finalError;
+        console.error('Payment error:', paymentErrorText);
+        setPaymentMessage(paymentErrorText);
+        setPaymentMessageType('error');
+        return; // Don't throw, just set the error message
       }
 
       if (!data) {
@@ -2365,7 +2367,11 @@ const AuctionDetail = () => {
         } catch (updateError) {
           console.error('Could not mark deposit as failed:', updateError);
         }
-        throw new Error('No response from edge function');
+        
+        console.error('No response from edge function');
+        setPaymentMessage('No response from edge function');
+        setPaymentMessageType('error');
+        return;
       }
 
       if (data.error) {
@@ -2383,9 +2389,15 @@ const AuctionDetail = () => {
         // If there's a raw response in the error, it might be HTML
         if (data.rawResponse) {
           console.error('Raw error response:', data.rawResponse);
-          throw new Error('Ödeme servisi yanıtı işlenemedi. Lütfen daha sonra tekrar deneyin.');
+          setPaymentMessage('Ödeme servisi yanıtı işlenemedi. Lütfen daha sonra tekrar deneyin.');
+          setPaymentMessageType('error');
+          return;
         }
-        throw new Error(data.error);
+        
+        console.error('Data error:', data.error);
+        setPaymentMessage(String(data.error));
+        setPaymentMessageType('error');
+        return;
       }
 
       if (!data.paymentLink) {
@@ -2401,7 +2413,9 @@ const AuctionDetail = () => {
           console.error('Could not mark deposit as failed:', updateError);
         }
         console.error('Invalid payment response:', data);
-        throw new Error('Ödeme linki alınamadı');
+        setPaymentMessage('Ödeme linki alınamadı');
+        setPaymentMessageType('error');
+        return;
         }
 
       // Payment initiation successful, redirect to PaymentLink
