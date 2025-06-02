@@ -107,7 +107,9 @@ export const getUserDepositAnyStatus = async (auctionId, userId) => {
  */
 export const updateDepositStatus = async (paymentId, status) => {
   if (!paymentId || !status) {
-    throw new Error('Payment ID and status are required');
+    const safeError = new Error();
+    safeError.message = 'Payment ID and status are required';
+    throw safeError;
   }
 
   try {
@@ -119,8 +121,18 @@ export const updateDepositStatus = async (paymentId, status) => {
     });
 
     if (error) {
-      const errorMessage = error && error.message ? error.message : 'Unknown error';
-      throw new Error('Failed to update deposit status: ' + errorMessage);
+      let errorMessage = 'Failed to update deposit status: Unknown error';
+      try {
+        if (error && error.message && typeof error.message === 'string') {
+          errorMessage = 'Failed to update deposit status: ' + error.message;
+        }
+      } catch (e) {
+        console.error('Error processing error message:', e);
+      }
+      
+      const safeError = new Error();
+      safeError.message = errorMessage;
+      throw safeError;
     }
 
     return data;
@@ -146,7 +158,9 @@ export const createDeposit = async (depositData) => {
     
     if (existingDeposit) {
       if (existingDeposit.status === 'completed') {
-        throw new Error('Bu ilan için depozito ödemesi zaten tamamlanmış.');
+        const safeError = new Error();
+        safeError.message = 'Bu ilan için depozito ödemesi zaten tamamlanmış.';
+        throw safeError;
       } else if (existingDeposit.status === 'pending') {
         // Mark the existing pending deposit as failed so we can create a new one
         // This works around the RLS policy that prevents direct updates from client
@@ -160,7 +174,13 @@ export const createDeposit = async (depositData) => {
           console.log('Marked old pending deposit as failed:', existingDeposit.id);
         } catch (updateError) {
           console.error('Could not mark old deposit as failed:', updateError);
-          throw new Error('Mevcut depozito kaydı güncellenemiyor. Lütfen sayfayı yenileyin ve tekrar deneyin.');
+          
+          // Create a safe error message without template literals
+          let safeErrorMessage = 'Mevcut depozito kaydı güncellenemiyor. Lütfen sayfayı yenileyin ve tekrar deneyin.';
+          
+          const safeError = new Error();
+          safeError.message = safeErrorMessage;
+          throw safeError;
         }
       }
     }
@@ -178,10 +198,23 @@ export const createDeposit = async (depositData) => {
     if (error) {
       if (error.code === '23505') {
         // Unique constraint violation - there's still an active deposit
-        throw new Error('Bu ilan için zaten aktif bir depozito kaydınız var. Lütfen sayfayı yenileyin.');
+        const safeError = new Error();
+        safeError.message = 'Bu ilan için zaten aktif bir depozito kaydınız var. Lütfen sayfayı yenileyin.';
+        throw safeError;
       }
-      const errorMessage = error && error.message ? error.message : 'Unknown error';
-      throw new Error('Failed to create deposit: ' + errorMessage);
+      
+      let errorMessage = 'Failed to create deposit: Unknown error';
+      try {
+        if (error && error.message && typeof error.message === 'string') {
+          errorMessage = 'Failed to create deposit: ' + error.message;
+        }
+      } catch (e) {
+        console.error('Error processing error message:', e);
+      }
+      
+      const safeError = new Error();
+      safeError.message = errorMessage;
+      throw safeError;
     }
 
     return data;

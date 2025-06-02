@@ -2322,17 +2322,34 @@ const AuctionDetail = () => {
           console.error('Could not mark deposit as failed:', updateError);
         }
         
-        // Defensive error handling to prevent constructor issues
-        let errorMessage = 'Unknown error occurred';
+        // Maximum defensive error handling to prevent any constructor issues
+        let errorMessage = 'Ödeme işlemi başlatılırken hata oluştu';
         try {
-          errorMessage = (error && typeof error === 'object' && error.message) 
-            ? String(error.message) 
-            : (typeof error === 'string' ? error : 'Unknown error');
-        } catch (e) {
-          console.error('Error processing error message:', e);
+          // First try to get a safe string representation
+          if (error) {
+            if (typeof error === 'string') {
+              errorMessage = error;
+            } else if (error && error.message && typeof error.message === 'string') {
+              errorMessage = error.message;
+            } else if (error && typeof error.toString === 'function') {
+              errorMessage = error.toString();
+            } else {
+              // Last resort - JSON stringify
+              errorMessage = JSON.stringify(error);
+            }
+          }
+        } catch (parseError) {
+          console.error('Error parsing error object:', parseError);
+          errorMessage = 'Bilinmeyen hata oluştu';
         }
         
-        const finalError = new Error('Edge function error: ' + errorMessage);
+        // Ensure errorMessage is definitely a string
+        errorMessage = String(errorMessage || 'Bilinmeyen hata');
+        
+        // Create error without template literals or concatenation that might cause issues
+        const errorText = 'Edge function error: ' + errorMessage;
+        const finalError = new Error();
+        finalError.message = errorText;
         throw finalError;
       }
 
