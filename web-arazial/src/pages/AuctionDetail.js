@@ -1789,7 +1789,8 @@ const AuctionDetail = () => {
         .single();
 
       if (auctionError || !auctionData) {
-        throw auctionError || new Error('İlan bulunamadı.');
+        setError(auctionError?.message || 'İlan bulunamadı.');
+        return;
       }
       
       console.log("AUCTION DATA FETCHED:", {
@@ -1804,16 +1805,17 @@ const AuctionDetail = () => {
 
       // 2. Fetch Bids OR Offers based on type
       if (auctionData.listing_type === 'auction') {
-        const { data: bidsData, error: bidsError } = await supabase
+        const { data, error } = await supabase
           .from('bids')
           .select('*, profiles ( full_name, avatar_url )')
           .eq('auction_id', auctionData.id)
           .order('amount', { ascending: false });
 
-        if (bidsError) {
-          console.error('Error fetching bids:', bidsError);
+        if (error) {
+          console.error('Error refreshing bids:', error);
+          return;
         }
-        setBids(bidsData || []);
+        setBids(data || []);
         setIsExpanded(false);
       } else if (auctionData.listing_type === 'offer') {
         // Fetch user's offers for THIS listing if logged in
@@ -1881,11 +1883,15 @@ const AuctionDetail = () => {
         .select('*, profiles ( full_name, avatar_url )')
         .eq('auction_id', auction.id)
         .order('amount', { ascending: false });
-      if (error) throw error;
+      if (error) {
+        console.error('Error refreshing bids:', error);
+        return;
+      }
       setBids(data || []);
       setIsExpanded(false);
     } catch (error) {
       console.error('Error refreshing bids:', error);
+      return;
     }
   };
 
@@ -1930,7 +1936,8 @@ const AuctionDetail = () => {
     
     try {
       if (!user?.id) {
-        throw new Error('Kullanıcı bilgisi bulunamadı. Lütfen sayfayı yenileyip tekrar deneyin.');
+        setBidError('Kullanıcı bilgisi bulunamadı. Lütfen sayfayı yenileyip tekrar deneyin.');
+        return;
       }
       
       const { error: insertError } = await supabase.from('bids').insert({
@@ -1941,10 +1948,11 @@ const AuctionDetail = () => {
       
       if (insertError) {
         if (insertError.code === '23505') { // Unique violation
-           throw new Error('Kısa süre içinde birden fazla teklif veremezsiniz veya teklifiniz çok düşük.');
+           setBidError('Kısa süre içinde birden fazla teklif veremezsiniz veya teklifiniz çok düşük.');
         } else {
-           throw insertError;
+           setBidError(insertError.message || 'Teklif gönderilirken bir hata oluştu.');
         }
+        return;
       }
       
       await refreshBids();
@@ -1966,7 +1974,10 @@ const AuctionDetail = () => {
         .eq('auction_id', auction.id)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-      if (error) throw error;
+      if (error) {
+        console.error("Error refreshing user's offers:", error);
+        return;
+      }
       setUserOffers(data || []);
     } catch (error) {
       console.error("Error refreshing user's offers:", error);
@@ -2041,10 +2052,11 @@ const AuctionDetail = () => {
 
       if (insertError) {
         if (insertError.code === '23505') { // Unique violation code for unique_pending_offer_per_user_auction
-            throw new Error('Bu ilan için zaten beklemede olan bir teklifiniz var. Sayfayı yenileyin.');
+            setOfferError('Bu ilan için zaten beklemede olan bir teklifiniz var. Sayfayı yenileyin.');
         } else {
-            throw insertError;
+            setOfferError(insertError.message || 'Teklif gönderilirken bir hata oluştu.');
         }
+        return;
       }
 
       setOfferAmount(''); // Clear input
