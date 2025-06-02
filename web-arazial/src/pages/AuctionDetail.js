@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { Helmet } from 'react-helmet-async'; // <-- Import Helmet
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
-import { hasUserCompletedDeposit, createDeposit } from '../services/depositService';
+import { hasUserCompletedDeposit, createDeposit, getDepositStatus } from '../services/depositService';
 import CountdownTimer from '../components/CountdownTimer';
 import Button from '../components/ui/Button';
 import { PAYMENT_CONFIG } from '../config/payment';
@@ -1748,10 +1748,12 @@ const AuctionDetail = () => {
   // --- Add new state for payment handling ---
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [hasDeposit, setHasDeposit] = useState(false);
+  const [hasPendingDeposit, setHasPendingDeposit] = useState(false);
+  const [depositInfo, setDepositInfo] = useState(null);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [paymentMessage, setPaymentMessage] = useState('');
   const [paymentMessageType, setPaymentMessageType] = useState('');
-  const [actionType, setActionType] = useState(''); // 'bid' or 'offer'
+  const [actionType, setActionType] = useState('bid'); // 'bid' or 'offer'
   const [paymentStep, setPaymentStep] = useState('info'); // 'info' or 'payment'
   
   // --- Add state for card info ---
@@ -1846,8 +1848,14 @@ const AuctionDetail = () => {
 
       // 3. Check if user has already made a deposit for this auction
       if (user?.id) {
-        const hasCompletedDeposit = await hasUserCompletedDeposit(id, user.id);
-        setHasDeposit(hasCompletedDeposit);
+        const depositStatus = await getDepositStatus(id, user.id);
+        setHasDeposit(depositStatus.hasCompleted);
+        setHasPendingDeposit(depositStatus.hasPending);
+        setDepositInfo(depositStatus.deposit);
+      } else {
+        setHasDeposit(false);
+        setHasPendingDeposit(false);
+        setDepositInfo(null);
       }
 
     } catch (err) {
@@ -1905,6 +1913,9 @@ const AuctionDetail = () => {
     
     // Check if the user has paid the deposit
     if (!hasDeposit) {
+      if (hasPendingDeposit) {
+        setBidError('Depozito ödemeniz henüz tamamlanmamış. Lütfen ödemeyi tamamlayın veya yeni bir ödeme başlatın.');
+      }
       setActionType('bid');
       setShowPaymentModal(true);
       return;
@@ -1985,6 +1996,9 @@ const AuctionDetail = () => {
     
     // Check if the user has paid the deposit
     if (!hasDeposit) {
+      if (hasPendingDeposit) {
+        setOfferError('Depozito ödemeniz henüz tamamlanmamış. Lütfen ödemeyi tamamlayın veya yeni bir ödeme başlatın.');
+      }
       setActionType('offer');
       setShowPaymentModal(true);
       return;
@@ -2344,7 +2358,7 @@ const AuctionDetail = () => {
           .eq('id', depositRecord.id);
         console.error('Invalid payment response:', data);
         throw new Error('Ödeme linki alınamadı');
-      }
+        }
 
       // Payment initiation successful, redirect to PaymentLink
       window.location.href = data.paymentLink;
@@ -2368,6 +2382,9 @@ const AuctionDetail = () => {
     setCardYear('');
     setCardCvv('');
     setCardOwner('');
+    // Clear bid/offer errors when modal is closed
+    setBidError(null);
+    setOfferError(null);
   };
 
   // Function to proceed to payment form
@@ -2404,12 +2421,25 @@ const AuctionDetail = () => {
               // Initial information step
               <>
                 <PaymentWarning>
-                  <p style={{ margin: 0, fontWeight: 500, textAlign: 'center' }}>
-                    Teklif verebilmek için hizmet bedeli peşinatını ödemeniz gerekmektedir.
-                  </p>
-                  <p style={{ marginBottom: 0, textAlign: 'center' }}>
-                    Kazanmadığınız durumda peşinat tutarınız iade edilecektir.
-                  </p>
+                  {hasPendingDeposit ? (
+                    <>
+                      <p style={{ margin: 0, fontWeight: 500, textAlign: 'center', color: 'orange' }}>
+                        Depozito ödemeniz henüz tamamlanmamış.
+                      </p>
+                      <p style={{ marginBottom: 0, textAlign: 'center' }}>
+                        Mevcut ödemeyi tamamlayabilir veya yeni bir ödeme başlatabilirsiniz.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p style={{ margin: 0, fontWeight: 500, textAlign: 'center' }}>
+                        Teklif verebilmek için hizmet bedeli peşinatını ödemeniz gerekmektedir.
+                      </p>
+                      <p style={{ marginBottom: 0, textAlign: 'center' }}>
+                        Kazanmadığınız durumda peşinat tutarınız iade edilecektir.
+                      </p>
+                    </>
+                  )}
                 </PaymentWarning>
                 
                 <PaymentAmount>
@@ -2510,7 +2540,7 @@ const AuctionDetail = () => {
                   onClick={proceedToPayment}
                   style={{ minWidth: '140px' }}
                 >
-                  Teminatı Yatır
+                  {hasPendingDeposit ? 'Yeniden Ödeme Yap' : 'Teminatı Yatır'}
                 </Button>
               </>
             ) : (

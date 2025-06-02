@@ -85,7 +85,7 @@ const PaymentCallback = () => {
         // Call the Supabase Edge Function for payment result checking
         const { data, error: functionError } = await supabase.functions.invoke('payment-result', {
           body: payload
-        });
+            });
 
         console.log('Payment result response:', { data, functionError });
 
@@ -168,7 +168,7 @@ const PaymentCallback = () => {
       
       for (const pattern of patterns) {
         const match = orderId.match(pattern);
-        if (match && match[1]) {
+      if (match && match[1]) {
           auctionId = match[1];
           break;
         }
