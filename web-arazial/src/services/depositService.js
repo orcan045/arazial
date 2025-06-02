@@ -119,7 +119,8 @@ export const updateDepositStatus = async (paymentId, status) => {
     });
 
     if (error) {
-      throw new Error(`Failed to update deposit status: ${error.message}`);
+      const errorMessage = error && error.message ? error.message : 'Unknown error';
+      throw new Error('Failed to update deposit status: ' + errorMessage);
     }
 
     return data;
@@ -179,7 +180,8 @@ export const createDeposit = async (depositData) => {
         // Unique constraint violation - there's still an active deposit
         throw new Error('Bu ilan için zaten aktif bir depozito kaydınız var. Lütfen sayfayı yenileyin.');
       }
-      throw new Error(`Failed to create deposit: ${error.message}`);
+      const errorMessage = error && error.message ? error.message : 'Unknown error';
+      throw new Error('Failed to create deposit: ' + errorMessage);
     }
 
     return data;

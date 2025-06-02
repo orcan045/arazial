@@ -2317,7 +2317,8 @@ const AuctionDetail = () => {
         } catch (updateError) {
           console.error('Could not mark deposit as failed:', updateError);
         }
-        throw new Error(`Edge function error: ${error.message}`);
+        const errorMessage = error && error.message ? error.message : 'Unknown error';
+        throw new Error('Edge function error: ' + errorMessage);
       }
 
       if (!data) {
