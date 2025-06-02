@@ -1708,6 +1708,10 @@ const PaymentMessage = styled.p`
 `;
 
 const AuctionDetail = () => {
+  // Version check to help with debugging cache issues
+  const CODE_VERSION = '2024-12-20-v2';
+  console.log('AuctionDetail code version:', CODE_VERSION);
+  
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, loading: authLoading, profile, isAuthenticated } = useAuth();
@@ -2317,8 +2321,19 @@ const AuctionDetail = () => {
         } catch (updateError) {
           console.error('Could not mark deposit as failed:', updateError);
         }
-        const errorMessage = error && error.message ? error.message : 'Unknown error';
-        throw new Error('Edge function error: ' + errorMessage);
+        
+        // Defensive error handling to prevent constructor issues
+        let errorMessage = 'Unknown error occurred';
+        try {
+          errorMessage = (error && typeof error === 'object' && error.message) 
+            ? String(error.message) 
+            : (typeof error === 'string' ? error : 'Unknown error');
+        } catch (e) {
+          console.error('Error processing error message:', e);
+        }
+        
+        const finalError = new Error('Edge function error: ' + errorMessage);
+        throw finalError;
       }
 
       if (!data) {
