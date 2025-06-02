@@ -2306,29 +2306,47 @@ const AuctionDetail = () => {
       console.log('Edge function response:', { data, error });
 
       if (error) {
-        // If payment initiation fails, update deposit status to failed
-        await supabase
-          .from('deposits')
-          .update({ status: 'failed' })
-          .eq('id', depositRecord.id);
+        // If payment initiation fails, update deposit status to failed using Edge Function
+        try {
+          await supabase.functions.invoke('update-deposit-status', {
+            body: {
+              payment_id: orderId,
+              status: 'failed'
+            }
+          });
+        } catch (updateError) {
+          console.error('Could not mark deposit as failed:', updateError);
+        }
         throw new Error(`Edge function error: ${error.message}`);
       }
 
       if (!data) {
-        // If payment initiation fails, update deposit status to failed
-        await supabase
-          .from('deposits')
-          .update({ status: 'failed' })
-          .eq('id', depositRecord.id);
+        // If payment initiation fails, update deposit status to failed using Edge Function
+        try {
+          await supabase.functions.invoke('update-deposit-status', {
+            body: {
+              payment_id: orderId,
+              status: 'failed'
+            }
+          });
+        } catch (updateError) {
+          console.error('Could not mark deposit as failed:', updateError);
+        }
         throw new Error('No response from edge function');
       }
 
       if (data.error) {
-        // If payment initiation fails, update deposit status to failed
-        await supabase
-          .from('deposits')
-          .update({ status: 'failed' })
-          .eq('id', depositRecord.id);
+        // If payment initiation fails, update deposit status to failed using Edge Function
+        try {
+          await supabase.functions.invoke('update-deposit-status', {
+            body: {
+              payment_id: orderId,
+              status: 'failed'
+            }
+          });
+        } catch (updateError) {
+          console.error('Could not mark deposit as failed:', updateError);
+        }
         // If there's a raw response in the error, it might be HTML
         if (data.rawResponse) {
           console.error('Raw error response:', data.rawResponse);
@@ -2338,11 +2356,17 @@ const AuctionDetail = () => {
       }
 
       if (!data.paymentLink) {
-        // If payment initiation fails, update deposit status to failed
-        await supabase
-          .from('deposits')
-          .update({ status: 'failed' })
-          .eq('id', depositRecord.id);
+        // If payment initiation fails, update deposit status to failed using Edge Function
+        try {
+          await supabase.functions.invoke('update-deposit-status', {
+            body: {
+              payment_id: orderId,
+              status: 'failed'
+            }
+          });
+        } catch (updateError) {
+          console.error('Could not mark deposit as failed:', updateError);
+        }
         console.error('Invalid payment response:', data);
         throw new Error('Ödeme linki alınamadı');
         }
