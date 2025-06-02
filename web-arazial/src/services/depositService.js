@@ -50,15 +50,15 @@ export const getUserDeposit = async (auctionId, userId) => {
       .eq('auction_id', auctionId)
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+    if (error) {
       console.error('Error getting user deposit:', error);
       return null;
     }
 
-    return data;
+    // Return the first item if it exists, otherwise null
+    return data && data.length > 0 ? data[0] : null;
   } catch (err) {
     console.error('Error in getUserDeposit:', err);
     return null;
@@ -84,15 +84,15 @@ export const getUserDepositAnyStatus = async (auctionId, userId) => {
       .eq('user_id', userId)
       .in('status', ['pending', 'completed'])
       .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+    if (error) {
       console.error('Error getting user deposit any status:', error);
       return null;
     }
 
-    return data;
+    // Return the first item if it exists, otherwise null
+    return data && data.length > 0 ? data[0] : null;
   } catch (err) {
     console.error('Error in getUserDepositAnyStatus:', err);
     return null;
@@ -147,27 +147,24 @@ export const createDeposit = async (depositData) => {
       if (existingDeposit.status === 'completed') {
         throw new Error('Bu ilan için depozito ödemesi zaten tamamlanmış.');
       } else if (existingDeposit.status === 'pending') {
-        // Update the existing pending deposit with new payment_id
-        const { data, error } = await supabase
-          .from('deposits')
-          .update({
-            payment_id: depositData.payment_id,
-            amount: depositData.amount,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingDeposit.id)
-          .select()
-          .single();
-
-        if (error) {
-          throw new Error(`Failed to update existing deposit: ${error.message}`);
+        // Mark the existing pending deposit as failed so we can create a new one
+        // This works around the RLS policy that prevents direct updates from client
+        try {
+          await supabase.functions.invoke('update-deposit-status', {
+            body: {
+              payment_id: existingDeposit.payment_id,
+              status: 'failed'
+            }
+          });
+          console.log('Marked old pending deposit as failed:', existingDeposit.id);
+        } catch (updateError) {
+          console.error('Could not mark old deposit as failed:', updateError);
+          throw new Error('Mevcut depozito kaydı güncellenemiyor. Lütfen sayfayı yenileyin ve tekrar deneyin.');
         }
-
-        return data;
       }
     }
 
-    // No existing deposit, create a new one
+    // Create a new deposit record
     const { data, error } = await supabase
       .from('deposits')
       .insert({
@@ -179,8 +176,8 @@ export const createDeposit = async (depositData) => {
 
     if (error) {
       if (error.code === '23505') {
-        // This shouldn't happen now with our check above, but just in case
-        throw new Error('Bu ilan için zaten bir depozito kaydınız bulunmaktadır.');
+        // Unique constraint violation - there's still an active deposit
+        throw new Error('Bu ilan için zaten aktif bir depozito kaydınız var. Lütfen sayfayı yenileyin.');
       }
       throw new Error(`Failed to create deposit: ${error.message}`);
     }

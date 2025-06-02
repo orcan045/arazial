@@ -1135,8 +1135,6 @@ const BidCard = ({
   currentStatus,
   user,
   authLoading,
-  bidAmount,
-  setBidAmount,
   getMinimumBidAmount,
   bidError,
   submitLoading,
@@ -1333,18 +1331,6 @@ const BidCard = ({
                           Paylaş
                         </button>
                       </div>
-                    </div>
-                    
-                    {/* Add Bid Amount Input for manual bidding if needed */}
-                    <div style={{ marginBottom: '0.75rem' }}>
-                      <InputLabel>Teklif Tutarınız</InputLabel>
-                      <CurrencyInput
-                        value={bidAmount}
-                        onChange={(e) => setBidAmount(e.target.value)}
-                        placeholder="Teklif tutarınızı girin"
-                        disabled={submitLoading}
-                        isBidInput={true}
-                      />
                     </div>
                     
                     <OfferButton 
@@ -1921,6 +1907,7 @@ const AuctionDetail = () => {
       return;
     }
     
+    // For auctions, automatically use the minimum bid amount
     const amount = getMinimumBidAmount();
     
     if (amount <= 0) {
@@ -2432,12 +2419,12 @@ const AuctionDetail = () => {
                     </>
                   ) : (
                     <>
-                      <p style={{ margin: 0, fontWeight: 500, textAlign: 'center' }}>
-                        Teklif verebilmek için hizmet bedeli peşinatını ödemeniz gerekmektedir.
-                      </p>
-                      <p style={{ marginBottom: 0, textAlign: 'center' }}>
-                        Kazanmadığınız durumda peşinat tutarınız iade edilecektir.
-                      </p>
+                  <p style={{ margin: 0, fontWeight: 500, textAlign: 'center' }}>
+                    Teklif verebilmek için hizmet bedeli peşinatını ödemeniz gerekmektedir.
+                  </p>
+                  <p style={{ marginBottom: 0, textAlign: 'center' }}>
+                    Kazanmadığınız durumda peşinat tutarınız iade edilecektir.
+                  </p>
                     </>
                   )}
                 </PaymentWarning>
@@ -2726,8 +2713,6 @@ const AuctionDetail = () => {
             currentStatus={currentStatus}
             user={user}
             authLoading={authLoading}
-            bidAmount={bidAmount}
-            setBidAmount={setBidAmount}
             getMinimumBidAmount={getMinimumBidAmount}
             bidError={bidError}
             submitLoading={submitLoading}
@@ -2931,8 +2916,6 @@ const AuctionDetail = () => {
               currentStatus={currentStatus}
               user={user}
               authLoading={authLoading}
-              bidAmount={bidAmount}
-              setBidAmount={setBidAmount}
               getMinimumBidAmount={getMinimumBidAmount}
               bidError={bidError}
               submitLoading={submitLoading}
