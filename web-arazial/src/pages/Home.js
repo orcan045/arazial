@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import { Helmet } from 'react-helmet-async';
 import { fetchAuctions, fetchNegotiations } from '../services/auctionService';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -947,6 +948,82 @@ const Home = () => {
   
   return (
     <>
+      <Helmet>
+        <title>
+          {selectedCity && selectedCity !== '' 
+            ? `${selectedCity} Arazi İhaleleri | Arazialcom` 
+            : 'Türkiye Arazi İhaleleri | Arazialcom'
+          }
+        </title>
+        <meta name="description" content={
+          selectedCity && selectedCity !== ''
+            ? `${selectedCity} ili arazi ihaleleri. ${selectedCity} bölgesindeki değerli araziler için teklif verin. Güvenli ödeme, şeffaf süreç.`
+            : `Türkiye'nin dört bir yanındaki değerli araziler için ihale tekliflerinizi verin. Adana, Adıyaman, Afyonkarahisar, Ağrı, Aksaray, Amasya ve tüm şehirlerde arazi yatırım fırsatları.`
+        } />
+        <meta name="keywords" content={
+          selectedCity && selectedCity !== ''
+            ? `${selectedCity} arazi ihalesi, ${selectedCity} arazi satışı, ${selectedCity} emlak ihalesi, ${selectedCity} arazi yatırımı`
+            : 'arazi ihalesi, arazi satışı, emlak ihalesi, arazi yatırımı, gayrimenkul ihalesi, Türkiye arazi, ihale platformu'
+        } />
+        
+        {/* Open Graph Tags */}
+        <meta property="og:title" content={
+          selectedCity && selectedCity !== ''
+            ? `${selectedCity} Arazi İhaleleri | Arazialcom`
+            : 'Türkiye Arazi İhaleleri | Arazialcom'
+        } />
+        <meta property="og:description" content={
+          selectedCity && selectedCity !== ''
+            ? `${selectedCity} ili arazi ihaleleri. ${selectedCity} bölgesindeki değerli araziler için teklif verin.`
+            : `Türkiye'nin dört bir yanındaki değerli araziler için ihale tekliflerinizi verin. Güvenli ödeme, şeffaf süreç.`
+        } />
+        <meta property="og:image" content="https://www.arazialcom.net/logo.png" />
+        <meta property="og:url" content="https://www.arazialcom.net/" />
+        <meta property="og:type" content="website" />
+        
+        {/* Twitter Card Tags */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={
+          selectedCity && selectedCity !== ''
+            ? `${selectedCity} Arazi İhaleleri | Arazialcom`
+            : 'Türkiye Arazi İhaleleri | Arazialcom'
+        } />
+        <meta name="twitter:description" content={
+          selectedCity && selectedCity !== ''
+            ? `${selectedCity} ili arazi ihaleleri. Değerli araziler için teklif verin.`
+            : `Türkiye'nin değerli arazileri için ihale tekliflerinizi verin.`
+        } />
+        <meta name="twitter:image" content="https://www.arazialcom.net/logo.png" />
+        
+        {/* Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": selectedCity && selectedCity !== '' 
+              ? `${selectedCity} Arazi İhaleleri` 
+              : "Türkiye Arazi İhaleleri",
+            "description": selectedCity && selectedCity !== ''
+              ? `${selectedCity} ili arazi ihaleleri ve değerli araziler için ihale platformu`
+              : "Türkiye'nin en güvenilir arazi ihale platformu",
+            "url": "https://www.arazialcom.net/",
+            "mainEntity": {
+              "@type": "ItemList",
+              "name": "Arazi İhaleleri",
+              "numberOfItems": filteredAuctions.length,
+              "itemListElement": filteredAuctions.slice(0, 10).map((auction, index) => ({
+                "@type": "RealEstateListing",
+                "position": index + 1,
+                "name": auction.title,
+                "description": auction.description || `${auction.city || selectedCity || 'Türkiye'} bölgesinde arazi ihalesi`,
+                "url": `https://www.arazialcom.net/auction/${auction.id}`,
+                "price": auction.starting_price || auction.startingPrice,
+                "priceCurrency": "TRY"
+              }))
+            }
+          })}
+        </script>
+      </Helmet>
       <HeroSection>
         <HeroContent>
 

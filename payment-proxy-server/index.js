@@ -633,6 +633,157 @@ app.post('/api/pay-result', authenticate, async (req, res) => {
   }
 });
 
+// Refund request schema
+const refundRequestSchema = Joi.object({
+  uid: Joi.string().required().messages({
+    'string.empty': 'UID is required',
+    'any.required': 'UID is required'
+  }),
+  amount: Joi.number().positive().required().messages({
+    'number.positive': 'Amount must be positive',
+    'any.required': 'Amount is required'
+  }),
+  description: Joi.string().allow('').optional()
+});
+
+// Refund request endpoint
+app.post('/api/refund-request', authenticate, async (req, res) => {
+  try {
+    console.log('Incoming refund request:', JSON.stringify(req.body, null, 2));
+
+    // Validate request body
+    const { error, value } = refundRequestSchema.validate(req.body);
+    if (error) {
+      console.error('Refund validation error:', error.details);
+      return res.status(400).json({
+        success: false,
+        error: error.details[0].message
+      });
+    }
+
+    // Prepare credential headers
+    const credentialHeaders = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'User-Agent': 'Payment-Proxy/1.0',
+      'MerchantId': process.env.MERCHANT_ID,
+      'UserId': process.env.USER_ID,
+      'ApiKey': process.env.API_KEY
+    };
+
+    // Validate that all required credentials are present
+    if (!credentialHeaders.MerchantId || !credentialHeaders.UserId || !credentialHeaders.ApiKey) {
+      console.error('Missing required credentials for refund:', {
+        hasMerchantId: !!credentialHeaders.MerchantId,
+        hasUserId: !!credentialHeaders.UserId,
+        hasApiKey: !!credentialHeaders.ApiKey
+      });
+      return res.status(500).json({
+        success: false,
+        error: 'Refund service configuration error',
+        details: 'Missing required payment provider credentials'
+      });
+    }
+
+    // Prepare the refund request payload according to İşyeriPOS documentation
+    const refundPayload = {
+      uid: value.uid,
+      amount: value.amount,
+      description: value.description || 'Admin deposit refund'
+    };
+
+    console.log('Sending refund request to İşyeriPOS:', {
+      url: 'https://api.isyerimpos.com/v1/refundRequest',
+      payload: refundPayload,
+      headers: {
+        ...credentialHeaders,
+        'ApiKey': '****' // Hide API key in logs
+      }
+    });
+
+    // Make the refund request to İşyeriPOS API
+    const response = await axios.post(
+      'https://api.isyerimpos.com/v1/refundRequest',
+      refundPayload,
+      {
+        headers: credentialHeaders,
+        validateStatus: null, // Don't throw error on non-2xx status
+        timeout: 30000 // 30 seconds timeout
+      }
+    );
+
+    console.log('İşyeriPOS refund response:', {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data
+    });
+
+    // Check if the request was successful
+    if (response.status === 200 && response.data) {
+      const responseData = response.data;
+      
+      // Check if the refund was successful according to İşyeriPOS response format
+      if (responseData.IsDone === true && responseData.ErrorCode === 200) {
+        return res.status(200).json({
+          success: true,
+          message: responseData.Message,
+          data: responseData
+        });
+      } else {
+        // Refund request failed
+        console.error('Refund request failed:', responseData);
+        return res.status(400).json({
+          success: false,
+          error: responseData.Message || 'Refund request failed',
+          errorCode: responseData.ErrorCode,
+          errors: responseData.Errors
+        });
+      }
+    } else {
+      // HTTP error or unexpected response
+      console.error('HTTP error in refund request:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: response.data
+      });
+      
+      return res.status(response.status || 500).json({
+        success: false,
+        error: 'Refund request failed',
+        details: response.data || response.statusText,
+        httpStatus: response.status
+      });
+    }
+
+  } catch (error) {
+    console.error('Refund request error:', error);
+    
+    // Check if it's an axios error with response
+    if (error.response) {
+      console.error('İşyeriPOS API error response:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+      
+      return res.status(error.response.status || 500).json({
+        success: false,
+        error: 'Refund service error',
+        details: error.response.data || error.response.statusText,
+        httpStatus: error.response.status
+      });
+    }
+    
+    // Network or other error
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error during refund request',
+      details: error.message
+    });
+  }
+});
+
 // Add a test endpoint to debug the İşyeriPOS API
 app.post('/api/test-payment', authenticate, async (req, res) => {
   try {

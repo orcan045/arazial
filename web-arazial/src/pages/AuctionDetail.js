@@ -1707,6 +1707,58 @@ const PaymentMessage = styled.p`
   };
 `;
 
+const AgreementSection = styled.div`
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: #f9f9f9;
+`;
+
+const AgreementText = styled.div`
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--color-text);
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  
+  h4 {
+    margin: 0.75rem 0 0.5rem 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+  
+  p {
+    margin: 0.5rem 0;
+  }
+  
+  strong {
+    font-weight: 600;
+  }
+`;
+
+const AgreementCheckbox = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  
+  input[type="checkbox"] {
+    margin-top: 0.25rem;
+    min-width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+  
+  label {
+    font-size: 0.875rem;
+    cursor: pointer;
+    color: var(--color-text);
+    line-height: 1.4;
+  }
+`;
+
 const AuctionDetail = () => {
   // Version check to help with debugging cache issues
   const CODE_VERSION = '2024-12-20-v2';
@@ -1752,6 +1804,9 @@ const AuctionDetail = () => {
   const [cardYear, setCardYear] = useState('');
   const [cardCvv, setCardCvv] = useState('');
   const [cardOwner, setCardOwner] = useState('');
+  
+  // --- Add state for agreement checkbox ---
+  const [agreementAccepted, setAgreementAccepted] = useState(false);
   
   useEffect(() => {
     // Set the current URL when the component mounts
@@ -2452,6 +2507,7 @@ const AuctionDetail = () => {
     setCardYear('');
     setCardCvv('');
     setCardOwner('');
+    setAgreementAccepted(false);
     // Clear bid/offer errors when modal is closed
     setBidError(null);
     setOfferError(null);
@@ -2494,10 +2550,10 @@ const AuctionDetail = () => {
                   {hasPendingDeposit ? (
                     <>
                       <p style={{ margin: 0, fontWeight: 500, textAlign: 'center', color: 'orange' }}>
-                        Depozito ödemeniz henüz tamamlanmamış.
+                      Teklif verebilmek için hizmet bedeli peşinatını ödemeniz gerekmektedir.
                       </p>
                       <p style={{ marginBottom: 0, textAlign: 'center' }}>
-                        Mevcut ödemeyi tamamlayabilir veya yeni bir ödeme başlatabilirsiniz.
+                      Kazanmadığınız durumda peşinat tutarınız iade edilecektir.
                       </p>
                     </>
                   ) : (
@@ -2516,6 +2572,66 @@ const AuctionDetail = () => {
                   <PaymentAmountLabel>Ödenecek Tutar:</PaymentAmountLabel>
                   <PaymentAmountValue>{formatPrice(auction.deposit_amount || 0)}</PaymentAmountValue>
                 </PaymentAmount>
+                
+                <AgreementSection>
+                  <AgreementText>
+                    <p>
+                      <strong>Aşağıda detayları belirtilen hizmete ilişkin siparişinizi onaylayarak ilgili hizmeti aşağıdaki fiyat ve koşullarla satın almayı kabul etmektesiniz.</strong>
+                    </p>
+                    
+                    <h4>HİZMET BİLGİLERİ:</h4>
+                    
+                    <p>
+                      Hizmet Türü: Katılımcılar ile gayrimenkul sahipleri/satıcılar arasında ileride gerçekleştirilebilecek satış sözleşmesinde uygulanabilecek bedelin belirlenmesi amacıyla gerçekleştirilen, en yüksek teklifi veren katılımcının belirlendiği, detayları Site üzerinden yayınlanan içerikler ile belirlenen sisteme ("Açık Arttırma") katılım imkanı ve buna ilişkin gerekli altyapının sağlanması
+                    </p>
+                    
+                    <p>
+                      Hizmet Açıklaması: Hizmet kapsamında, gayrimenkul satışlarına ilişkin Açık Arttırımlar'ın gerçekleştirilebilmesine ve Site Üyelik Sözleşmesi çerçevesinde Site üzerinden yayınlanan gayrimenkul satış ilanlarının incelenmesi sonrasında uygun görülmesi halinde Site üzerinden gerçekleştirilen Açık Arttırmalar'a katılım sağlanmasına yönelik altyapı hizmetleri sağlanmaktadır.
+                    </p>
+                    
+                    <p>
+                      Hizmet Bedeli/Fiyatı (KDV ve her türlü masraf dâhil) : {formatPrice(auction.deposit_amount || 0)}
+                    </p>
+                    
+                    <p>
+                      Hizmete ilişkin Hizmet Alan Tarafından Karşılanacak Diğer Masraflar: [________]
+                    </p>
+                    
+                    <p>
+                      Ödeme şekli: Kredi Kartı
+                    </p>
+                    
+                    <p>
+                      Fatura Adresi:
+                    </p>
+                    
+                    <h4>CAYMA HAKKI:</h4>
+                    
+                    <p>
+                      Hizmet Alan, işbu sözleşmenin akdedilmesini takip eden on dört gün içerisinde hiçbir hukuki ve cezai sorumluluk üstlenmeksizin ve hiçbir gerekçe göstermeksizin sözleşmeden cayma hakkına sahiptir. Hizmet Alan, bahsi geçen süre içerisinde cayma hakkını kullanmak istediğini, işbu sözleşme ekinde yer alan örnek cayma hakkı formunu doldurarak veya sair açık bir bildirimi ile işbu sözleşmede belirtilen iletişim yöntemlerinden herhangi biri ile Hizmet Veren'e bildirecektir. Hizmet Veren, ilgili bildirimin kendisine ulaşmasını takip eden on dört gün içerisinde kendisine yapılmış ödemeleri Hizmet Alan'a iade edecektir.
+                    </p>
+                    
+                    <p>
+                      Hizmet Alan; cayma hakkı süresi sona ermeden önce kendi onayı ile hizmetin ifasına başlanan hizmet sözleşmelerinde cayma hakkının kullanılamayacağını bilmekte olup bu kapsamda Açık Arttırma tarihinin yukarıda belirtilen cayma hakkı süresi içerisine denk gelmesi halinde Açık Arttırma tarihi itibariyle ek bir onay gerekmeksizin hizmete başlanmış olacağını ve bu kapsamda cayma hakkının ortadan kalkacağını kabul eder.
+                    </p>
+                    
+                    <p>
+                      Hizmet Alan, Mesafeli Sözleşmeler Yönetmeliği gereği cayma hakkına ilişkin bilgilendirmenin gereği gibi yapıldığını kabul eder.
+                    </p>
+                  </AgreementText>
+                  
+                  <AgreementCheckbox>
+                    <input
+                      type="checkbox"
+                      id="agreement-checkbox"
+                      checked={agreementAccepted}
+                      onChange={(e) => setAgreementAccepted(e.target.checked)}
+                    />
+                    <label htmlFor="agreement-checkbox">
+                      Yukarıda belirtilen tüm şartları okudum, anladım ve kabul ediyorum.
+                    </label>
+                  </AgreementCheckbox>
+                </AgreementSection>
               </>
             ) : (
               // Payment form step
@@ -2608,7 +2724,12 @@ const AuctionDetail = () => {
                 </Button>
                 <Button 
                   onClick={proceedToPayment}
-                  style={{ minWidth: '140px' }}
+                  style={{ 
+                    minWidth: '140px',
+                    opacity: agreementAccepted ? 1 : 0.5,
+                    cursor: agreementAccepted ? 'pointer' : 'not-allowed'
+                  }}
+                  disabled={!agreementAccepted}
                 >
                   {hasPendingDeposit ? 'Yeniden Ödeme Yap' : 'Teminatı Yatır'}
                 </Button>

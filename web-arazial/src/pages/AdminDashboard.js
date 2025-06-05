@@ -1824,6 +1824,9 @@ function AdminDashboard() {
         }
       }
 
+      // 3. Fetch deposits for this auction
+      await fetchAuctionDeposits(auctionId);
+
     } catch (error) {
       console.error('Error fetching auction details:', error);
       alert('İhale detayları getirilirken bir hata oluştu');
@@ -2400,6 +2403,112 @@ function AdminDashboard() {
     } else {
       // Loop to the beginning if at the end
       setActiveImage(auctionForm.images[0]);
+    }
+  };
+  
+  // Fetch deposits for a specific auction
+  const fetchAuctionDeposits = async (auctionId) => {
+    setLoading(true);
+    try {
+      const { data: depositsData, error: depositsError } = await supabase
+        .from('deposits')
+        .select(`
+          *,
+          profiles:user_id (
+            id,
+            full_name,
+            email,
+            phone_number
+          )
+        `)
+        .eq('auction_id', auctionId)
+        .order('created_at', { ascending: false });
+
+      if (depositsError) {
+        console.error('Error fetching deposits:', depositsError);
+        setDeposits([]);
+      } else {
+        console.log("Fetched deposits:", depositsData);
+        setDeposits(depositsData || []);
+      }
+    } catch (error) {
+      console.error('Error in fetchAuctionDeposits:', error);
+      setDeposits([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle deposit refund
+  const handleDepositRefund = async (deposit) => {
+    if (!deposit.payment_uid) {
+      alert('Bu depozit için UID bulunamadı. İade işlemi yapılamaz.');
+      return;
+    }
+
+    const confirmRefund = window.confirm(
+      `${deposit.profiles?.full_name || 'Bu kullanıcı'} için ${deposit.amount.toLocaleString('tr-TR')} TL tutarındaki depoziti iade etmek istediğinize emin misiniz?`
+    );
+
+    if (!confirmRefund) return;
+
+    setActionLoading(true);
+    try {
+      console.log('Initiating refund for deposit:', {
+        depositId: deposit.id,
+        uid: deposit.payment_uid,
+        amount: deposit.amount
+      });
+
+      // Call the Supabase Edge Function for deposit refund
+      const { data, error } = await supabase.functions.invoke('deposit-refund', {
+        body: {
+          uid: deposit.payment_uid,
+          amount: deposit.amount,
+          description: `Refund for auction #${selectedAuctionId} deposit`
+        }
+      });
+
+      if (error) {
+        console.error('Error calling refund function:', error);
+        throw new Error(error.message || 'İade talebinde hata oluştu');
+      }
+
+      if (!data.success) {
+        console.error('Refund failed:', data);
+        throw new Error(data.error || 'İade işlemi başarısız');
+      }
+
+      console.log('Refund successful:', data);
+
+      // Update the deposit status to 'refunded' in the database
+      const { error: updateError } = await supabase
+        .from('deposits')
+        .update({ 
+          status: 'refunded',
+          refund_message: data.message,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', deposit.id);
+
+      if (updateError) {
+        console.error('Error updating deposit status:', updateError);
+        // Still show success message since the refund was processed
+        alert(`İade işlemi başarılı: ${data.message}\n\nAncak veritabanı güncellenirken hata oluştu. Lütfen durumu manuel olarak kontrol edin.`);
+      } else {
+        alert(`İade işlemi başarılı: ${data.message}`);
+      }
+
+      // Refresh the deposits list
+      if (selectedAuctionId) {
+        await fetchAuctionDeposits(selectedAuctionId);
+      }
+
+    } catch (error) {
+      console.error('Error processing refund:', error);
+      alert(`İade işlemi sırasında hata oluştu: ${error.message}`);
+    } finally {
+      setActionLoading(false);
     }
   };
   
@@ -4266,6 +4375,93 @@ function AdminDashboard() {
                       <EmptyStateTitle>Bu ilan için henüz pazarlık teklifi alınmamıştır.</EmptyStateTitle>
                     </EmptyState>
                   )
+                )}
+              </div>
+            </CardContainer>
+
+            {/* Deposits Section */}
+            <CardContainer>
+              <div style={{ padding: '1.5rem' }}>
+                <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
+                  Peşinat Ödemeleri
+                </h3>
+                
+                {deposits && deposits.length > 0 ? (
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableHeader>Kullanıcı</TableHeader>
+                          <TableHeader>Telefon</TableHeader>
+                          <TableHeader>Peşinat Tutarı</TableHeader>
+                          <TableHeader>Ödeme Tarihi</TableHeader>
+                          <TableHeader>Durum</TableHeader>
+                          <TableHeader>İşlemler</TableHeader>
+                        </TableRow>
+                      </TableHead>
+                      <tbody>
+                        {deposits.map(deposit => (
+                          <TableRow key={deposit.id}>
+                            <TableCell data-label="Kullanıcı">{deposit.profiles?.full_name || 'İsimsiz'}</TableCell>
+                            <TableCell data-label="Telefon">{deposit.profiles?.phone_number || '-'}</TableCell>
+                            <TableCell data-label="Peşinat Tutarı">{deposit.amount?.toLocaleString('tr-TR')} TL</TableCell>
+                            <TableCell data-label="Ödeme Tarihi">{formatDate(deposit.created_at)}</TableCell>
+                            <TableCell data-label="Durum">
+                              <StatusBadge status={
+                                deposit.status === 'completed' ? 'active' : 
+                                deposit.status === 'refunded' ? 'upcoming' : 
+                                'completed'
+                              }>
+                                {deposit.status === 'completed' ? 'Tamamlandı' : 
+                                 deposit.status === 'refunded' ? 'İade Edildi' : 
+                                 deposit.status === 'pending' ? 'Beklemede' : 
+                                 deposit.status}
+                              </StatusBadge>
+                            </TableCell>
+                            <TableCell data-label="İşlemler">
+                              {deposit.status === 'completed' && deposit.payment_uid && (
+                                <ActionButton 
+                                  variant="warning"
+                                  size="small"
+                                  onClick={() => handleDepositRefund(deposit)}
+                                  disabled={actionLoading}
+                                >
+                                  İade Et
+                                </ActionButton>
+                              )}
+                              {deposit.status === 'refunded' && deposit.refund_message && (
+                                <span style={{ 
+                                  fontSize: '0.75rem', 
+                                  color: 'var(--color-text-secondary)',
+                                  fontStyle: 'italic'
+                                }}>
+                                  {deposit.refund_message}
+                                </span>
+                              )}
+                              {!deposit.payment_uid && deposit.status === 'completed' && (
+                                <span style={{ 
+                                  fontSize: '0.75rem', 
+                                  color: 'var(--color-text-secondary)',
+                                  fontStyle: 'italic'
+                                }}>
+                                  UID bulunamadı
+                                </span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <EmptyState>
+                    <EmptyStateIcon>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                      </svg>
+                    </EmptyStateIcon>
+                    <EmptyStateTitle>Bu ilan için henüz peşinat ödemesi alınmamıştır.</EmptyStateTitle>
+                  </EmptyState>
                 )}
               </div>
             </CardContainer>
