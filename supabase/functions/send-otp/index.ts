@@ -128,7 +128,7 @@ serve(async (req) => {
     console.log('OTP stored successfully');
 
     // Prepare SMS message
-    const message = `Arazial doğrulama kodunuz: ${otp}. Bu kod 10 dakika geçerlidir.`;
+    const message = `arazialcom doğrulama kodunuz: ${otp}`;
 
     // Get proxy server credentials from environment variables
     console.log('Getting proxy server credentials...');

@@ -66,24 +66,24 @@ serve(async (req: Request) => {
         updated_at: new Date().toISOString()
       })
       .eq('payment_id', body.payment_id)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error('Error updating deposit status:', error);
       throw new Error(`Database error: ${error.message}`);
     }
 
-    if (!data) {
+    if (!data || data.length === 0) {
       throw new Error('No deposit found with the provided payment_id');
     }
 
-    console.log('Deposit status updated successfully:', data);
+    const updatedDeposit = data[0];
+    console.log('Deposit status updated successfully:', updatedDeposit);
 
     // Return success response
     return new Response(JSON.stringify({
       success: true,
-      deposit: data,
+      deposit: updatedDeposit,
       message: `Deposit status updated to ${body.status}`
     }), {
       status: 200,

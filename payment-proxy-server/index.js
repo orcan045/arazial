@@ -207,12 +207,12 @@ app.post('/api/pay-request', authenticate, async (req, res) => {
         Description: value.CustomerInfo?.Description || ''
       }
     };
-
+    
     // Add ReflectCost only if it's explicitly provided as a boolean
     if (typeof value.ReflectCost === 'boolean') {
       requestPayload.ReflectCost = value.ReflectCost;
     }
-
+    
     // Add Products if provided
     if (value.Products && value.Products.length > 0) {
       requestPayload.Products = value.Products.map(product => ({
@@ -351,7 +351,18 @@ app.post('/api/pay-request', authenticate, async (req, res) => {
         message: posResponse?.Message,
         errors: posResponse?.Errors
       });
-      throw new Error(errorMessage);
+      
+      // Return the error response directly instead of throwing
+      return res.status(400).json({
+        success: false,
+        error: errorMessage,
+        data: posResponse ? JSON.stringify(posResponse) : null,
+        debug: {
+          isDone: posResponse?.IsDone,
+          errorCode: posResponse?.ErrorCode,
+          errors: posResponse?.Errors
+        }
+      });
     }
 
     // Extract content from the nested structure
@@ -399,12 +410,8 @@ app.post('/api/pay-request', authenticate, async (req, res) => {
     } else {
       return res.status(500).json({
         success: false,
-        error: 'Internal server error',
-        details: error.message,
-        debug: {
-          errorType: 'SETUP_ERROR',
-          message: error.message
-        }
+        error: 'Payment verification service error',
+        details: error.message
       });
     }
   }
@@ -434,9 +441,36 @@ app.post('/api/pay-complete', authenticate, async (req, res) => {
   } catch (error) {
     console.error('Error forwarding pay-complete:', error);
     if (error.response) {
-      return res.status(error.response.status).json({ success: false, error: error.response.data || 'Payment provider error' });
+      // Pass through more specific error details
+      const errorData = error.response.data;
+      let errorMessage = 'Payment completion failed';
+      
+      if (errorData) {
+        try {
+          const parsed = typeof errorData === 'string' ? JSON.parse(errorData) : errorData;
+          if (parsed.Message) {
+            errorMessage = parsed.Message;
+          } else if (parsed.message) {
+            errorMessage = parsed.message;
+          } else if (typeof errorData === 'string') {
+            errorMessage = errorData;
+          }
+        } catch (e) {
+          errorMessage = errorData.toString();
+        }
+      }
+      
+      return res.status(error.response.status).json({ 
+        success: false, 
+        error: errorMessage,
+        details: errorData 
+      });
     }
-    return res.status(500).json({ success: false, error: 'Internal server error' });
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Payment completion service error',
+      details: error.message 
+    });
   }
 });
 
@@ -592,7 +626,7 @@ app.post('/api/pay-result', authenticate, async (req, res) => {
     } else {
       return res.status(500).json({
         success: false,
-        error: 'Internal server error',
+        error: 'Payment verification service error',
         details: error.message
       });
     }

@@ -46,7 +46,7 @@ BEGIN
     'source_addr', coalesce(current_setting('app.verimor_source_addr'), 'ARAZIAL'),
     'messages', json_build_array(
       json_build_object(
-        'msg', format('Arazial doğrulama kodunuz: %s. Bu kod 10 dakika geçerlidir.', otp),
+        'msg', format('arazialcom doğrulama kodunuz: %s', otp),
         'dest', p_phone_number
       )
     )

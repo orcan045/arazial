@@ -78,7 +78,7 @@ app.post('/api/send-otp', authenticate, async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
     // Prepare message text
-    const messageText = message || `Arazial doğrulama kodunuz: ${otp}. Bu kod 10 dakika geçerlidir.`;
+    const messageText = message || `arazialcom doğrulama kodunuz: ${otp}`;
     
     // Prepare Verimor payload
     const payload = {

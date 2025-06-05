@@ -35,7 +35,7 @@ BEGIN
   -- Prepare proxy API payload
   proxy_payload := json_build_object(
     'phoneNumber', p_phone_number,
-    'message', format('Arazial doğrulama kodunuz: %s. Bu kod 10 dakika geçerlidir.', otp)
+    'message', format('arazialcom doğrulama kodunuz: %s', otp)
   );
 
   -- Call Proxy API

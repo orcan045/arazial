@@ -126,7 +126,38 @@ serve(async (req: Request) => {
 
     // Check if we have a valid İşyeriPOS response
     if (!proxyData.success || !proxyData.uid) {
-      throw new Error(proxyData.error || 'Payment proxy error');
+      // Log the actual error details for debugging
+      console.error('Payment request failed:', {
+        success: proxyData.success,
+        error: proxyData.error,
+        data: proxyData.data,
+        message: proxyData.message,
+        details: proxyData.details
+      });
+      
+      // Pass through the actual error message from İşyeriPOS
+      let actualErrorMessage = 'Ödeme işlemi başarısız';
+      
+      // First try the direct error field (new format from payment-proxy-server)
+      if (proxyData.error && typeof proxyData.error === 'string') {
+        actualErrorMessage = proxyData.error;
+      } else if (proxyData.data && typeof proxyData.data === 'string') {
+        // Try to parse the nested İşyeriPOS response (legacy format)
+        try {
+          const isyeriposResponse = JSON.parse(proxyData.data);
+          if (isyeriposResponse.Message) {
+            actualErrorMessage = isyeriposResponse.Message;
+          }
+        } catch (parseError) {
+          console.warn('Could not parse nested İşyeriPOS response:', parseError);
+        }
+      } else if (proxyData.message) {
+        actualErrorMessage = proxyData.message;
+      } else if (proxyData.details) {
+        actualErrorMessage = proxyData.details;
+      }
+      
+      throw new Error(actualErrorMessage);
     }
 
     // Return the successful response with payment data
