@@ -7,12 +7,15 @@ import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import CountdownTimer from '../components/CountdownTimer';
 import Button from '../components/ui/Button';
+import backgroundImage from '../assets/backgroundimage.png';
 
 // Hero section and modern homepage styling
 const HeroSection = styled.section`
   height: 600px;
+  background-image: url(${backgroundImage});
   background-position: center;
   background-size: cover;
+  background-repeat: no-repeat;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -21,6 +24,17 @@ const HeroSection = styled.section`
   padding: 2rem;
   text-align: center;
   position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 0;
+  }
   
   @media (max-width: 768px) {
     height: auto;

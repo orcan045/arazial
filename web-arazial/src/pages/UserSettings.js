@@ -145,7 +145,8 @@ const UserSettings = () => {
     emailNotifications: true,
     auctionReminders: true,
     marketingEmails: false,
-    twoFactorAuth: false
+    twoFactorAuth: false,
+    smsNotifications: true
   });
   
   const [passwordForm, setPasswordForm] = useState({
@@ -181,7 +182,8 @@ const UserSettings = () => {
             emailNotifications: data.email_notifications,
             auctionReminders: data.auction_reminders,
             marketingEmails: data.marketing_emails,
-            twoFactorAuth: data.two_factor_auth
+            twoFactorAuth: data.two_factor_auth,
+            smsNotifications: data.sms_notifications !== false // Default to true if null
           });
         } else {
           // Create default settings
@@ -192,7 +194,8 @@ const UserSettings = () => {
               email_notifications: true,
               auction_reminders: true,
               marketing_emails: false,
-              two_factor_auth: false
+              two_factor_auth: false,
+              sms_notifications: true
             }]);
         }
       } catch (error) {
@@ -466,6 +469,20 @@ const UserSettings = () => {
             </Checkbox>
             <HelperText>
               Yeni özellikler, özel teklifler ve platformumuzla ilgili güncellemeler hakkında e-postalar alın.
+            </HelperText>
+            
+            <Checkbox>
+              <input 
+                type="checkbox" 
+                id="smsNotifications" 
+                name="smsNotifications"
+                checked={userSettings.smsNotifications}
+                onChange={handleSettingsChange}
+              />
+              <label htmlFor="smsNotifications">SMS Bildirimleri</label>
+            </Checkbox>
+            <HelperText>
+              Teklif verdiğiniz taşınmazlara yeni teklifler geldiğinde SMS ile bildirim alın.
             </HelperText>
           </SectionContainer>
         );

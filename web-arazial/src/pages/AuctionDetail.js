@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet-async'; // <-- Import Helmet
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
 import { hasUserCompletedDeposit, createDeposit, getDepositStatus } from '../services/depositService';
+import { sendNewOfferNotification } from '../services/smsService';
 import CountdownTimer from '../components/CountdownTimer';
 import Button from '../components/ui/Button';
 import { PAYMENT_CONFIG } from '../config/payment';
@@ -1046,6 +1047,110 @@ const CurrencySymbol = styled.span`
   z-index: 1;
 `;
 
+const IncrementCurrencySymbol = styled.span`
+  position: absolute;
+  right: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  font-weight: 500;
+  pointer-events: none;
+  z-index: 1;
+  
+  @media (max-width: 768px) {
+    right: 52px;
+  }
+`;
+
+// Styled components for increment/decrement input
+const IncrementInputContainer = styled.div`
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  overflow: visible;
+  min-height: 48px;
+  
+  &:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+  }
+  
+  @media (max-width: 768px) {
+    min-height: 40px;
+  }
+`;
+
+const IncrementButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e5e7eb;
+  border: 1px solid #d1d5db;
+  width: 50px;
+  min-width: 50px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  align-self: stretch;
+  z-index: 10;
+  
+  &:hover:not(:disabled) {
+    background-color: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+  }
+  
+  &:active:not(:disabled) {
+    background-color: #2563eb;
+    border-color: #2563eb;
+  }
+  
+  &:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+  }
+  
+  @media (max-width: 768px) {
+    width: 44px;
+    min-width: 44px;
+    font-size: 1.25rem;
+  }
+`;
+
+const IncrementInput = styled.input`
+  flex: 1;
+  padding: 0.875rem 80px 0.875rem 1rem;
+  border: none;
+  font-size: 1.125rem;
+  text-align: center;
+  font-weight: 600;
+  background: transparent;
+  align-self: stretch;
+  
+  &:focus {
+    outline: none;
+  }
+  
+  &::placeholder {
+    color: var(--color-text-secondary);
+    font-weight: 400;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0.5rem 70px 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+`;
+
 const FormattedInput = styled.input`
   width: 100%;
   padding: 0.875rem 2.5rem 0.875rem 1rem;
@@ -1072,7 +1177,90 @@ const BidAmountInput = styled(FormattedInput)`
   text-align: center;
 `;
 
-// Custom formatted currency input component
+// Function to calculate dynamic step amount based on current value
+const getStepAmount = (currentValue) => {
+  const value = parseInt(currentValue) || 0;
+  
+  if (value < 10000) {
+    return 500; // 0-10,000: increment by 500
+  } else if (value < 100000) {
+    return 5000; // 10,000-100,000: increment by 5,000
+  } else if (value < 1000000) {
+    return 25000; // 100,000-1,000,000: increment by 25,000
+  } else {
+    return 50000; // 1,000,000+: increment by 50,000
+  }
+};
+
+// Custom increment/decrement currency input component for offers
+const IncrementCurrencyInput = ({ 
+  value, 
+  onChange, 
+  placeholder, 
+  disabled, 
+  style, 
+  className 
+}) => {
+  const [displayValue, setDisplayValue] = useState('');
+  
+  // Update display value when value prop changes
+  useEffect(() => {
+    if (value) {
+      setDisplayValue(formatNumberDisplay(value));
+    } else {
+      setDisplayValue('');
+    }
+  }, [value]);
+
+  const handleIncrement = () => {
+    if (disabled) return;
+    
+    const currentValue = parseInt(value) || 0;
+    const stepAmount = getStepAmount(currentValue);
+    const newValue = currentValue + stepAmount;
+    
+    onChange({ target: { value: newValue.toString() } });
+  };
+
+  const handleDecrement = () => {
+    if (disabled) return;
+    
+    const currentValue = parseInt(value) || 0;
+    const stepAmount = getStepAmount(currentValue);
+    const newValue = Math.max(0, currentValue - stepAmount);
+    
+    onChange({ target: { value: newValue.toString() } });
+  };
+  
+  return (
+    <IncrementInputContainer style={style} className={className}>
+      <IncrementButton 
+        type="button"
+        onClick={handleDecrement}
+        disabled={disabled || parseInt(value) <= 0}
+      >
+        −
+      </IncrementButton>
+      <IncrementInput
+        type="text"
+        value={displayValue}
+        placeholder={placeholder}
+        disabled={disabled}
+        readOnly
+      />
+      <IncrementCurrencySymbol>₺</IncrementCurrencySymbol>
+      <IncrementButton 
+        type="button"
+        onClick={handleIncrement}
+        disabled={disabled}
+      >
+        +
+      </IncrementButton>
+    </IncrementInputContainer>
+  );
+};
+
+// Custom formatted currency input component (original for bids)
 const CurrencyInput = ({ 
   value, 
   onChange, 
@@ -1555,7 +1743,7 @@ const BidCard = ({
                   <PropertyLabel htmlFor="offerAmount">Teklif Miktarınız</PropertyLabel>
                 )}
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexDirection: isMobile ? 'column' : 'row' }}>
-                  <CurrencyInput
+                  <IncrementCurrencyInput
                     value={offerAmount}
                     onChange={(e) => setOfferAmount(e.target.value)}
                     placeholder="Teklifinizi girin"
@@ -1780,6 +1968,16 @@ const AuctionDetail = () => {
   const [userOffers, setUserOffers] = useState([]);
   const [offerAmount, setOfferAmount] = useState('');
   const [offerError, setOfferError] = useState(null);
+  
+  // Initialize offer amount with listing price for offer-type listings
+  useEffect(() => {
+    if (auction && auction.listing_type === 'offer' && !offerAmount) {
+      const listingPrice = auction?.price || auction?.starting_price || auction?.startingPrice || 0;
+      if (listingPrice > 0) {
+        setOfferAmount(listingPrice.toString());
+      }
+    }
+  }, [auction, offerAmount]);
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -1802,11 +2000,49 @@ const AuctionDetail = () => {
   const [cardNumber, setCardNumber] = useState('');
   const [cardMonth, setCardMonth] = useState('');
   const [cardYear, setCardYear] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
   const [cardOwner, setCardOwner] = useState('');
   
   // --- Add state for agreement checkbox ---
   const [agreementAccepted, setAgreementAccepted] = useState(false);
+  
+  // Function to handle expiry date formatting
+  const handleExpiryChange = (e) => {
+    const inputValue = e.target.value;
+    let value = inputValue.replace(/\D/g, ''); // Remove non-digits
+    
+    // Handle deletion - if user deletes the slash, remove the last digit too
+    if (inputValue.length < cardExpiry.length && cardExpiry.includes('/') && !inputValue.includes('/')) {
+      value = value.slice(0, -1);
+    }
+    
+    // Format with slash
+    if (value.length >= 2) {
+      value = value.substring(0, 2) + '/' + value.substring(2, 4);
+    }
+    
+    // Limit to 5 characters max (MM/YY)
+    if (value.length <= 5) {
+      setCardExpiry(value);
+      
+      // Update individual month/year states for backend compatibility
+      const digits = value.replace(/\D/g, '');
+      if (digits.length >= 2) {
+        setCardMonth(digits.substring(0, 2));
+      } else {
+        setCardMonth(digits);
+      }
+      
+      if (digits.length >= 4) {
+        setCardYear(digits.substring(2, 4));
+      } else if (digits.length === 3) {
+        setCardYear(digits.substring(2, 3));
+      } else {
+        setCardYear('');
+      }
+    }
+  };
   
   useEffect(() => {
     // Set the current URL when the component mounts
@@ -2116,6 +2352,25 @@ const AuctionDetail = () => {
 
       setOfferAmount(''); // Clear input
       await refreshOffers(); // Refresh offers to show the new pending one
+
+      // Send SMS notifications to other users who have made offers on this property
+      try {
+        console.log('Sending SMS notifications for new offer');
+        const notificationResult = await sendNewOfferNotification({
+          auctionId: auction.id,
+          newOfferAmount: amount,
+          newOfferUserId: user.id
+        });
+        
+        if (notificationResult.success) {
+          console.log('SMS notifications sent successfully:', notificationResult.message);
+        } else {
+          console.error('Failed to send SMS notifications:', notificationResult.error);
+        }
+      } catch (smsError) {
+        console.error('Exception sending SMS notifications:', smsError);
+        // Don't fail the offer submission if SMS fails
+      }
 
     } catch (error) {
       console.error('Error submitting offer:', error);
@@ -2667,25 +2922,15 @@ const AuctionDetail = () => {
                   </InputGroup>
                   <div style={{ display: 'flex', gap: '1rem' }}>
                     <InputGroup style={{ flex: 1 }}>
-                      <InputLabel>Son Kullanma Ayı</InputLabel>
+                      <InputLabel>Son Kullanma Tarihi</InputLabel>
                       <Input
                         type="text"
-                        placeholder="MM"
-                        value={cardMonth}
-                        onChange={e => setCardMonth(e.target.value)}
+                        placeholder="MM/YY"
+                        value={cardExpiry}
+                        onChange={handleExpiryChange}
                         disabled={paymentProcessing}
                         required
-                      />
-                    </InputGroup>
-                    <InputGroup style={{ flex: 1 }}>
-                      <InputLabel>Son Kullanma Yılı</InputLabel>
-                      <Input
-                        type="text"
-                        placeholder="YY"
-                        value={cardYear}
-                        onChange={e => setCardYear(e.target.value)}
-                        disabled={paymentProcessing}
-                        required
+                        maxLength={5}
                       />
                     </InputGroup>
                     <InputGroup style={{ flex: 1 }}>
@@ -2731,7 +2976,7 @@ const AuctionDetail = () => {
                   }}
                   disabled={!agreementAccepted}
                 >
-                  {hasPendingDeposit ? 'Yeniden Ödeme Yap' : 'Teminatı Yatır'}
+                  Teminatı Yatır
                 </Button>
               </>
             ) : (
