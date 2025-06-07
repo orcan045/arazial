@@ -892,6 +892,20 @@ const OfferButton = styled(Button)`
   }
 `;
 
+const BuyNowButton = styled(Button)`
+  width: 100%;
+  margin-top: 0.5rem;
+  box-sizing: border-box;
+  
+  @media (max-width: 768px) {
+    margin-top: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    min-height: 36px;
+    width: 100%;
+  }
+`;
+
 const OfferStatusMessage = styled.div`
   padding: 1rem 1.5rem;
   border-radius: var(--border-radius-md);
@@ -1739,25 +1753,46 @@ const BidCard = ({
                 marginTop: showRejectedMessage ? (isMobile ? '0.5rem' : '1.5rem') : '0', 
                 marginBottom: isMobile ? '0.5rem' : '2rem' 
               }}>
-                {!isMobile && (
-                  <PropertyLabel htmlFor="offerAmount">Teklif Miktarınız</PropertyLabel>
+                {auction.listing_type === 'offer' ? (
+                  // For offer-type listings, show only "Buy Now" button
+                  <div style={{ textAlign: 'center' }}>
+                    {!isMobile && (
+                      <PropertyLabel style={{ marginBottom: '1rem' }}>
+                        Liste Fiyatı: {formatPrice(auction.price)}
+                      </PropertyLabel>
+                    )}
+                    <BuyNowButton 
+                      type="submit" 
+                      disabled={submitLoading}
+                      style={{ width: '100%' }}
+                    >
+                      {submitLoading ? <LoadingIcon /> : 'Hemen Satın Al'}
+                    </BuyNowButton>
+                  </div>
+                ) : (
+                  // For auction-type listings, show the increment input
+                  <>
+                    {!isMobile && (
+                      <PropertyLabel htmlFor="offerAmount">Teklif Miktarınız</PropertyLabel>
+                    )}
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexDirection: isMobile ? 'column' : 'row' }}>
+                      <IncrementCurrencyInput
+                        value={offerAmount}
+                        onChange={(e) => setOfferAmount(e.target.value)}
+                        placeholder="Teklifinizi girin"
+                        disabled={submitLoading}
+                        style={{ margin: 0, flex: 1, width: '100%' }}
+                      />
+                      <OfferButton 
+                        type="submit" 
+                        disabled={submitLoading}
+                        style={{ marginTop: isMobile ? '0.5rem' : 0, width: isMobile ? '100%' : 'auto' }}
+                      >
+                        {submitLoading ? <LoadingIcon /> : 'Teklifi Gönder'}
+                      </OfferButton>
+                    </div>
+                  </>
                 )}
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexDirection: isMobile ? 'column' : 'row' }}>
-                  <IncrementCurrencyInput
-                    value={offerAmount}
-                    onChange={(e) => setOfferAmount(e.target.value)}
-                    placeholder="Teklifinizi girin"
-                    disabled={submitLoading}
-                    style={{ margin: 0, flex: 1, width: '100%' }}
-                  />
-                  <OfferButton 
-                    type="submit" 
-                    disabled={submitLoading}
-                    style={{ marginTop: isMobile ? '0.5rem' : 0, width: isMobile ? '100%' : 'auto' }}
-                  >
-                    {submitLoading ? <LoadingIcon /> : 'Teklifi Gönder'}
-                  </OfferButton>
-                </div>
                 {offerError && <p style={{ color: 'red', fontSize: '0.875rem', marginTop: '0.5rem', marginBottom: '0' }}>{offerError}</p>}
                 {shareMessage && (
                   <div style={{ 
@@ -2297,15 +2332,22 @@ const AuctionDetail = () => {
       return;
     }
 
-    // Clean the input string by removing dots (thousand separators)
-    const cleanedAmountString = String(offerAmount).replace(/\./g, '');
-    
-    // Parse the cleaned string
-    const amount = parseFloat(cleanedAmountString);
-    
-    if (isNaN(amount) || amount <= 0) {
-      setOfferError('Lütfen geçerli bir teklif miktarı girin.');
-      return;
+    // For offer-type listings, use the auction price. For auctions, use the entered amount.
+    let amount;
+    if (auction.listing_type === 'offer') {
+      // Use the listing price for "Buy Now" functionality
+      amount = parseFloat(auction.price);
+    } else {
+      // Clean the input string by removing dots (thousand separators)
+      const cleanedAmountString = String(offerAmount).replace(/\./g, '');
+      
+      // Parse the cleaned string
+      amount = parseFloat(cleanedAmountString);
+      
+      if (isNaN(amount) || amount <= 0) {
+        setOfferError('Lütfen geçerli bir teklif miktarı girin.');
+        return;
+      }
     }
 
     // Double-check if user already has a pending or accepted offer just before submitting
