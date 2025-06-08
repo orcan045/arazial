@@ -3003,7 +3003,7 @@ function AdminDashboard() {
                               )}
                             </TableCell>
                             <TableCell data-label="Başlık">{item.title}</TableCell>
-                            <TableCell data-label="Tür">{item.listing_type === 'auction' || item.listingType === 'auction' ? 'İhale' : 'Pazarlık'}</TableCell>
+                            <TableCell data-label="Tür">{item.listing_type === 'auction' || item.listingType === 'auction' ? 'İhale' : 'Satın al'}</TableCell>
                             <TableCell data-label="Fiyat">{item.starting_price?.toLocaleString('tr-TR')} TL</TableCell>
                             <TableCell data-label="Bitiş Tarihi">{formatDate(item.end_date || item.endDate)}</TableCell>
                             <TableCell data-label="Durum">
@@ -3105,7 +3105,7 @@ function AdminDashboard() {
                       <div className="mobile-card-content">
                         <div className="item">
                           <div className="label">Tür</div>
-                          <div>{item.listing_type === 'auction' || item.listingType === 'auction' ? 'İhale' : 'Pazarlık'}</div>
+                          <div>{item.listing_type === 'auction' || item.listingType === 'auction' ? 'İhale' : 'Satın al'}</div>
                         </div>
                         <div className="item">
                           <div className="label">Fiyat</div>
@@ -3183,7 +3183,7 @@ function AdminDashboard() {
                     onChange={handleAuctionFormChange}
                   >
                     <option value="auction">İhale (Açık Artırma)</option>
-                    <option value="offer">Teklif Usulü (Pazarlık)</option>
+                    <option value="offer">Teklif Usulü (Satın al)</option>
                   </Select>
                 </FormGroup>
               </FormGrid>
@@ -3539,7 +3539,7 @@ function AdminDashboard() {
                     onChange={handleAuctionFormChange}
                   >
                     <option value="auction">İhale (Açık Artırma)</option>
-                    <option value="offer">Teklif Usulü (Pazarlık)</option>
+                    <option value="offer">Teklif Usulü (Satın al)</option>
                   </Select>
                 </FormGroup>
               </FormGrid>
@@ -4222,7 +4222,7 @@ function AdminDashboard() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
                   <div><strong>Başlık:</strong> {auctionForm.title}</div>
                   <div><strong>Durum:</strong> <StatusBadge status={auctionForm.status}>{getStatusText(auctionForm.status)}</StatusBadge></div>
-                  <div><strong>Tür:</strong> {auctionForm.listingType === 'auction' ? 'İhale' : 'Pazarlık'}</div>
+                  <div><strong>Tür:</strong> {auctionForm.listingType === 'auction' ? 'İhale' : 'Satın al'}</div>
                   <div><strong>Başlangıç/Liste Fiyatı:</strong> {auctionForm.startingPrice?.toLocaleString('tr-TR')} TL</div>
                   {auctionForm.listingType === 'auction' && 
                     <div><strong>Min. Artış:</strong> {auctionForm.minIncrement?.toLocaleString('tr-TR')} TL</div>
@@ -4268,7 +4268,7 @@ function AdminDashboard() {
             <CardContainer>
               <div style={{ padding: '1.5rem' }}>
                 <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--color-border)', paddingBottom: '0.5rem' }}>
-                  {auctionForm.listingType === 'auction' ? 'Teklifler (İhale)' : 'Pazarlık Teklifleri'}
+                  {auctionForm.listingType === 'auction' ? 'Teklifler (İhale)' : 'Satın al Teklifleri'}
                 </h3>
                 
                 {/* Conditional Rendering based on listingType */}
@@ -4372,7 +4372,7 @@ function AdminDashboard() {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                          </svg>
                       </EmptyStateIcon>
-                      <EmptyStateTitle>Bu ilan için henüz pazarlık teklifi alınmamıştır.</EmptyStateTitle>
+                      <EmptyStateTitle>Bu ilan için henüz satın al teklifi alınmamıştır.</EmptyStateTitle>
                     </EmptyState>
                   )
                 )}
