@@ -106,17 +106,17 @@ const TermsOfUse = () => {
       <ContentSection>
         <SectionTitle>1. Taraflar</SectionTitle>
         <Paragraph>
-          İşbu Mesafeli Hizmet Sözleşmesi, bir tarafta arazialcom Gayrimenkul Sanayi ve Ticaret Limited Şirketi ("Hizmet Sağlayıcı" olarak anılacaktır), diğer tarafta platforma üye olan ve teminat ödemesi gerçekleştiren kullanıcı ("Hizmet Alan" olarak anılacaktır) arasında, aşağıdaki şartlar çerçevesinde elektronik ortamda kurulmuştur.
+          İşbu Mesafeli Hizmet Sözleşmesi, bir tarafta ARAZİALCOM EMLAK SANAYİ VE TİCARET LİMİTED ŞİRKETİ ("Hizmet Sağlayıcı" olarak anılacaktır), diğer tarafta platforma üye olan ve teminat ödemesi gerçekleştiren kullanıcı ("Hizmet Alan" olarak anılacaktır) arasında, aşağıdaki şartlar çerçevesinde elektronik ortamda kurulmuştur.
         </Paragraph>
       </ContentSection>
 
       <ContentSection>
         <SectionTitle>2. Konu</SectionTitle>
         <Paragraph>
-          İşbu sözleşme, Hizmet Alan'ın arazialcom platformunda yayınlanan taşınmazlara katılım teminatı ödeyerek başvuru hakkı kazanması sürecine ilişkin şartları düzenler.
+          İşbu sözleşme, Hizmet Alan'ın ARAZİALCOM platformunda yayınlanan taşınmazlara katılım teminatı ödeyerek başvuru ve açık artırmaya katılım hakkı kazanması sürecine ilişkin şartları düzenler.
         </Paragraph>
         <Paragraph>
-          Bu sözleşme herhangi bir taşınmazın satışı değil, yalnızca başvuru ve teklif sürecine katılım hizmeti sunulmasına ilişkindir.
+          Bu sözleşme herhangi bir taşınmazın satışı değil, yalnızca başvuru ve açık artırmaya katılım hizmeti sunulmasına ilişkindir.
         </Paragraph>
       </ContentSection>
 
@@ -125,7 +125,8 @@ const TermsOfUse = () => {
         <List>
           <ListItem>Hizmet Alan, ilanda belirtilen teminat tutarını ödeyerek ilgili taşınmaza teklif verme hakkı elde eder.</ListItem>
           <ListItem>Teminat ödemesi yapılmadan teklif verilemez.</ListItem>
-          <ListItem>Bu süreçte arazialcom yalnızca dijital altyapı sağlar, doğrudan satış gerçekleştirmez.</ListItem>
+          <ListItem>Açık artırma süreci, sistem üzerinden dijital ortamda şeffaf bir şekilde yürütülür ve en yüksek teklifi veren kullanıcı sistem tarafından otomatik olarak belirlenir.</ListItem>
+          <ListItem>ARAZİALCOM, yalnızca dijital altyapıyı sağlar; doğrudan satış gerçekleştirmez ve taşınmaz mülkiyeti devrinden sorumlu değildir.</ListItem>
         </List>
       </ContentSection>
 
@@ -133,24 +134,24 @@ const TermsOfUse = () => {
         <SectionTitle>4. Teminat ve İade Koşulları</SectionTitle>
         <List>
           <ListItem>Teminat ödemesi, başvurulan taşınmaza katılım amacıyla tahsil edilir.</ListItem>
-          <ListItem>Satın alma gerçekleşmezse, teminat bedeli 7 (yedi) iş günü içinde iade edilir.</ListItem>
-          <ListItem>Kazanım sağlanırsa, teminat bedeli satış bedelinden düşülür.</ListItem>
-          <ListItem>Hatalı IBAN, alıcı bilgisi gibi kullanıcıdan kaynaklı sorunlarda gecikmelerden Hizmet Sağlayıcı sorumlu değildir.</ListItem>
+          <ListItem>Satın alma işlemi gerçekleşmezse, teminat bedeli 7 (yedi) iş günü içerisinde iade edilir.</ListItem>
+          <ListItem>Satın alma işlemi gerçekleştiği takdirde, teminat bedeli satış bedelinden düşülür.</ListItem>
+          <ListItem>Kullanıcının hatalı IBAN, hesap bilgisi gibi nedenlerle iade sürecinde yaşanacak gecikmelerden Hizmet Sağlayıcı sorumlu tutulamaz.</ListItem>
         </List>
       </ContentSection>
 
       <ContentSection>
         <SectionTitle>5. Cayma Hakkı</SectionTitle>
         <List>
-          <ListItem>Kullanıcı, teminat ödemesini yaptıktan sonra taşınmaza teklif vermemişse, 14 gün içinde cayma hakkını kullanabilir.</ListItem>
-          <ListItem>Bu durumda teminat, kullanıcıya iade edilir.</ListItem>
+          <ListItem>Kullanıcı, teminat ödemesini yaptıktan sonra taşınmaza teklif vermemişse, 14 (on dört) gün içerisinde cayma hakkını kullanabilir.</ListItem>
+          <ListItem>Cayma hakkı kullanıldığı takdirde, teminat bedeli kullanıcıya iade edilir.</ListItem>
         </List>
       </ContentSection>
 
       <ContentSection>
         <SectionTitle>6. Sözleşmenin Süresi</SectionTitle>
         <Paragraph>
-          Bu sözleşme, teminat ödemesiyle birlikte elektronik ortamda yürürlüğe girer ve ilgili başvuru süreci sona erdiğinde veya iade yapıldığında kendiliğinden sona erer.
+          Bu sözleşme, teminat ödemesiyle birlikte elektronik ortamda yürürlüğe girer ve ilgili başvuru süreci sona erdiğinde veya teminat iadesi yapıldığında kendiliğinden sona erer.
         </Paragraph>
       </ContentSection>
 
@@ -163,9 +164,41 @@ const TermsOfUse = () => {
       </ContentSection>
 
       <ContentSection>
-        <SectionTitle>8. İletişim Bilgileri</SectionTitle>
+        <SectionTitle>8. Kişisel Verilerin Korunması</SectionTitle>
         <Paragraph>
-          arazialcom Gayrimenkul Sanayi ve Ticaret Ltd. Şti.
+          Kullanıcıların kişisel verileri, 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında işlenmekte olup, ARAZİALCOM tarafından yalnızca hizmetin sunulması amacıyla kullanılmaktadır.
+          Kişisel verilerinizin işlenmesine ilişkin detaylı bilgiye KVKK Aydınlatma Metni üzerinden ulaşabilirsiniz.
+        </Paragraph>
+      </ContentSection>
+
+      <ContentSection>
+        <SectionTitle>9. Sorumluluk Reddi</SectionTitle>
+        <Paragraph>
+          ARAZİALCOM, sistemde meydana gelebilecek geçici erişim kesintileri, teknik arızalar, veri kaybı veya bağlantı sorunlarından dolayı doğabilecek zararlar için sorumluluk kabul etmez.
+          Açık artırma süreci tamamen dijital ortamda yürütülmekte olup, kullanıcıların internet bağlantı veya cihaz kaynaklı sorunlarından Hizmet Sağlayıcı sorumlu değildir.
+        </Paragraph>
+      </ContentSection>
+
+      <ContentSection>
+        <SectionTitle>10. Değişiklik Hakkı</SectionTitle>
+        <Paragraph>
+          ARAZİALCOM, açık artırma şartlarında, taşınmaz bilgileri üzerinde gerekli gördüğü değişiklikleri yapma ve sistemde iyileştirme amacıyla güncelleme yapma hakkını saklı tutar.
+          Bu tür değişiklikler, platformda yayımlandığı anda geçerlilik kazanır.
+        </Paragraph>
+      </ContentSection>
+
+      <ContentSection>
+        <SectionTitle>11. Başvurunun Reddedilmesi</SectionTitle>
+        <Paragraph>
+          ARAZİALCOM, kullanıcı başvurularını; eksik belge, hatalı bilgi veya güvenlik gerekçeleri ile reddetme hakkını saklı tutar.
+          Başvurunun reddedilmesi halinde, ödenen teminat bedeli kullanıcıya iade edilir.
+        </Paragraph>
+      </ContentSection>
+
+      <ContentSection>
+        <SectionTitle>12. İletişim Bilgileri</SectionTitle>
+        <Paragraph>
+          ARAZİALCOM EMLAK SANAYİ VE TİCARET LİMİTED ŞİRKETİ
           <br />
           Adres: ULU CAMİİ MAH. 388 SK. NO:29/1B, AKHİSAR / MANİSA
           <br />

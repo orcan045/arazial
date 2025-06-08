@@ -294,21 +294,21 @@ const PopularSearches = styled.div`
   margin-top: 1.5rem;
   
   span {
-    color: var(--color-primary-dark, #003366);
+    color: white;
     font-size: 0.9rem;
     margin-right: 0.5rem;
     font-weight: 500;
   }
   
   a {
-    color: var(--color-primary-dark, #003366);
+    color: white;
     margin-right: 1.5rem;
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s;
     
     &:hover {
-      color: var(--color-primary);
+      color: rgba(255, 255, 255, 0.8);
       text-decoration: underline;
     }
   }
