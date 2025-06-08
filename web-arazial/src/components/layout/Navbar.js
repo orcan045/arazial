@@ -30,7 +30,7 @@ const NavbarContainer = styled.nav`
 
 const NavbarContent = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding: ${props => props.$isScrolled ? '0.75rem 2rem' : '1.25rem 2rem'};
   max-width: 1400px;
@@ -109,16 +109,15 @@ const LogoIcon = styled.div`
   }
 `;
 
-const NavMenu = styled.div`
-  display: none;
-  
-  @media (min-width: 768px) {
+const NavMenu = styled.nav`
     display: flex;
     align-items: center;
+  margin-left: auto;
+  @media (min-width: 1024px) {
     gap: 0.5rem;
-    margin: 0 1rem;
-    flex-grow: 1;
-    justify-content: center;
+    margin: 0 1rem 0 auto;
+    flex-grow: 0;
+    justify-content: flex-end;
   }
 `;
 
@@ -155,7 +154,6 @@ const NavButtonsContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-left: auto;
   flex-shrink: 0;
   
   .auth-buttons {
@@ -166,31 +164,21 @@ const NavButtonsContainer = styled.div`
 `;
 
 const MobileMenuButton = styled.button`
+  display: none;
+  @media (max-width: 1023px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   background: none;
   border: none;
-  display: flex;
+    cursor: pointer;
   padding: 0.5rem;
-  cursor: pointer;
+    margin-left: 1rem;
+    svg {
+      width: 2rem;
+      height: 2rem;
   color: var(--color-text);
-  border-radius: 50%;
-  transition: background-color 0.2s ease;
-  width: 40px;
-  height: 40px;
-  align-items: center;
-  justify-content: center;
-  margin-left: 0.5rem;
-  
-  &:hover {
-    background-color: rgba(15, 52, 96, 0.06);
-  }
-  
-  @media (min-width: 768px) {
-    display: none;
-  }
-  
-  svg {
-    width: 1.375rem;
-    height: 1.375rem;
+    }
   }
 `;
 
@@ -602,19 +590,8 @@ const Navbar = () => {
         </Logo>
         
         <NavMenu>
-          <NavLink to="/about" className={location.pathname === '/about' ? 'active' : ''}>
-            Hakkımızda
-          </NavLink>
-          <NavLink to="/terms-of-use" className={location.pathname === '/terms-of-use' ? 'active' : ''}>
-            Sözleşmeler
-          </NavLink>
-          <NavLink to="/sss" className={location.pathname === '/sss' ? 'active' : ''}>
-            Sıkça Sorulan Sorular
-          </NavLink>
-          <NavLink to="/contact" className={location.pathname === '/contact' ? 'active' : ''}>
-            İletişim
-          </NavLink>
-          {user && (
+          {/* Masaüstü: Giriş yaptıysa hamburger menüdeki butonlar burada */}
+          {windowWidth >= 1024 && user && (
             <>
               <NavLink to="/profile">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -646,6 +623,8 @@ const Navbar = () => {
           )}
         </NavMenu>
         
+        {/* NavButtonsContainer sadece kullanıcı yoksa gösterilecek */}
+        {!user && (
         <NavButtonsContainer>
           {loading ? (
             <div style={{ 
@@ -656,7 +635,7 @@ const Navbar = () => {
               borderTopColor: 'var(--color-primary)',
               animation: 'navbarSpin 1s linear infinite'
             }} />
-          ) : !user ? (
+            ) : (
             <div className="auth-buttons">
               <Button 
                 as={Link} 
@@ -690,13 +669,14 @@ const Navbar = () => {
                 Kayıt Ol
               </Button>
             </div>
-          ) : null}
-          <MobileMenuButton onClick={() => setIsOpen(true)}>
+            )}
+          </NavButtonsContainer>
+        )}
+        <MobileMenuButton onClick={() => setIsOpen(true)} style={{ marginLeft: 'auto' }}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
             </svg>
           </MobileMenuButton>
-        </NavButtonsContainer>
       </NavbarContent>
       
       <MobileMenu $isOpen={isOpen}>
@@ -748,12 +728,7 @@ const Navbar = () => {
             }} />
           </div>
         ) : user ? (
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            flex: '1 1 auto', 
-            paddingBottom: '4rem'
-          }}>
+          <>
             <MobileNavSection>
               <MobileNavLink to="/profile" onClick={() => setIsOpen(false)}>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -775,58 +750,23 @@ const Navbar = () => {
                   Admin Paneli
                 </MobileNavLink>
               )}
-            </MobileNavSection>
-
-            <MobileNavSection style={{ marginBottom: '2rem', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-              <MobileNavLink to="/about" className={location.pathname === '/about' ? 'active' : ''} onClick={() => setIsOpen(false)}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Hakkımızda
-              </MobileNavLink>
-              <MobileNavLink to="/terms-of-use" className={location.pathname === '/terms-of-use' ? 'active' : ''} onClick={() => setIsOpen(false)}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Sözleşmeler
-              </MobileNavLink>
-              <MobileNavLink to="/sss" className={location.pathname === '/sss' ? 'active' : ''} onClick={() => setIsOpen(false)}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Sıkça Sorulan Sorular
-              </MobileNavLink>
-              <MobileNavLink to="/contact" className={location.pathname === '/contact' ? 'active' : ''} onClick={() => setIsOpen(false)}>
+              <MobileNavLink to="/contact" onClick={() => setIsOpen(false)}>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 İletişim
               </MobileNavLink>
-              <div style={{ flex: '1 0 auto', minHeight: '20px' }}></div>
-              <MobileNavLink 
-                as="button" 
-                onClick={() => { handleSignOut(); setIsOpen(false); }} 
-                style={{ 
-                  width: '100%', 
-                  textAlign: 'left', 
-                  border: 'none', 
-                  background: 'var(--color-surface-secondary)',
-                  cursor: 'pointer',
-                  marginTop: '1rem',
-                  paddingTop: '1.5rem',
-                  paddingBottom: '1.5rem',
-                  color: 'var(--color-error)',
-                  fontWeight: '500',
-                  marginBottom: '1rem'
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ color: 'var(--color-error)' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                Çıkış Yap
-              </MobileNavLink>
             </MobileNavSection>
+            <div style={{ marginTop: '2rem', padding: '0 1.5rem 1.5rem 1.5rem' }}>
+              <Button 
+                variant="danger" 
+                style={{ width: '100%', fontWeight: 600, fontSize: '1.1rem', padding: '0.9rem 0' }}
+                onClick={() => { setIsOpen(false); handleSignOut(); }}
+              >
+                Çıkış Yap
+              </Button>
           </div>
+          </>
         ) : null}
       </MobileMenu>
     </NavbarContainer>
