@@ -1500,7 +1500,7 @@ const BidCard = ({
                         padding: '0.5rem 1rem 0.75rem 1rem',
                         justifyContent: 'space-between'
                       }}>
-                        <div style={{ fontWeight: '600', fontSize: '1rem', textAlign: 'left' }}>
+                        <div style={{ fontWeight: '600', fontSize: '1rem', textAlign: 'left', whiteSpace: 'nowrap' }}>
                           Hizmet Bedeli Peşinatı: {formatPrice(auction.deposit_amount || 0)}
                         </div>
                         <button 
@@ -1682,7 +1682,7 @@ const BidCard = ({
                   paddingTop: '0.75rem',
                   justifyContent: 'space-between'
                 }}>
-                  <div style={{ fontWeight: '600', fontSize: '1rem', textAlign: 'left' }}>
+                  <div style={{ fontWeight: '600', fontSize: '1rem', textAlign: 'left', whiteSpace: 'nowrap' }}>
                     Hizmet Bedeli Peşinatı: {formatPrice(auction.deposit_amount || 0)}
                   </div>
                   <button 
