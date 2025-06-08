@@ -912,6 +912,7 @@ const OfferStatusMessage = styled.div`
   font-weight: 500;
   margin-top: 1rem;
   text-align: center;
+  line-height: 1.5;
   background-color: ${props => 
     props.status === 'pending' ? 'rgba(251, 191, 36, 0.1)' :
     props.status === 'accepted' ? 'rgba(16, 185, 129, 0.1)' :
@@ -924,6 +925,19 @@ const OfferStatusMessage = styled.div`
     props.status === 'rejected' ? '#DC2626' :
     'var(--color-text-secondary)'
   };
+  
+  @media (max-width: 768px) {
+    padding: 0.75rem 1rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+    border: 1px solid ${props => 
+      props.status === 'pending' ? 'rgba(251, 191, 36, 0.3)' :
+      props.status === 'accepted' ? 'rgba(16, 185, 129, 0.3)' :
+      props.status === 'rejected' ? 'rgba(239, 68, 68, 0.3)' :
+      'var(--color-border)'
+    };
+  }
 `;
 
 // --- Add New Icon Component --- 
