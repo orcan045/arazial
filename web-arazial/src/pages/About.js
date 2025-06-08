@@ -94,15 +94,16 @@ const About = () => {
       
       <Section>
         <Paragraph>
-          arazialcom Gayrimenkul Sanayi ve Ticaret Limited Şirketi, Türkiye genelinde tapulu taşınmazların dijital ortamda tanıtımını ve başvuru süreçlerini yönetmek amacıyla kurulmuş bir teknoloji platformudur.
+          ARAZIALCOM EMLAK SANAYİ VE TİCARET LİMİTED ŞİRKETİ, Türkiye genelinde tapulu taşınmazların dijital ortamda açık artırma yöntemiyle başvuru süreçlerini yönetmek amacıyla kurulmuş bir teknoloji platformudur.
         </Paragraph>
         
         <Paragraph>
-          Amacımız; güvenilir, şeffaf ve kolay erişilebilir bir sistem ile gayrimenkul başvuru süreçlerini dijitalleştirerek, kullanıcıların zaman ve maliyet avantajı elde etmesini sağlamaktır.
+          Amacımız; güvenilir, şeffaf ve kolay erişilebilir bir sistem ile gayrimenkul açık artırma başvuru süreçlerini dijitalleştirerek, kullanıcıların zaman ve maliyet avantajı elde etmesini sağlamaktır.
         </Paragraph>
 
         <Paragraph>
-          arazialcom üzerinden yapılan işlemler satış amaçlı değil, yalnızca kullanıcıların ilgilendiği taşınmazlara katılım başvurusu yapabilmesini sağlamak amacı taşır. Bu kapsamda, her başvuru için teminat bedeli tahsil edilmekte olup, işlem gerçekleşmediği durumlarda teminat tutarı şartsız ve eksiksiz şekilde iade edilmektedir.
+          ARAZIALCOM EMLAK SANAYİ VE TİCARET LİMİTED ŞİRKETİ üzerinde yapılan işlemler satış amacı taşımaz; yalnızca kullanıcıların ilgilendikleri tapulu taşınmazlara açık artırma yoluyla katılım başvurusu yapabilmesini sağlar.<br/>
+          Her başvuru için teminat bedeli tahsil edilmekte olup, işlem gerçekleşmediği durumlarda teminat tutarı eksiksiz ve şartsız şekilde iade edilmektedir.
         </Paragraph>
       </Section>
       
@@ -117,26 +118,25 @@ const About = () => {
         
         <NumberedList>
           <NumberedListItem>
-            <strong>Taşınmaz İnceleme:</strong>
-            <br />
-            Platformda yer alan tapulu taşınmazların detaylarını, konumunu, özelliklerini ve diğer bilgilerini dijital ortamda inceleyebilirsiniz.
+            <strong>Taşınmaz İnceleme:</strong><br/>
+            Platformda yayınlanan tapulu taşınmazların detay bilgilerini, konumlarını ve özelliklerini dijital ortamda kolayca inceleyebilirsiniz.
           </NumberedListItem>
           
           <NumberedListItem>
-            <strong>Başvuru Yapma:</strong>
-            <br />
-            İlgilendiğiniz taşınmaza başvuru yapmak için teminat bedelini yatırarak başvuru sürecini başlatabilirsiniz.
+            <strong>Açık Artırmaya Katılım:</strong><br/>
+            İlgilendiğiniz taşınmaz için belirtilen teminat bedelini yatırarak açık artırmaya katılabilirsiniz.
           </NumberedListItem>
           
           <NumberedListItem>
-            <strong>Başvuru Sonucu:</strong>
-            <br />
-            Başvurunuz değerlendirilir ve sonuç tarafınıza bildirilir. İşlem gerçekleşmediği durumlarda teminat tutarı şartsız ve eksiksiz şekilde iade edilir.
+            <strong>Açık Artırma Süreci ve Sonuç:</strong><br/>
+            Gerçek zamanlı ve şeffaf açık artırmalar sistem tarafından otomatik olarak yürütülür.<br/>
+            Açık artırma sonunda en yüksek teklifi veren kullanıcı otomatik olarak belirlenir.<br/>
+            İşlem gerçekleşmediği durumlarda, yatırılan teminat bedeli eksiksiz ve şartsız olarak iade edilir.
           </NumberedListItem>
         </NumberedList>
         
         <Paragraph>
-          Tüm süreç dijital ortamda şeffaf bir şekilde yürütülür ve kullanıcıların zaman ve maliyet avantajı elde etmesi sağlanır.
+          Tüm süreç dijital ortamda şeffaf bir şekilde yürütülmekte olup, kullanıcılarımıza hem zaman hem de maliyet açısından avantaj sağlamaktadır.
         </Paragraph>
       </Section>
       
@@ -145,15 +145,16 @@ const About = () => {
       <Section>
         <SectionTitle>Neden arazialcom?</SectionTitle>
         <List>
-          <ListItem>Güvenilir ve şeffaf başvuru sistemi</ListItem>
-          <ListItem>Teminat sistemiyle güvenli katılım</ListItem>
-          <ListItem>Kullanıcı dostu, hızlı ve pratik arayüz</ListItem>
-          <ListItem>İşlem gerçekleşmediğinde şartsız teminat iadesi</ListItem>
-          <ListItem>Dijital ortamda tapulu taşınmaz tanıtımı ve başvuru süreci</ListItem>
+          <ListItem>✅ Güvenilir ve şeffaf açık artırma sistemi</ListItem>
+          <ListItem>✅ Teminat sistemiyle güvenli katılım</ListItem>
+          <ListItem>✅ Kullanıcı dostu, hızlı ve pratik dijital platform</ListItem>
+          <ListItem>✅ İşlem gerçekleşmediğinde şartsız teminat iadesi</ListItem>
+          <ListItem>✅ Dijital ortamda gerçek zamanlı açık artırmalarla tapulu taşınmazlara başvuru imkânı</ListItem>
         </List>
         
         <Paragraph style={{ marginTop: '2rem' }}>
-          arazialcom, modern teknolojiyle gayrimenkul başvuru süreçlerini daha güvenilir, daha hızlı ve daha erişilebilir hale getirmek için kurulmuştur.
+          ARAZIALCOM EMLAK SANAYİ VE TİCARET LİMİTED ŞİRKETİ, modern teknolojiyi kullanarak gayrimenkul açık artırma ve başvuru süreçlerini daha güvenilir, daha şeffaf ve daha erişilebilir hale getirmek için kurulmuştur.<br/>
+          Amacımız; kullanıcılarımıza sadece bir platform sunmak değil, güven esaslı bir gayrimenkul deneyimi yaşatmaktır.
         </Paragraph>
       </Section>
     </AboutContainer>
