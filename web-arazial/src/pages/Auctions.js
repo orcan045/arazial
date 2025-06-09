@@ -1978,7 +1978,7 @@ const Auctions = () => {
         item._display_type === 'offer' ||
         item.listing_type === 'offer'
       );
-      return isOffer ? 'Pazarlık' : 'Açık Arttırma';
+      return isOffer ? 'Satın al' : 'Açık Arttırma';
     }
     
     // For normal tab display
