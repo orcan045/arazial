@@ -523,13 +523,17 @@ const Dashboard = () => {
             {userBids.slice(0, 5).map((bid) => (
               <BidItem key={bid.id} onClick={() => handleAuctionClick(bid.auction.id)}>
                 <BidItemContent>
-                  <BidItemTitle>
+                  <BidItemTitle style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.3rem' }}>
                     {bid.auction.title || 'Arsa İhalesi'}
                   </BidItemTitle>
-                  <BidItemDetail>
-                    <span>Teklif: {formatPrice(bid.amount)}</span>
-                    <span>Tarih: {formatDate(bid.created_at)}</span>
-                  </BidItemDetail>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                    <span style={{ fontSize: '1rem', color: 'var(--color-primary)', fontWeight: 600 }}>
+                      Teklif: {formatPrice(bid.amount)}
+                    </span>
+                    <span style={{ fontSize: '0.95rem', color: 'var(--color-text-secondary)' }}>
+                      Tarih: {formatDate(bid.created_at)}
+                    </span>
+                  </div>
                 </BidItemContent>
                 <BidItemStatus status={
                   new Date() > new Date(bid.auction.end_time) 
