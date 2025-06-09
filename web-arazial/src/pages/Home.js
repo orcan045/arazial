@@ -298,13 +298,12 @@ const PopularSearches = styled.div`
   
   @media (max-width: 768px) {
     overflow-x: auto;
-    background: rgba(255,255,255,0.92);
     border-radius: 18px;
-    padding: 0.5rem 0.7rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.07);
     gap: 0.4rem;
     margin-left: -0.5rem;
     margin-right: -0.5rem;
+    margin-bottom: 0.5rem;
     scrollbar-width: thin;
     scrollbar-color: #e2e8f0 #fff;
   }
@@ -1108,7 +1107,6 @@ const Home = () => {
           </SearchContainer>
           
           <PopularSearches>
-            <span>Popüler:</span>
             <a href="#" onClick={(e) => {e.preventDefault(); setSelectedCity('Kütahya'); filterAuctions();}}>Kütahya</a>
             <a href="#" onClick={(e) => {e.preventDefault(); setSelectedCity('Konya'); filterAuctions();}}>Konya</a>
             <a href="#" onClick={(e) => {e.preventDefault(); setSelectedCity('Uşak'); filterAuctions();}}>Uşak</a>
