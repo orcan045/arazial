@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
+import logoImage from '../../assets/logo.png';
 
 const FooterContainer = styled.footer`
   background: #1a1a1a;
@@ -289,7 +290,7 @@ const Footer = () => {
           <FooterLogoSection>
             <LogoBlock>
               <FooterLogo to="/">
-                <img src="/images/logo.png" alt="arazialcom logo" />
+                <img src={logoImage} alt="arazialcom logo" />
                 <span>arazialcom</span>
               </FooterLogo>
             </LogoBlock>
