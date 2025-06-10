@@ -1739,7 +1739,7 @@ const BidCard = ({
               </p>
             )}
             
-            {/* Loading Auth prompt */} 
+            {/* Loading Auth prompt */ 
             {authLoading && showAuthLoading && (
               <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: isMobile ? '0.5rem' : '2rem' }}>
                 Kullanıcı bilgileri yükleniyor...
@@ -2326,113 +2326,57 @@ const AuctionDetail = () => {
   }, [auction, user?.id]);
 
   const handleSubmitOffer = async (e) => {
-    console.log("--- Executing handleSubmitOffer ---");
     e.preventDefault();
-    if (!user) {
-      setOfferError('Teklif vermek için giriş yapmalısınız.');
-      return;
-    }
-    if (!auction || auction.listing_type !== 'offer') {
-      setOfferError('Bu ilana teklif verilemez.');
-      return;
-    }
-    
-    // Check if the user has paid the deposit
-    /*
-    if (!hasDeposit) {
-      if (hasPendingDeposit) {
-        setOfferError('Depozito ödemeniz henüz tamamlanmamış. Lütfen ödemeyi tamamlayın veya yeni bir ödeme başlatın.');
-      }
-      setActionType('offer');
-      setShowPaymentModal(true);
-      return;
-    }*/
-
-    // For offer-type listings, use the auction price. For auctions, use the entered amount.
-    let amount;
-    if (auction.listing_type === 'offer') {
-      // Use the listing price for "Buy Now" functionality
-      amount = parseFloat(auction.price);
-    } else {
-      // Clean the input string by removing dots (thousand separators)
-      const cleanedAmountString = String(offerAmount).replace(/\./g, '');
-      
-      // Parse the cleaned string
-      amount = parseFloat(cleanedAmountString);
-      
-      if (isNaN(amount) || amount <= 0) {
-        setOfferError('Lütfen geçerli bir teklif miktarı girin.');
-        return;
-      }
-    }
-
-    // Double-check if user already has a pending or accepted offer just before submitting
-    const { data: existingOffers, error: checkError } = await supabase
-        .from('offers')
-        .select('id, status')
-        .eq('auction_id', auction.id)
-        .eq('user_id', user.id)
-        .in('status', ['pending', 'accepted'])
-        .limit(1);
-
-    if (checkError) {
-        console.error('Error checking existing offers before submit:', checkError);
-        setOfferError('Teklif durumu kontrol edilirken hata oluştu. Lütfen tekrar deneyin.');
-        return;
-    }
-
-    if (existingOffers && existingOffers.length > 0) {
-        const existingOffer = existingOffers[0];
-        setOfferError(`Zaten ${existingOffer.status === 'pending' ? 'beklemede olan' : 'kabul edilmiş'} bir teklifiniz var.`);
-        await refreshOffers(); // Refresh state to be sure
-        return;
-    }
-
     setSubmitLoading(true);
     setOfferError(null);
 
     try {
-      const { error: insertError } = await supabase.from('offers').insert({
-        auction_id: auction.id,
-        user_id: user.id,
-        amount: amount,
-        // status defaults to 'pending' in the database
-      });
+      // For direct purchase (offer type), use the listing price as the offer amount
+      const offerAmountToSubmit = auction.listing_type === 'offer' ? auction.price : offerAmount;
 
-      if (insertError) {
-        if (insertError.code === '23505') { // Unique violation code for unique_pending_offer_per_user_auction
-            setOfferError('Bu ilan için zaten beklemede olan bir teklifiniz var. Sayfayı yenileyin.');
-        } else {
-            setOfferError(insertError.message || 'Teklif gönderilirken bir hata oluştu.');
-        }
+      if (!offerAmountToSubmit) {
+        setOfferError('Lütfen geçerli bir teklif miktarı girin.');
+        setSubmitLoading(false);
         return;
       }
 
-      setOfferAmount(''); // Clear input
-      await refreshOffers(); // Refresh offers to show the new pending one
-
-      // Send SMS notifications to other users who have made offers on this property
-      try {
-        console.log('Sending SMS notifications for new offer');
-        const notificationResult = await sendNewOfferNotification({
-          auctionId: auction.id,
-          newOfferAmount: amount,
-          newOfferUserId: user.id
-        });
-        
-        if (notificationResult.success) {
-          console.log('SMS notifications sent successfully:', notificationResult.message);
-        } else {
-          console.error('Failed to send SMS notifications:', notificationResult.error);
-        }
-      } catch (smsError) {
-        console.error('Exception sending SMS notifications:', smsError);
-        // Don't fail the offer submission if SMS fails
+      // Check if user has completed deposit
+      const hasDeposit = await hasUserCompletedDeposit(auction.id);
+      if (!hasDeposit) {
+        setShowPaymentModal(true);
+        setSubmitLoading(false);
+        return;
       }
+
+      // Create the offer
+      const { data: offer, error: offerError } = await supabase
+        .from('offers')
+        .insert([
+          {
+            auction_id: auction.id,
+            user_id: user.id,
+            amount: offerAmountToSubmit,
+            status: 'pending'
+          }
+        ])
+        .select()
+        .single();
+
+      if (offerError) throw offerError;
+
+      // Send notification
+      await sendNewOfferNotification(auction.id, offer.id);
+
+      // Refresh auction data
+      await fetchData();
+
+      // Show success message
+      setShareMessage('Teklifiniz başarıyla gönderildi!');
+      setShowOfferForm(false);
 
     } catch (error) {
       console.error('Error submitting offer:', error);
-      setOfferError(error.message || 'Teklif gönderilirken bir hata oluştu.');
+      setOfferError('Teklif gönderilirken bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setSubmitLoading(false);
     }
