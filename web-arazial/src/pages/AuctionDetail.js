@@ -2248,6 +2248,7 @@ const AuctionDetail = () => {
     }
     
     // Check if the user has paid the deposit
+    /*
     if (!hasDeposit) {
       if (hasPendingDeposit) {
         setBidError('Depozito ödemeniz henüz tamamlanmamış. Lütfen ödemeyi tamamlayın veya yeni bir ödeme başlatın.');
@@ -2255,7 +2256,7 @@ const AuctionDetail = () => {
       setActionType('bid');
       setShowPaymentModal(true);
       return;
-    }
+    }*/
     
     // For auctions, automatically use the minimum bid amount
     const amount = getMinimumBidAmount();
@@ -2337,6 +2338,7 @@ const AuctionDetail = () => {
     }
     
     // Check if the user has paid the deposit
+    /*
     if (!hasDeposit) {
       if (hasPendingDeposit) {
         setOfferError('Depozito ödemeniz henüz tamamlanmamış. Lütfen ödemeyi tamamlayın veya yeni bir ödeme başlatın.');
@@ -2344,7 +2346,7 @@ const AuctionDetail = () => {
       setActionType('offer');
       setShowPaymentModal(true);
       return;
-    }
+    }*/
 
     // For offer-type listings, use the auction price. For auctions, use the entered amount.
     let amount;

@@ -236,7 +236,7 @@ const Contact = () => {
               </svg>
               Şirket Adı
             </InfoLabel>
-            <InfoText>ARAZIALCOM GAYRİMENKUL SANAYİ VE TİCARET LİMİTED ŞİRKETİ</InfoText>
+            <InfoText>ARAZİALCOM EMLAK SANAYİ VE TİCARET LİMİTED ŞİRKETİ</InfoText>
           </InfoItem>
 
           <InfoItem>
