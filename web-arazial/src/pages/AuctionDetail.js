@@ -2645,7 +2645,7 @@ const AuctionDetail = () => {
       
       // Prepare the payload for the payment-proxy-server
       const payload = {
-        ReturnUrl: window.location.origin + '/payment-callback',
+        ReturnUrl: window.location.origin + '/payment-callback?orderId=' + orderId,
         OrderId: orderId,
         ClientIp: clientIp,
         Installment: 1,
