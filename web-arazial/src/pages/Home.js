@@ -230,25 +230,18 @@ const TabsContainer = styled.div`
 
 const TabButton = styled.button`
   padding: 0.75rem 1.5rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: ${props => props.$isActive ? 'white' : 'var(--color-text)'};
-  background: ${props => props.$isActive ? 'var(--color-primary)' : 'white'};
   border: 1px solid ${props => props.$isActive ? 'var(--color-primary)' : 'var(--color-border)'};
-  border-radius: 8px;
+  background: ${props => props.$isActive ? '#059669e6' : 'transparent'};
+  color: ${props => props.$isActive ? '#fff' : '#666'};
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: ${props => props.$isActive ? '0 4px 12px rgba(0, 0, 0, 0.1)' : '0 2px 4px rgba(0, 0, 0, 0.05)'};
-  
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  font-size: 1rem;
+
   &:hover {
-    background: ${props => props.$isActive ? 'var(--color-primary-dark)' : 'rgba(0, 0, 0, 0.02)'};
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-  
-  @media (max-width: 768px) {
-    padding: 0.6rem 1rem;
-    font-size: 0.85rem;
+    background: ${props => props.$isActive ? '#059669e6' : 'rgba(5, 150, 105, 0.1)'};
+    color: ${props => props.$isActive ? '#fff' : '#059669e6'};
   }
 `;
 
@@ -291,35 +284,62 @@ const StatusTab = styled.button`
 `;
 
 const PopularSearches = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin-top: 1.5rem;
   
-  span {
-    color: white;
-    font-size: 0.9rem;
-    margin-right: 0.5rem;
-    font-weight: 500;
+  @media (max-width: 768px) {
+    overflow-x: auto;
+    border-radius: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    gap: 0.4rem;
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    margin-bottom: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 #fff;
   }
   
-  a {
+  span {
+    color: #1a202c;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-right: 0.7rem;
+    flex: none;
+    letter-spacing: 0.01em;
+    @media (min-width: 769px) {
     color: white;
-    margin-right: 1.5rem;
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.2s;
-    
-    &:hover {
-      color: rgba(255, 255, 255, 0.8);
-      text-decoration: underline;
+    }
+    @media (max-width: 768px) {
+    margin-right: 0.5rem;
+      font-size: 0.98rem;
     }
   }
   
+  a {
+    display: inline-block;
+    background: #fff;
+    color: #1a202c;
+    border-radius: 16px;
+    padding: 0.32rem 1rem;
+    font-size: 0.98rem;
+    font-weight: 600;
+    text-decoration: none;
+    margin: 0;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    white-space: nowrap;
+  }
+  a:active, a:focus {
+    background: var(--color-primary);
+    color: #fff;
+    }
   @media (max-width: 768px) {
-    margin-top: 0.25rem;
-    margin-bottom: 0;
-    
     a {
-      margin-right: 1rem;
-      font-size: 0.85rem;
+      font-size: 0.95rem;
+      padding: 0.28rem 0.85rem;
     }
   }
 `;
@@ -845,7 +865,7 @@ const Home = () => {
   };
   
   const getStatusText = (status, itemType) => {
-    if (itemType === 'offer') return 'Pazarlık';
+    if (itemType === 'offer') return 'Satın al';
     
     switch (status) {
       case 'active':
@@ -1041,7 +1061,7 @@ const Home = () => {
       <HeroSection>
         <HeroContent>
 
-          <HeroSubtitle>
+          <HeroSubtitle style={{ color: 'white' }}>
           Türkiye'nin dört bir yanındaki değerli araziler için ihale tekliflerinizi verin.  
           </HeroSubtitle>
           
@@ -1080,7 +1100,6 @@ const Home = () => {
           </SearchContainer>
           
           <PopularSearches>
-            <span>Popüler:</span>
             <a href="#" onClick={(e) => {e.preventDefault(); setSelectedCity('Kütahya'); filterAuctions();}}>Kütahya</a>
             <a href="#" onClick={(e) => {e.preventDefault(); setSelectedCity('Konya'); filterAuctions();}}>Konya</a>
             <a href="#" onClick={(e) => {e.preventDefault(); setSelectedCity('Uşak'); filterAuctions();}}>Uşak</a>
@@ -1108,7 +1127,7 @@ const Home = () => {
               $isActive={listingType === 'offer'} 
               onClick={() => handleListingTypeChange('offer')}
             >
-              Pazarlık Yap
+              Satın Al
             </TabButton>
           </TabsContainer>
           
@@ -1197,7 +1216,7 @@ const Home = () => {
                       </AuctionPrice>
                       <AuctionStatus status={listing._display_type === 'offer' ? 'offer' : listing.status}>
                         {getStatusIcon(listing.status, listing._display_type)}
-                        {listing._display_type === 'offer' ? 'Pazarlık Yap' : 
+                        {listing._display_type === 'offer' ? 'Satın Al' : 
                           listing.status === 'active' && (listing.end_time || listing.endTime || listing.end_date) ? (
                             <span>Kalan: <CountdownTimer 
                               endTime={new Date(listing.end_time || listing.endTime || listing.end_date).toISOString()} 
