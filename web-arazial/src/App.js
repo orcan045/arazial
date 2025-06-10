@@ -32,6 +32,7 @@ import CookiePolicy from './pages/CookiePolicy';
 import LegalNotices from './pages/LegalNotices';
 import Security from './pages/Security';
 import KvkkAydinlatmaMetniPage from './pages/KvkkAydinlatmaMetniPage';
+import HowToUse from './pages/HowToUse';
 
 // Re-export for backward compatibility
 export { forceAuthRefresh, resetAllAuthStorage };
@@ -470,7 +471,8 @@ const App = () => {
           <Route path="/sartlar-ve-kosullar" element={<Layout><SartlarVeKosullarPage /></Layout>} />
           <Route path="/payment-callback" element={<Layout><PaymentCallback /></Layout>} />
           <Route path="/sss" element={<Layout><FAQ /></Layout>} />
-          <Route path="/cookies" element={<Layout><CookiePolicy /></Layout>} />
+          <Route path="/how-to-use" element={<Layout><HowToUse /></Layout>} />
+          <Route path="/cookie-policy" element={<Layout><CookiePolicy /></Layout>} />
           <Route path="/legal" element={<Layout><LegalNotices /></Layout>} />
           <Route path="/security" element={<Layout><Security /></Layout>} />
           <Route path="/kvkk-aydinlatma-metni" element={<Layout><KvkkAydinlatmaMetniPage /></Layout>} />

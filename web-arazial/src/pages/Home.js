@@ -230,25 +230,18 @@ const TabsContainer = styled.div`
 
 const TabButton = styled.button`
   padding: 0.75rem 1.5rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: ${props => props.$isActive ? 'white' : 'var(--color-text)'};
-  background: ${props => props.$isActive ? 'var(--color-primary)' : 'white'};
   border: 1px solid ${props => props.$isActive ? 'var(--color-primary)' : 'var(--color-border)'};
-  border-radius: 8px;
+  background: ${props => props.$isActive ? '#059669e6' : 'transparent'};
+  color: ${props => props.$isActive ? '#fff' : '#666'};
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: ${props => props.$isActive ? '0 4px 12px rgba(0, 0, 0, 0.1)' : '0 2px 4px rgba(0, 0, 0, 0.05)'};
-  
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  font-size: 1rem;
+
   &:hover {
-    background: ${props => props.$isActive ? 'var(--color-primary-dark)' : 'rgba(0, 0, 0, 0.02)'};
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-  
-  @media (max-width: 768px) {
-    padding: 0.6rem 1rem;
-    font-size: 0.85rem;
+    background: ${props => props.$isActive ? '#059669e6' : 'rgba(5, 150, 105, 0.1)'};
+    color: ${props => props.$isActive ? '#fff' : '#059669e6'};
   }
 `;
 
