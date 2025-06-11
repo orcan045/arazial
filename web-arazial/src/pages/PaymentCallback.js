@@ -151,32 +151,26 @@ const PaymentCallback = () => {
     fetchResult();
   }, [searchParams]);
 
-  const handleContinue = () => {
-    // Extract auction ID from orderId or URL
-    const orderId = searchParams.get('orderId');
+  const handleContinue = async () => {
+    // Try to find the auction ID from the deposit record using the payment_id (orderId)
+    const paymentData = result?.paymentData;
     
-    if (orderId) {
-      // Try different patterns to extract auction ID
-      let auctionId = null;
-      
-      // Pattern: auction-ID-user or aID-uID-timestamp
-      const patterns = [
-        /auction-([a-f0-9-]+)-user/i,
-        /a([a-f0-9-]+)u[a-f0-9-]+t\d+/i,
-        /([a-f0-9-]{8,})/i // Fallback: any long hex string
-      ];
-      
-      for (const pattern of patterns) {
-        const match = orderId.match(pattern);
-      if (match && match[1]) {
-          auctionId = match[1];
-          break;
+    if (paymentData && paymentData.orderId) {
+      try {
+        // Query the deposits table to find the auction_id for this payment_id
+        const { data: deposit, error } = await supabase
+          .from('deposits')
+          .select('auction_id')
+          .eq('payment_id', paymentData.orderId)
+          .single();
+        
+        if (!error && deposit && deposit.auction_id) {
+          console.log('Found auction ID from deposit:', deposit.auction_id);
+          window.location.href = `/auctions/${deposit.auction_id}`;
+          return;
         }
-      }
-      
-      if (auctionId) {
-        window.location.href = `/auctions/${auctionId}`;
-        return;
+      } catch (err) {
+        console.error('Error finding auction from deposit:', err);
       }
     }
     
