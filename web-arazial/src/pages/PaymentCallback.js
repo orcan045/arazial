@@ -102,11 +102,12 @@ const PaymentCallback = () => {
         // Update deposit status based on payment result using Edge Function
         if (data.paymentSuccessful && data.paymentData) {
           try {
-            // Update deposit status to completed
+            // Update deposit status to completed with payment_uid
             const { error: updateError } = await supabase.functions.invoke('update-deposit-status', {
               body: {
                 payment_id: data.paymentData.orderId,
-                status: 'completed'
+                status: 'completed',
+                payment_uid: data.paymentData.uid // Store the payment UID for refund functionality
               }
             });
               
