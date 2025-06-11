@@ -2425,7 +2425,7 @@ function AdminDashboard() {
     console.log('📋 [AdminDashboard] Current user:', { 
       id: user?.id, 
       email: user?.email, 
-      isAdmin: isAdmin 
+      isAdmin: authIsAdmin 
     });
     
     try {
