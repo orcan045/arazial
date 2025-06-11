@@ -2409,6 +2409,13 @@ function AdminDashboard() {
   // Fetch deposits for a specific auction
   const fetchAuctionDeposits = async (auctionId) => {
     setLoading(true);
+    console.log('📋 [AdminDashboard] Fetching deposits for auction:', auctionId);
+    console.log('📋 [AdminDashboard] Current user:', { 
+      id: user?.id, 
+      email: user?.email, 
+      isAdmin: isAdmin 
+    });
+    
     try {
       const { data: depositsData, error: depositsError } = await supabase
         .from('deposits')
@@ -2424,15 +2431,21 @@ function AdminDashboard() {
         .eq('auction_id', auctionId)
         .order('created_at', { ascending: false });
 
+      console.log('📋 [AdminDashboard] Deposits query result:', {
+        data: depositsData,
+        error: depositsError,
+        dataLength: depositsData?.length || 0
+      });
+
       if (depositsError) {
-        console.error('Error fetching deposits:', depositsError);
+        console.error('❌ [AdminDashboard] Error fetching deposits:', depositsError);
         setDeposits([]);
       } else {
-        console.log("Fetched deposits:", depositsData);
+        console.log('✅ [AdminDashboard] Successfully fetched deposits:', depositsData?.length || 0, 'deposits');
         setDeposits(depositsData || []);
       }
     } catch (error) {
-      console.error('Error in fetchAuctionDeposits:', error);
+      console.error('❌ [AdminDashboard] Exception in fetchAuctionDeposits:', error);
       setDeposits([]);
     } finally {
       setLoading(false);
