@@ -4475,14 +4475,27 @@ function AdminDashboard() {
                             </TableCell>
                             <TableCell data-label="İşlemler">
                               {deposit.status === 'completed' && deposit.payment_uid && (
-                                <ActionButton 
-                                  variant="warning"
-                                  size="small"
-                                  onClick={() => handleDepositRefund(deposit)}
-                                  disabled={actionLoading}
-                                >
-                                  İade Et
-                                </ActionButton>
+                                <>
+                                  {/* Check if payment_uid is a valid GUID format */}
+                                  {/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(deposit.payment_uid) ? (
+                                    <ActionButton 
+                                      variant="warning"
+                                      size="small"
+                                      onClick={() => handleDepositRefund(deposit)}
+                                      disabled={actionLoading}
+                                    >
+                                      İade Et
+                                    </ActionButton>
+                                  ) : (
+                                    <span style={{ 
+                                      fontSize: '0.75rem', 
+                                      color: 'var(--color-text-secondary)',
+                                      fontStyle: 'italic'
+                                    }}>
+                                      Eski depozit (İade edilemez)
+                                    </span>
+                                  )}
+                                </>
                               )}
                               {deposit.status === 'refunded' && deposit.refund_message && (
                                 <span style={{ 
