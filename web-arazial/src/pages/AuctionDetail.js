@@ -2600,6 +2600,54 @@ const AuctionDetail = () => {
     };
   }, [id]);
 
+  // Setup real-time subscription for bids
+  useEffect(() => {
+    if (!auction?.id || auction.listing_type !== 'auction') return;
+    
+    console.log(`[AuctionDetail] Setting up real-time subscription for auction ${auction.id}`);
+    
+    // Set up real-time subscription for bids
+    const channel = supabase
+      .channel(`auction-${auction.id}-bids`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'bids',
+          filter: `auction_id=eq.${auction.id}`
+        },
+        (payload) => {
+          console.log('[AuctionDetail] New bid received via real-time:', payload);
+          // Refresh bids to get the latest data with profile information
+          refreshBids();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'bids',
+          filter: `auction_id=eq.${auction.id}`
+        },
+        (payload) => {
+          console.log('[AuctionDetail] Bid updated via real-time:', payload);
+          // Refresh bids to get the latest data
+          refreshBids();
+        }
+      )
+      .subscribe((status) => {
+        console.log(`[AuctionDetail] Real-time subscription status: ${status}`);
+      });
+
+    // Cleanup function
+    return () => {
+      console.log(`[AuctionDetail] Cleaning up real-time subscription for auction ${auction.id}`);
+      supabase.removeChannel(channel);
+    };
+  }, [auction?.id, auction?.listing_type]);
+
   // --- Utility to get client IP ---
   const getClientIp = async () => {
     try {
