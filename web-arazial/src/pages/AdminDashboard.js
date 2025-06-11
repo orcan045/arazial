@@ -1826,7 +1826,13 @@ function AdminDashboard() {
 
       // 3. Fetch deposits for this auction (only for auction-type listings)
       if (auctionData.listing_type === 'auction') {
-        await fetchAuctionDeposits(auctionId);
+        try {
+          await fetchAuctionDeposits(auctionId);
+        } catch (depositError) {
+          console.error('❌ [AdminDashboard] Error in fetchAuctionDeposits call:', depositError);
+          setDeposits([]);
+          // Don't let deposit errors break the entire detail view
+        }
       } else {
         // Clear deposits for offer-type listings
         setDeposits([]);
@@ -2431,8 +2437,10 @@ function AdminDashboard() {
         .eq('auction_id', auctionId)
         .order('created_at', { ascending: false });
 
-      // If we got deposits, fetch the profile information separately
+      // Initialize depositsWithProfiles with empty array
       let depositsWithProfiles = [];
+      
+      // If we got deposits, fetch the profile information separately
       if (depositsData && depositsData.length > 0) {
         const userIds = [...new Set(depositsData.map(d => d.user_id))];
         
@@ -2453,6 +2461,9 @@ function AdminDashboard() {
             profiles: profilesData.find(p => p.id === deposit.user_id) || null
           }));
         }
+      } else {
+        // No deposits found, set empty array
+        depositsWithProfiles = [];
       }
 
       console.log('📋 [AdminDashboard] Deposits query result:', {
@@ -2470,8 +2481,14 @@ function AdminDashboard() {
         setDeposits(depositsWithProfiles || depositsData || []);
       }
     } catch (error) {
-      console.error('❌ [AdminDashboard] Exception in fetchAuctionDeposits:', error);
+      console.error('❌ [AdminDashboard] Exception in fetchAuctionDeposits:', {
+        error: error,
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       setDeposits([]);
+      // Don't throw the error to prevent it from bubbling up
     } finally {
       setLoading(false);
     }
