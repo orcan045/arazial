@@ -2079,8 +2079,10 @@ const AuctionDetail = () => {
       const digits = value.replace(/\D/g, '');
       if (digits.length >= 2) {
         setCardMonth(digits.substring(0, 2));
-      } else {
+      } else if (digits.length === 1) {
         setCardMonth(digits);
+      } else {
+        setCardMonth(''); // Only clear if completely empty
       }
       
       if (digits.length >= 4) {
@@ -2663,6 +2665,37 @@ const AuctionDetail = () => {
   const handleRealPayment = async () => {
     if (!user?.id || !auction) return;
     
+    // Validate card info before proceeding
+    if (!cardOwner.trim()) {
+      setPaymentMessage('Kart sahibi adı gereklidir.');
+      setPaymentMessageType('error');
+      return;
+    }
+    
+    if (!cardNumber.trim() || cardNumber.replace(/\s/g, '').length < 13) {
+      setPaymentMessage('Geçerli bir kart numarası giriniz.');
+      setPaymentMessageType('error');
+      return;
+    }
+    
+    if (!cardMonth || cardMonth.length !== 2) {
+      setPaymentMessage('Geçerli bir son kullanma ayı giriniz (MM).');
+      setPaymentMessageType('error');
+      return;
+    }
+    
+    if (!cardYear || cardYear.length !== 2) {
+      setPaymentMessage('Geçerli bir son kullanma yılı giriniz (YY).');
+      setPaymentMessageType('error');
+      return;
+    }
+    
+    if (!cardCvv || cardCvv.length !== 3) {
+      setPaymentMessage('Geçerli bir CVV kodu giriniz.');
+      setPaymentMessageType('error');
+      return;
+    }
+    
     setPaymentProcessing(true);
     setPaymentMessage('');
     setPaymentMessageType('');
@@ -2725,7 +2758,22 @@ const AuctionDetail = () => {
 
       console.log('Payment request payload:', {
         ...payload,
-        CardInfo: { ...payload.CardInfo, CardNo: '****', Cvv: '***' }
+        CardInfo: { 
+          ...payload.CardInfo, 
+          CardNo: '****', 
+          Cvv: '***',
+          Month: payload.CardInfo.Month, // Show actual month for debugging
+          Year: payload.CardInfo.Year   // Show actual year for debugging
+        }
+      });
+      
+      // Extra debugging for card month issue
+      console.log('Card form state before payment:', {
+        cardExpiry,
+        cardMonth,
+        cardYear,
+        cardMonthLength: cardMonth?.length,
+        cardYearLength: cardYear?.length
       });
       
       // Call the Supabase Edge Function using invoke
