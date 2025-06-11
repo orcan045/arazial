@@ -237,9 +237,17 @@ const PaymentCallback = () => {
         </PaymentDetails>
       )}
 
-      {!isSuccess && result?.message && (
+      {!isSuccess && (result?.message || result?.paymentData) && (
         <PaymentDetails>
-          <p><strong>Hata Detayı:</strong> {result.message}</p>
+          {result?.message && (
+            <p><strong>Hata Sebebi:</strong> {result.message}</p>
+          )}
+          {result?.paymentData?.status && (
+            <p><strong>Ödeme Durumu:</strong> {result.paymentData.status}</p>
+          )}
+          {result?.paymentData?.orderId && (
+            <p><strong>İşlem No:</strong> {result.paymentData.orderId}</p>
+          )}
         </PaymentDetails>
       )}
 

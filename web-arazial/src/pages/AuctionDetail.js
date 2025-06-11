@@ -2056,7 +2056,53 @@ const AuctionDetail = () => {
   // --- Add state for agreement checkbox ---
   const [agreementAccepted, setAgreementAccepted] = useState(false);
   
-  // Function to handle expiry date formatting
+  // Enhanced card number formatting and validation
+  const handleCardNumberChange = (e) => {
+    const inputValue = e.target.value;
+    // Remove all non-digits
+    let value = inputValue.replace(/\D/g, '');
+    // Limit to 19 digits max
+    value = value.substring(0, 19);
+    // Format with spaces every 4 digits
+    const formatted = value.replace(/(.{4})/g, '$1 ').trim();
+    setCardNumber(formatted);
+    
+    // Clear previous payment errors when user types
+    if (paymentMessage) {
+      setPaymentMessage('');
+      setPaymentMessageType('');
+    }
+  };
+
+  // Enhanced CVV validation
+  const handleCvvChange = (e) => {
+    const inputValue = e.target.value;
+    // Only allow 3 digits
+    const value = inputValue.replace(/\D/g, '').substring(0, 3);
+    setCardCvv(value);
+    
+    // Clear previous payment errors when user types
+    if (paymentMessage) {
+      setPaymentMessage('');
+      setPaymentMessageType('');
+    }
+  };
+
+  // Enhanced card owner validation
+  const handleCardOwnerChange = (e) => {
+    const inputValue = e.target.value;
+    // Only allow letters, spaces, and common name characters
+    const value = inputValue.replace(/[^a-zA-ZçğıöşüÇĞIİÖŞÜ\s]/g, '');
+    setCardOwner(value);
+    
+    // Clear previous payment errors when user types
+    if (paymentMessage) {
+      setPaymentMessage('');
+      setPaymentMessageType('');
+    }
+  };
+
+  // Function to handle expiry date formatting with enhanced validation
   const handleExpiryChange = (e) => {
     const inputValue = e.target.value;
     let value = inputValue.replace(/\D/g, ''); // Remove non-digits
@@ -2078,7 +2124,18 @@ const AuctionDetail = () => {
       // Update individual month/year states for backend compatibility
       const digits = value.replace(/\D/g, '');
       if (digits.length >= 2) {
-        setCardMonth(digits.substring(0, 2));
+        const month = digits.substring(0, 2);
+        const monthNum = parseInt(month, 10);
+        // Validate month range
+        if (monthNum >= 1 && monthNum <= 12) {
+          setCardMonth(month);
+        } else {
+          setCardMonth('');
+          if (monthNum > 12) {
+            setPaymentMessage('Geçersiz ay. Ay 01-12 arasında olmalıdır.');
+            setPaymentMessageType('error');
+          }
+        }
       } else if (digits.length === 1) {
         setCardMonth(digits);
       } else {
@@ -2086,12 +2143,36 @@ const AuctionDetail = () => {
       }
       
       if (digits.length >= 4) {
-        setCardYear(digits.substring(2, 4));
+        const year = digits.substring(2, 4);
+        const yearNum = parseInt(year, 10);
+        const monthNum = parseInt(digits.substring(0, 2), 10);
+        const currentYear = new Date().getFullYear() % 100;
+        const currentMonth = new Date().getMonth() + 1;
+        
+        // Check if date is in the future
+        if (yearNum < currentYear || (yearNum === currentYear && monthNum < currentMonth)) {
+          setPaymentMessage('Kartınızın son kullanma tarihi geçmiş.');
+          setPaymentMessageType('error');
+          setCardYear('');
+        } else {
+          setCardYear(year);
+          // Clear error if date is valid
+          if (paymentMessage && paymentMessage.includes('son kullanma')) {
+            setPaymentMessage('');
+            setPaymentMessageType('');
+          }
+        }
       } else if (digits.length === 3) {
         setCardYear(digits.substring(2, 3));
       } else {
         setCardYear('');
       }
+    }
+    
+    // Clear previous payment errors when user types (except date-specific ones)
+    if (paymentMessage && !paymentMessage.includes('ay') && !paymentMessage.includes('son kullanma')) {
+      setPaymentMessage('');
+      setPaymentMessageType('');
     }
   };
   
@@ -2665,33 +2746,107 @@ const AuctionDetail = () => {
   const handleRealPayment = async () => {
     if (!user?.id || !auction) return;
     
-    // Validate card info before proceeding
+    // Comprehensive card validation before proceeding
     if (!cardOwner.trim()) {
       setPaymentMessage('Kart sahibi adı gereklidir.');
       setPaymentMessageType('error');
       return;
     }
     
-    if (!cardNumber.trim() || cardNumber.replace(/\s/g, '').length < 13) {
-      setPaymentMessage('Geçerli bir kart numarası giriniz.');
+    if (cardOwner.trim().length < 2) {
+      setPaymentMessage('Kart sahibi adı en az 2 karakter olmalıdır.');
       setPaymentMessageType('error');
       return;
     }
     
+    // Card number validation
+    const cleanCardNumber = cardNumber.replace(/\s/g, '');
+    if (!cleanCardNumber) {
+      setPaymentMessage('Kart numarası gereklidir.');
+      setPaymentMessageType('error');
+      return;
+    }
+    
+    if (!/^\d+$/.test(cleanCardNumber)) {
+      setPaymentMessage('Kart numarası sadece rakam içermelidir.');
+      setPaymentMessageType('error');
+      return;
+    }
+    
+    if (cleanCardNumber.length < 13 || cleanCardNumber.length > 19) {
+      setPaymentMessage('Kart numarası 13-19 rakam arasında olmalıdır.');
+      setPaymentMessageType('error');
+      return;
+    }
+    
+    // Luhn algorithm check for card number
+    const isValidCardNumber = (number) => {
+      let sum = 0;
+      let isEven = false;
+      for (let i = number.length - 1; i >= 0; i--) {
+        let digit = parseInt(number[i]);
+        if (isEven) {
+          digit *= 2;
+          if (digit > 9) digit -= 9;
+        }
+        sum += digit;
+        isEven = !isEven;
+      }
+      return sum % 10 === 0;
+    };
+    
+    if (!isValidCardNumber(cleanCardNumber)) {
+      setPaymentMessage('Geçersiz kart numarası. Lütfen kartınızı kontrol ediniz.');
+      setPaymentMessageType('error');
+      return;
+    }
+    
+    // Month validation
     if (!cardMonth || cardMonth.length !== 2) {
-      setPaymentMessage('Geçerli bir son kullanma ayı giriniz (MM).');
+      setPaymentMessage('Son kullanma ayı gereklidir (MM formatında).');
       setPaymentMessageType('error');
       return;
     }
     
+    const monthNum = parseInt(cardMonth, 10);
+    if (monthNum < 1 || monthNum > 12) {
+      setPaymentMessage('Geçersiz ay. Ay 01-12 arasında olmalıdır.');
+      setPaymentMessageType('error');
+      return;
+    }
+    
+    // Year validation
     if (!cardYear || cardYear.length !== 2) {
-      setPaymentMessage('Geçerli bir son kullanma yılı giriniz (YY).');
+      setPaymentMessage('Son kullanma yılı gereklidir (YY formatında).');
       setPaymentMessageType('error');
       return;
     }
     
-    if (!cardCvv || cardCvv.length !== 3) {
-      setPaymentMessage('Geçerli bir CVV kodu giriniz.');
+    const yearNum = parseInt(cardYear, 10);
+    const currentYear = new Date().getFullYear() % 100; // Get last 2 digits of current year
+    const currentMonth = new Date().getMonth() + 1; // 1-based month
+    
+    if (yearNum < currentYear || (yearNum === currentYear && monthNum < currentMonth)) {
+      setPaymentMessage('Kartınızın son kullanma tarihi geçmiş. Lütfen geçerli bir kart kullanınız.');
+      setPaymentMessageType('error');
+      return;
+    }
+    
+    if (yearNum > currentYear + 20) {
+      setPaymentMessage('Geçersiz son kullanma yılı. Lütfen kontrol ediniz.');
+      setPaymentMessageType('error');
+      return;
+    }
+    
+    // CVV validation
+    if (!cardCvv) {
+      setPaymentMessage('CVV kodu gereklidir.');
+      setPaymentMessageType('error');
+      return;
+    }
+    
+    if (!/^\d{3}$/.test(cardCvv)) {
+      setPaymentMessage('CVV kodu 3 rakamdan oluşmalıdır.');
       setPaymentMessageType('error');
       return;
     }
@@ -3056,7 +3211,7 @@ const AuctionDetail = () => {
                       type="text"
                       placeholder="Ad Soyad"
                       value={cardOwner}
-                      onChange={e => setCardOwner(e.target.value)}
+                      onChange={handleCardOwnerChange}
                       disabled={paymentProcessing}
                       required
                     />
@@ -3067,7 +3222,7 @@ const AuctionDetail = () => {
                       type="text"
                       placeholder="1234 5678 9012 3456"
                       value={cardNumber}
-                      onChange={e => setCardNumber(e.target.value)}
+                      onChange={handleCardNumberChange}
                       disabled={paymentProcessing}
                       required
                     />
@@ -3091,7 +3246,7 @@ const AuctionDetail = () => {
                         type="text"
                         placeholder="123"
                         value={cardCvv}
-                        onChange={e => setCardCvv(e.target.value)}
+                        onChange={handleCvvChange}
                         disabled={paymentProcessing}
                         required
                       />
