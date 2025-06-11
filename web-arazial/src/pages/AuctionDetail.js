@@ -5,7 +5,7 @@ import { Helmet } from 'react-helmet-async'; // <-- Import Helmet
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../services/supabase';
 import { hasUserCompletedDeposit, createDeposit, getDepositStatus } from '../services/depositService';
-import { sendNewOfferNotification } from '../services/smsService';
+import { sendNewBidNotification, sendNewOfferNotification } from '../services/smsService';
 import CountdownTimer from '../components/CountdownTimer';
 import Button from '../components/ui/Button';
 import { PAYMENT_CONFIG } from '../config/payment';
@@ -2379,6 +2379,25 @@ const AuctionDetail = () => {
       }
       
       await refreshBids();
+
+      // Send SMS notifications to other users who have been outbid
+      try {
+        console.log('Sending SMS notifications for new bid');
+        const notificationResult = await sendNewBidNotification({
+          auctionId: auction.id,
+          newBidAmount: amount,
+          newBidUserId: user.id
+        });
+        
+        if (notificationResult.success) {
+          console.log('SMS notifications sent successfully:', notificationResult.message);
+        } else {
+          console.error('Failed to send SMS notifications:', notificationResult.error);
+        }
+      } catch (smsError) {
+        console.error('Exception sending SMS notifications:', smsError);
+        // Don't fail the bid submission if SMS fails
+      }
       
     } catch (error) {
       console.error('Error placing bid:', error);
@@ -2492,24 +2511,6 @@ const AuctionDetail = () => {
       setOfferAmount(''); // Clear input
       await refreshOffers(); // Refresh offers to show the new pending one
 
-      // Send SMS notifications to other users who have made offers on this property
-      try {
-        console.log('Sending SMS notifications for new offer');
-        const notificationResult = await sendNewOfferNotification({
-          auctionId: auction.id,
-          newOfferAmount: amount,
-          newOfferUserId: user.id
-        });
-        
-        if (notificationResult.success) {
-          console.log('SMS notifications sent successfully:', notificationResult.message);
-        } else {
-          console.error('Failed to send SMS notifications:', notificationResult.error);
-        }
-      } catch (smsError) {
-        console.error('Exception sending SMS notifications:', smsError);
-        // Don't fail the offer submission if SMS fails
-      }
 
     } catch (error) {
       console.error('Error submitting offer:', error);
