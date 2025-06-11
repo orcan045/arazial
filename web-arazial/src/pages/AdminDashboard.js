@@ -2420,29 +2420,48 @@ function AdminDashboard() {
       const { data: depositsData, error: depositsError } = await supabase
         .from('deposits')
         .select(`
-          *,
-          profiles:user_id (
-            id,
-            full_name,
-            email,
-            phone_number
-          )
+          *
         `)
         .eq('auction_id', auctionId)
         .order('created_at', { ascending: false });
 
+      // If we got deposits, fetch the profile information separately
+      let depositsWithProfiles = [];
+      if (depositsData && depositsData.length > 0) {
+        const userIds = [...new Set(depositsData.map(d => d.user_id))];
+        
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, phone_number')
+          .in('id', userIds);
+
+        if (profilesError) {
+          console.error('Error fetching profiles for deposits:', profilesError);
+          depositsWithProfiles = depositsData.map(deposit => ({
+            ...deposit,
+            profiles: null
+          }));
+        } else {
+          depositsWithProfiles = depositsData.map(deposit => ({
+            ...deposit,
+            profiles: profilesData.find(p => p.id === deposit.user_id) || null
+          }));
+        }
+      }
+
       console.log('📋 [AdminDashboard] Deposits query result:', {
         data: depositsData,
         error: depositsError,
-        dataLength: depositsData?.length || 0
+        dataLength: depositsData?.length || 0,
+        withProfiles: depositsWithProfiles?.length || 0
       });
 
       if (depositsError) {
         console.error('❌ [AdminDashboard] Error fetching deposits:', depositsError);
         setDeposits([]);
       } else {
-        console.log('✅ [AdminDashboard] Successfully fetched deposits:', depositsData?.length || 0, 'deposits');
-        setDeposits(depositsData || []);
+        console.log('✅ [AdminDashboard] Successfully fetched deposits:', depositsWithProfiles?.length || 0, 'deposits with profiles');
+        setDeposits(depositsWithProfiles || depositsData || []);
       }
     } catch (error) {
       console.error('❌ [AdminDashboard] Exception in fetchAuctionDeposits:', error);
