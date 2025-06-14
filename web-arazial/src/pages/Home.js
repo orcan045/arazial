@@ -1204,18 +1204,30 @@ const Home = () => {
                     </AuctionLocation>
                     <AuctionDetails>
                       <div style={{display:'flex',flexDirection:'column'}}>
-                        <span style={{fontSize:'0.75rem',color:'var(--color-text-secondary)',marginBottom:'0.1rem'}}>Başlangıç Fiyatı</span>
-                        <AuctionPrice>
-                          {formatPrice(
-                            listing.highest_bid || 
-                            listing.final_price || 
-                            listing.finalPrice || 
-                            listing.starting_price || 
-                            listing.startingPrice || 
-                            listing.starting_bid || 
-                            0
-                          )}
-                        </AuctionPrice>
+                        {listing.status === 'active' ? (
+                          <>
+                            <span style={{fontSize:'0.75rem',color:'var(--color-text-secondary)',marginBottom:'0.1rem'}}>Güncel Teklif Tutarı</span>
+                            <AuctionPrice>
+                              {formatPrice(listing.highest_bid || listing.final_price || listing.finalPrice || listing.starting_price || listing.startingPrice || listing.starting_bid || 0)}
+                            </AuctionPrice>
+                            <span style={{fontSize:'0.75rem',color:'var(--color-text-secondary)',marginTop:'0.1rem'}}>ve en son verilen teklif</span>
+                          </>
+                        ) : listing.status === 'ended' || listing.status === 'completed' ? (
+                          <>
+                            <span style={{fontSize:'0.75rem',color:'var(--color-text-secondary)',marginBottom:'0.1rem'}}>Kapanış Fiyatı</span>
+                            <AuctionPrice>
+                              {formatPrice(listing.highest_bid || listing.final_price || listing.finalPrice || listing.starting_price || listing.startingPrice || listing.starting_bid || 0)}
+                            </AuctionPrice>
+                            <span style={{fontSize:'0.75rem',color:'var(--color-text-secondary)',marginTop:'0.1rem'}}>Açık artırma sona erdi</span>
+                          </>
+                        ) : (
+                          <>
+                            <span style={{fontSize:'0.75rem',color:'var(--color-text-secondary)',marginBottom:'0.1rem'}}>Başlangıç Fiyatı</span>
+                            <AuctionPrice>
+                              {formatPrice(listing.starting_price || listing.startingPrice || listing.starting_bid || 0)}
+                            </AuctionPrice>
+                          </>
+                        )}
                       </div>
                       <AuctionStatus status={listing._display_type === 'offer' ? 'offer' : listing.status}>
                         {getStatusIcon(listing.status, listing._display_type)}
