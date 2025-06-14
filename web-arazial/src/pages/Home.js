@@ -1203,17 +1203,20 @@ const Home = () => {
                       {getAuctionLocation(listing)}
                     </AuctionLocation>
                     <AuctionDetails>
-                      <AuctionPrice>
-                        {formatPrice(
-                          listing.highest_bid || 
-                          listing.final_price || 
-                          listing.finalPrice || 
-                          listing.starting_price || 
-                          listing.startingPrice || 
-                          listing.starting_bid || 
-                          0
-                        )}
-                      </AuctionPrice>
+                      <div style={{display:'flex',flexDirection:'column'}}>
+                        <span style={{fontSize:'0.75rem',color:'var(--color-text-secondary)',marginBottom:'0.1rem'}}>Başlangıç Fiyatı</span>
+                        <AuctionPrice>
+                          {formatPrice(
+                            listing.highest_bid || 
+                            listing.final_price || 
+                            listing.finalPrice || 
+                            listing.starting_price || 
+                            listing.startingPrice || 
+                            listing.starting_bid || 
+                            0
+                          )}
+                        </AuctionPrice>
+                      </div>
                       <AuctionStatus status={listing._display_type === 'offer' ? 'offer' : listing.status}>
                         {getStatusIcon(listing.status, listing._display_type)}
                         {listing._display_type === 'offer' ? 'Satın Al' : 

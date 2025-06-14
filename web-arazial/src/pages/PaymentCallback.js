@@ -209,7 +209,7 @@ const PaymentCallback = () => {
       
       <Message>
         {isSuccess
-          ? 'Depozito ödemesi başarıyla tamamlandı. Artık ihaleye teklif verebilirsiniz.'
+          ? 'Katılım teminatınız başarıyla alınmıştır. Artık açık artırmaya teklif verebilirsiniz.'
           : 'Depozito ödemesi başarısız oldu. Lütfen tekrar deneyin.'}
       </Message>
 
@@ -251,7 +251,7 @@ const PaymentCallback = () => {
         </PaymentDetails>
       )}
 
-      <Button onClick={handleContinue}>İlana Geri Dön</Button>
+      <Button onClick={handleContinue}>Teklif Sayfasına Git</Button>
     </Container>
   );
 };

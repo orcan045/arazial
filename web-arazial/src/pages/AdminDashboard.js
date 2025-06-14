@@ -3333,7 +3333,7 @@ function AdminDashboard() {
               </FormRow>
               <FormRow>
                 <FormGroup> 
-                  <Label htmlFor="deposit_amount">Hizmet Bedeli Peşinatı (TL)</Label>
+                  <Label htmlFor="deposit_amount">Katılım Teminatı (TL)</Label>
                   <Input 
                     type="number" 
                     id="deposit_amount" 

@@ -2104,13 +2104,16 @@ const Auctions = () => {
           </PropertyInfoGrid>
           
           <AuctionDetails>
-            <AuctionPrice>
-              {formatPrice(
-                itemStatus === 'upcoming' 
-                  ? (auction.starting_price || auction.startingPrice)
-                  : (auction.highest_bid || auction.final_price || auction.finalPrice || auction.starting_price || auction.startingPrice)
-              )}
-            </AuctionPrice>
+            <div style={{display:'flex',flexDirection:'column'}}>
+              <span style={{fontSize:'0.75rem',color:'var(--color-text-secondary)',marginBottom:'0.1rem'}}>Başlangıç Fiyatı</span>
+              <AuctionPrice>
+                {formatPrice(
+                  itemStatus === 'upcoming' 
+                    ? (auction.starting_price || auction.startingPrice)
+                    : (auction.highest_bid || auction.final_price || auction.finalPrice || auction.starting_price || auction.startingPrice)
+                )}
+              </AuctionPrice>
+            </div>
             <AuctionStatus status={itemStatus}>
               {getStatusIcon(itemStatus, listingType, auction)}
               {getStatusText(itemStatus, listingType, auction)}

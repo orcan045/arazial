@@ -1367,7 +1367,8 @@ const BidCard = ({
   offerError,
   handleSubmitOffer,
   showOfferForm,
-  auction
+  auction,
+  handleTimerComplete
 }) => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showAuthLoading, setShowAuthLoading] = useState(false);
@@ -1502,9 +1503,9 @@ const BidCard = ({
                         padding: '0.75rem 1rem 0.5rem 1rem',
                       }}>
                         <div style={{ flex: 1, textAlign: 'center', fontWeight: '600', fontSize: '1.125rem' }}>
-                          Sonraki Teklif: {formatPrice(getMinimumBidAmount())}
+                          Güncel Teklif: {formatPrice(getMinimumBidAmount())}
                         </div>
-                      </div>
+                      </div>  
                       
                       <div style={{ 
                         display: 'flex', 
@@ -1515,7 +1516,7 @@ const BidCard = ({
                         justifyContent: 'space-between'
                       }}>
                         <div style={{ fontWeight: '600', fontSize: '1rem', textAlign: 'left', whiteSpace: 'nowrap' }}>
-                          Hizmet Bedeli Peşinatı: {formatPrice(auction.deposit_amount || 0)}
+                          Teminat Tutarı: {formatPrice(auction.deposit_amount || 0)}
                         </div>
                         <button 
                           onClick={(e) => {
@@ -1578,9 +1579,20 @@ const BidCard = ({
             
             {/* Messages for non-active auctions */} 
             {currentStatus !== 'active' && (
-              <p style={{ marginTop: '1rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-                {currentStatus === 'upcoming' ? 'Teklif verme henüz başlamadı.' : 'Teklif verme sona erdi.'}
-              </p>
+              <div style={{ marginTop: '1rem', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                {currentStatus === 'upcoming' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+                    <p style={{ margin: 0 }}>İhale başlamasına kalan süre:</p>
+                    <CountdownTimer 
+                      endTime={auction.start_time} 
+                      compact={false}
+                      onComplete={handleTimerComplete}
+                    />
+                  </div>
+                ) : (
+                  <p style={{ margin: 0 }}>Teklif verme sona erdi.</p>
+                )}
+              </div>
             )}
             
             {/* Bid History - Only show on desktop */}
@@ -1697,7 +1709,7 @@ const BidCard = ({
                   justifyContent: 'space-between'
                 }}>
                   <div style={{ fontWeight: '600', fontSize: '1rem', textAlign: 'left', whiteSpace: 'nowrap' }}>
-                    Hizmet Bedeli Peşinatı: {formatPrice(auction.deposit_amount || 0)}
+                    Katılım Teminatı: {formatPrice(auction.deposit_amount || 0)}
                   </div>
                   <button 
                     onClick={(e) => {
@@ -1739,7 +1751,7 @@ const BidCard = ({
               </p>
             )}
             
-            {/* Loading Auth prompt */} 
+            {/* Loading Auth prompt */}
             {authLoading && showAuthLoading && (
               <p style={{ textAlign: 'center', color: 'var(--color-text-secondary)', marginBottom: isMobile ? '0.5rem' : '2rem' }}>
                 Kullanıcı bilgileri yükleniyor...
@@ -3090,7 +3102,7 @@ const AuctionDetail = () => {
         <PaymentModalContent onClick={(e) => e.stopPropagation()}>
           <PaymentModalHeader>
             <PaymentModalTitle>
-              {paymentStep === 'info' ? 'Hizmet Bedeli Peşinatı' : 'Hizmet Bedeli Peşinatı Ödemesi'}
+              {paymentStep === 'info' ? 'Katılım Teminatı' : 'Katılım Teminatı Ödemesi'}
             </PaymentModalTitle>
             <button 
               onClick={closePaymentModal}
@@ -3113,19 +3125,19 @@ const AuctionDetail = () => {
                   {hasPendingDeposit ? (
                     <>
                       <p style={{ margin: 0, fontWeight: 500, textAlign: 'center', color: 'orange' }}>
-                      Teklif verebilmek için hizmet bedeli peşinatını ödemeniz gerekmektedir.
+                      Açık artırma otomatik teklif sistemiyle ilerlemektedir
                       </p>
                       <p style={{ marginBottom: 0, textAlign: 'center' }}>
-                      Kazanmadığınız durumda peşinat tutarınız iade edilecektir.
+                      Her teklif verdiğinizde sistem otomatik olarak {formatPrice(auction.min_increment || 0)} teklif vermektedir.
                       </p>
                     </>
                   ) : (
                     <>
                   <p style={{ margin: 0, fontWeight: 500, textAlign: 'center' }}>
-                    Teklif verebilmek için hizmet bedeli peşinatını ödemeniz gerekmektedir.
+                  Açık artırma otomatik teklif sistemiyle ilerlemektedir
                   </p>
                   <p style={{ marginBottom: 0, textAlign: 'center' }}>
-                    Kazanmadığınız durumda peşinat tutarınız iade edilecektir.
+                  Her teklif verdiğinizde sistem otomatik olarak {formatPrice(auction.min_increment || 0)} teklif vermektedir.
                   </p>
                     </>
                   )}
@@ -3365,6 +3377,23 @@ const AuctionDetail = () => {
     );
   };
 
+  const StartTimeBadge = styled.div`
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--border-radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    gap: 0.5rem;
+    background-color: rgba(37, 99, 235, 0.1);
+    color: rgb(37, 99, 235);
+    
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  `;
+
   return (
     <PageContainer>
       {/* --- Add Helmet for Meta Tags --- */}
@@ -3404,6 +3433,24 @@ const AuctionDetail = () => {
             {getStatusIcon(currentStatus)}
             {getStatusText(currentStatus)}
           </AuctionStatus>
+          
+          {auction.listing_type === 'auction' && auction.start_time && (
+            <StartTimeBadge>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+              </svg>
+              Başlangıç: {formatDate(auction.start_time)}
+            </StartTimeBadge>
+          )}
+          
+          {auction.listing_type === 'auction' && auction.end_time && (
+            <StartTimeBadge>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+              </svg>
+              Bitiş: {formatDate(auction.end_time)}
+            </StartTimeBadge>
+          )}
           
           <AuctionLocation>
             <LocationIcon /> {auction.location?.split(',').reverse().join(', ').trim() || 'Konum belirtilmemiş'}
@@ -3487,6 +3534,7 @@ const AuctionDetail = () => {
             handleSubmitOffer={handleSubmitOffer}
             showOfferForm={showOfferForm}
             auction={auction}
+            handleTimerComplete={handleTimerComplete}
           />
         </div>
         
@@ -3499,6 +3547,24 @@ const AuctionDetail = () => {
               {getStatusIcon(currentStatus)}
               {getStatusText(currentStatus)}
             </AuctionStatus>
+            
+            {auction.listing_type === 'auction' && auction.start_time && (
+              <StartTimeBadge>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+                Başlangıç: {formatDate(auction.start_time)}
+              </StartTimeBadge>
+            )}
+            
+            {auction.listing_type === 'auction' && auction.end_time && (
+              <StartTimeBadge>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                </svg>
+                Bitiş: {formatDate(auction.end_time)}
+              </StartTimeBadge>
+            )}
             
             <AuctionLocation>
               <LocationIcon /> {auction.location?.split(',').reverse().join(', ').trim() || 'Konum belirtilmemiş'}
@@ -3690,6 +3756,7 @@ const AuctionDetail = () => {
               handleSubmitOffer={handleSubmitOffer}
               showOfferForm={showOfferForm}
               auction={auction}
+              handleTimerComplete={handleTimerComplete}
             />
           </DesktopBidCard>
         </Column>
