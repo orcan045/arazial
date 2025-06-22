@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import { completeAuction } from '../services/auctionService';
 
 const pulse = keyframes`
@@ -47,7 +47,7 @@ const TimerContainer = styled.div`
   position: relative;
   overflow: hidden;
   
-  ${props => props.isExpiring && `
+  ${props => props.isExpiring && css`
     animation: ${pulse} 2s infinite;
   `}
   

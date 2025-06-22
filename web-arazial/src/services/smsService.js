@@ -384,9 +384,93 @@ Detaylar için uygulamayı ziyaret edin.`;
   }
 };
 
+/**
+ * Send SMS notification for auction start reminder
+ * @param {Object} params - Notification parameters
+ * @param {string} params.phoneNumber - Phone number to send SMS to
+ * @param {string} params.auctionId - The auction ID
+ * @param {string} params.auctionTitle - The auction title
+ * @returns {Promise<Object>} Result of SMS sending operation
+ */
+export const sendAuctionStartNotification = async ({ phoneNumber, auctionId, auctionTitle }) => {
+  try {
+    console.log('[SMS Service] Sending auction start notification to:', phoneNumber);
+    
+    // Construct the SMS message
+    const message = `İlgilendiğiniz arazi açık artırmaya sunuldu!
+Teklif vermek için hemen ziyaret edin:
+https://www.arazialcom.net/auctions/${auctionId}`;
+    
+    // Send SMS via Supabase Edge Function
+    const { data, error } = await supabase.functions.invoke('send-notification-sms', {
+      body: {
+        phoneNumber: phoneNumber,
+        message: message,
+        type: 'auction_start_notification'
+      }
+    });
+    
+    if (error) {
+      console.error(`[SMS Service] Failed to send auction start SMS to ${phoneNumber}:`, error);
+      return { success: false, error: error.message };
+    }
+    
+    console.log(`[SMS Service] Auction start SMS sent successfully to ${phoneNumber}`);
+    return { success: true, data };
+    
+  } catch (error) {
+    console.error('[SMS Service] Error in sendAuctionStartNotification:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Add phone number to auction notification queue
+ * @param {Object} params - Notification parameters
+ * @param {string} params.phoneNumber - Phone number to add to queue
+ * @param {string} params.auctionId - The auction ID
+ * @returns {Promise<Object>} Result of adding to queue
+ */
+export const addToAuctionNotificationQueue = async ({ phoneNumber, auctionId }) => {
+  try {
+    console.log('[SMS Service] Adding phone number to auction notification queue:', phoneNumber);
+    
+    // Get Supabase URL from the existing client
+    const supabaseUrl = supabase.supabaseUrl;
+    
+    // Use direct API call to avoid RLS issues
+    const response = await fetch(
+      `${supabaseUrl}/functions/v1/add-sms-notification-queue`,
+      {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.supabaseKey}`
+        },
+        body: JSON.stringify({ phoneNumber, auctionId }),
+      }
+    );
+    
+    const result = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(result.error || 'API call failed');
+    }
+    
+    console.log(`[SMS Service] Phone number ${phoneNumber} added to auction notification queue`);
+    return result;
+    
+  } catch (error) {
+    console.error('[SMS Service] Error in addToAuctionNotificationQueue:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 export default {
   sendNewBidNotification,
   sendNewOfferNotification,
   sendOfferStatusNotification,
+  sendAuctionStartNotification,
+  addToAuctionNotificationQueue,
   checkSMSNotificationEnabled
 };
